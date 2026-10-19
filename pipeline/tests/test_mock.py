@@ -39,7 +39,7 @@ def test_mock_passes_hub_validation_and_shape():
     for (mid, ref), df in subs.items():
         assert validate_submission(df, ref, mid, set(LOCS) | {"CD"}) == [], mid
         assert set(df.location) == set(LOCS) | {"CD"}
-        assert df.target_end_date.nunique() == mock.N_NOWCAST_WEEKS + len(config.HORIZONS)
+        assert df.target_end_date.nunique() == mock.N_NOWCAST_WEEKS + len([h for h in config.HORIZONS if h > 0])
         # the reference date itself and three forecast Saturdays are present
         assert "2026-10-31" in set(df.target_end_date) and "2026-11-21" in set(df.target_end_date)
     # affected province gets substantial counts, unaffected one is (mostly) zero

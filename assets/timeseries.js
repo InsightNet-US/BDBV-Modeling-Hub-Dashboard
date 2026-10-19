@@ -82,9 +82,9 @@ function drawTS() {
   });
   s += `<text x="${mL}" y="${H - 4}" style="fill:#5b6675;font-size:9px">week ending (Saturday) · cases by symptom onset</text>`;
 
-  // horizon shading and NOW marker
+  // forecast window shading: week 0 (the reference week) through +h
   if (nowIdx >= 0) {
-    const hx0 = edge(nowIdx + 1), hx1 = edge(Math.min(total, nowIdx + 1 + horizon));
+    const hx0 = edge(nowIdx), hx1 = edge(Math.min(total, nowIdx + 1 + horizon));
     if (hx1 > hx0) s += `<rect x="${hx0}" y="${mT}" width="${hx1 - hx0}" height="${ih}" fill="var(--accent)" opacity="0.07"/>`;
   }
 
@@ -116,17 +116,17 @@ function drawTS() {
   });
 
   if (nowIdx >= 0) {
-    const nx = edge(nowIdx + 1);
-    s += `<line x1="${nx}" y1="${mT}" x2="${nx}" y2="${mT + ih}" stroke="var(--now)" stroke-width="1" opacity="0.25" stroke-dasharray="2 3"/>`;
-    s += `<rect x="${nx - 26}" y="${mT - 15}" width="52" height="13" rx="3" fill="#fff" stroke="var(--now)"/>`;
-    s += `<text x="${nx}" y="${mT - 5}" text-anchor="middle" style="fill:var(--now);font-size:9px;font-weight:700">REF DATE</text>`;
+    // faint guide between the last closed week (nowcast) and the reference week (forecast week 0)
+    const nx = edge(nowIdx);
+    s += `<line x1="${nx}" y1="${mT}" x2="${nx}" y2="${mT + ih}" stroke="var(--now)" stroke-width="1" opacity="0.35" stroke-dasharray="2 3"/>`;
   }
   svg.innerHTML = s;
 
   svg.querySelectorAll('.hit').forEach(r => {
     r.addEventListener('mousemove', e => {
       const i = +r.dataset.i, w = weeks[i], rel = nowIdx >= 0 ? i - nowIdx : null;
-      const kind = rel == null ? '' : rel > 0 ? ` · forecast +${rel} wk` : rel === 0 ? ' · reference week' : '';
+      const hasModelHere = (ens && qAt(ens, w)) || teams.some(t => qAt(t.m, w));
+      const kind = rel == null ? '' : rel >= 0 ? ` · forecast wk ${rel === 0 ? '0 (reference week)' : '+' + rel}` : hasModelHere ? ' · nowcast' : '';
       let rows = '';
       if (obs[w] != null) rows += `<div class="row"><span>Reported (as of ${fmtDate(asOf)})${w > lastComplete ? ' <span class="sm">week in progress</span>' : ''}</span><b>${fmtN(obs[w])}</b></div>`;
       else if (rel != null && rel <= 0) rows += `<div class="row"><span>Reported</span><b>no data yet</b></div>`;

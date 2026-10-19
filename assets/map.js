@@ -23,6 +23,9 @@ function onProv(f, layer) {
   layer.on('click', () => selectLocation(f.properties.location === S.location ? NATIONAL : f.properties.location));
 }
 
+/* forecast window label: week 0 (the reference week) alone, or weeks 0 through +h */
+const hzLabel = () => S.horizon === 0 ? 'wk 0' : `wk 0 to +${S.horizon}`;
+
 /* ---- values and styles ---- */
 function provValue(code) {
   const m = S.mapModel ? modelLoc(S.mapModel, code) : null;
@@ -48,8 +51,8 @@ function provTip(f) {
   let rows = '';
   if (m) {
     const q = m.horizon_sum[h];
-    rows += `<div class="row"><span>Median cases, next ${S.horizon} wk</span><b>${q ? fmtN(q[QI.med]) : '–'} ${q ? `<span class="sm">(${fmtRange(q)})</span>` : ''}</b></div>`;
-    rows += `<div class="row"><span>P(≥1 case) within ${S.horizon} wk</span><b>${m.presence[h] == null ? '–' : Math.round(m.presence[h] * 100) + '%'}</b></div>`;
+    rows += `<div class="row"><span>Median cases, ${hzLabel()}</span><b>${q ? fmtN(q[QI.med]) : '–'} ${q ? `<span class="sm">(${fmtRange(q)})</span>` : ''}</b></div>`;
+    rows += `<div class="row"><span>P(≥1 case), ${hzLabel()}</span><b>${m.presence[h] == null ? '–' : Math.round(m.presence[h] * 100) + '%'}</b></div>`;
   } else rows += `<div class="row"><span>${S.mapModel ? modelLabel(S.mapModel) : 'Model output'}</span><b>no submission</b></div>`;
   rows += `<div class="row"><span>Reported, last 4 wk</span><b>${fmtN(recent)}</b></div><div class="row"><span>Reported to date</span><b>${fmtN(total)}</b></div>`;
   return `<b>${f.properties.name}</b> <span class="sm">· ${code}</span>${rows}<div class="sm" style="margin-top:4px">click to ${S.location === code ? 'clear selection' : 'select'}</div>${m ? synNote() : ''}`;
@@ -65,7 +68,7 @@ function drawMap() {
     if (S.location === l.feature.properties.location) l.bringToFront();
   });
   const n = S.manifest.locations.length, missing = n - vals.length;
-  const mt = S.mapMetric === 'presence' ? `P(≥1 case) within <span class="horizonval">${S.horizon}</span> wk` : `Median cases, next <span class="horizonval">${S.horizon}</span> wk`;
+  const mt = `${S.mapMetric === 'presence' ? 'P(≥1 case)' : 'Median cases'}, <span class="horizonval">${hzLabel()}</span>`;
   document.getElementById('mapSub').innerHTML = `${mt} · ${S.mapModel ? modelLabel(S.mapModel) : 'no model'}`
     + (S.manifest.mock && S.mapModel ? ' <b style="color:#9a5b00">(synthetic)</b>' : '')
     + (missing ? ` · ${missing} province${missing === 1 ? '' : 's'} without output (dashed)` : '');

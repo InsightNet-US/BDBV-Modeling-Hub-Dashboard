@@ -17,12 +17,12 @@ function drawCum() {
   const H_LIST = S.manifest.horizons;
   const n = Math.max(1, sel.length);
   const mLc = 162, mRc = 56, mT = 8, mB = 18, gp = 13, ggap = 6;
-  const H = mT + 8 + 15 + 23 + (latestObs != null ? 16 : 0) + 4 + n * gp + 8 + 15 + H_LIST.length * (n * gp + ggap) + mB;
+  const H = mT + 8 + 15 + 23 + (latestObs != null ? 16 : 0) + 4 + 15 + (H_LIST.length + 1) * (n * gp + ggap) + 6 + mB;
   svg.setAttribute('height', H);
   const y0 = H - mB;
   const maxOf = arr => arr.length ? Math.max(...arr) : 0;
   const xmax = Math.max(reported, latestObs || 0,
-    maxOf(sel.map(t => t.m.cum_through_ref[QI.hi95])),
+    maxOf(sel.map(t => t.m.cum_nowcast[QI.hi95])),
     maxOf(sel.flatMap(t => H_LIST.map(h => (t.m.cum_through_h[h] || [0])[QI.hi95] || 0)))) * 1.06 || 1;
   const px = v => mLc + (v / xmax) * (W - mLc - mRc);
 
@@ -48,19 +48,23 @@ function drawCum() {
   { const cy = yy + 7; s += cat(`Reported (as of ${fmtDate(asOf)})`, cy, 'var(--past)') + dot(reported, 'var(--past)', cy); yy += 23; }
   if (latestObs != null) { const cy = yy; s += cat(`Latest (as of ${fmtDate(S.obsLatest.as_of)})`, cy, 'var(--latest)') + dot(latestObs, 'var(--latest)', cy, true); yy += 16; }
   yy += 4;
-  { const gTop = yy, gH = n * gp;
-    s += cat(R ? `Nowcast · eventual thru ${fmtDate(R)}` : 'Nowcast', gTop + gH / 2 - 4, 'var(--median)');
+  s += section('Eventual cumulative', yy); yy += 15;
+  if (!sel.length) s += note(S.round && roundModels().length ? 'no model output for this location' : 'no submissions', yy + gp / 2);
+  // nowcast: closed weeks through the Saturday before the reference date
+  { const gTop = yy, gH = n * gp, through = R ? fmtDate(addDays(R, -7)) : '';
+    s += cat(`Nowcast · closed wks thru ${through}`, gTop + gH / 2 - 4, 'var(--median)');
     sel.forEach((t, k) => { const cy = gTop + k * gp + gp / 2;
-      if (t.m.n_nowcast_weeks === 0) s += dot(t.m.cum_through_ref[QI.med], t.color, cy, true) + note('no nowcast weeks submitted', cy + 0);
-      else s += box(t.m.cum_through_ref, t.color, cy, 9, `${t.name}: eventual confirmed cases through ${fmtDate(R)} (${t.m.n_nowcast_weeks} nowcast wk)`); });
-    if (!sel.length) s += note(S.round && roundModels().length ? 'no model output for this location' : 'no submissions', gTop + gp / 2);
-    yy += gH + 8; }
-  s += section('Projected cumulative', yy); yy += 15;
+      if (t.m.n_nowcast_weeks === 0) s += dot(t.m.cum_nowcast[QI.med], t.color, cy, true) + note('no nowcast weeks submitted (reported only)', cy);
+      else s += box(t.m.cum_nowcast, t.color, cy, 9, `${t.name}: eventual confirmed cases in weeks closed by ${through} (${t.m.n_nowcast_weeks} nowcast wk)`); });
+    yy += gH + ggap + 6; }
+  // forecast horizons: week 0 (reference week, still in progress) through +3
   H_LIST.forEach(h => { const gTop = yy, gH = n * gp;
     if (h === horizon) s += `<rect x="${mLc - 2}" y="${gTop - 1}" width="${W - mRc - (mLc - 2)}" height="${gH + 2}" fill="var(--accent)" opacity="0.08"/>`;
-    s += cat(`through +${h} wk${R ? ' (' + fmtDate(addDays(R, 7 * h)) + ')' : ''}`, gTop + gH / 2 - 4);
+    const when = R ? fmtDate(addDays(R, 7 * h)) : '';
+    s += cat(h === 0 ? `Forecast wk 0 · thru ${when}` : `Forecast +${h} wk · thru ${when}`, gTop + gH / 2 - 4);
     sel.forEach((t, k) => { const q = t.m.cum_through_h[h], cy = gTop + k * gp + gp / 2;
-      if (q) s += box(q, t.color, cy, 9, `${t.name}: cumulative confirmed through +${h} wk`); else s += note('not submitted', cy); });
+      if (q) s += box(q, t.color, cy, 9, `${t.name}: cumulative confirmed through week ${h === 0 ? '0' : '+' + h} (${when})`);
+      else s += note('not submitted', cy); });
     yy += gH + ggap; });
   svg.innerHTML = s;
   svg.querySelectorAll('.cbox').forEach(g => {

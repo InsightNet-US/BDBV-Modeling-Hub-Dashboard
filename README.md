@@ -13,7 +13,7 @@ small JSON summaries under `data/`, and a GitHub Action rebuilds and deploys to 
   for the selected round, the latest release overlaid to show backfill, the hub ensemble's nowcast and
   forecast medians (dotted bars, optional 95% interval) and selected team models (points + 95% intervals).
 - **Cumulative confirmed cases**: reported to date, each model's nowcast of the eventual total through the
-  reference date, and projected cumulative totals at +1/+2/+3 weeks.
+  reference date, and forecast cumulative totals through weeks 0 (the reference week) to +3.
 - **Map**: provinces coloured by a model's median cases over the horizon or by P(at least one case) within
   the horizon. Clicking selects a location. (A health-zone layer was removed from the UI for now; the
   pipeline still writes `observed/health-zones.json` and `geo.py` can rebuild the zone boundaries.)
@@ -62,9 +62,9 @@ Environment variables: `HUB_DIR` (hub checkout; defaults to `./hub` or `~/Develo
   model-output README rules (100 samples per location, Saturdays, shared week sets) are reported but still
   summarised.
 - Summaries per model x location: quantiles 0.025/0.1/0.25/0.5/0.75/0.9/0.975 per week; quantiles of the
-  per-trajectory sum over the next 1-3 weeks; share of trajectories with at least one case within 1-3 weeks;
-  cumulative totals through the reference date and +1..+3 weeks, filling weeks the model did not submit with
-  the round's reported counts. Samples are never summed across provinces (they are joint only across weeks).
+  per-trajectory sum over forecast windows from week 0 (the reference week, not yet finished at submission) through +h, h = 0..3; share of trajectories with at least one case in each window;
+  nowcast cumulative through the last closed week (filling closed weeks the model did not submit with the
+  round's reported counts) and forecast cumulative through weeks 0..+3 (which must be submitted). Samples are never summed across provinces (they are joint only across weeks).
 - National view: reported provincial counts summed; model output appears only if the hub adds a national
   location (`CD`) to `tasks.json`.
 

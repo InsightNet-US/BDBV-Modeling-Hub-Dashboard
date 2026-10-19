@@ -56,13 +56,16 @@ def test_summary_full_submission():
     mat, weeks = samples_matrix(df[df.location == "IT"])
     observed = {"2026-09-26": 10, "2026-10-03": 20, "2026-10-10": 5}
     out = summarize_location(mat, weeks, R, observed)
-    assert out["n_nowcast_weeks"] == 4
-    assert out["observed_fixed_through_ref"] == 30          # 10-10 is submitted, so only 09-26 + 10-03 fixed
-    # cumulative through R for sample s = 30 + 4s ; median over s=1..100 -> 30 + 4*50.5
-    assert out["cum_through_ref"][3] == pytest.approx(30 + 4 * 50.5)
-    # horizon sums: h=2 -> 2s, median 101
-    assert out["horizon_sum"]["2"][3] == pytest.approx(101)
+    assert out["n_nowcast_weeks"] == 3                       # 10-10, 10-17, 10-24; the reference week is a forecast
+    assert out["nowcast_through"] == "2026-10-24"
+    assert out["observed_fixed"] == 30                       # 10-10 is submitted, so only 09-26 + 10-03 fixed
+    # nowcast cumulative through 10-24 for sample s = 30 + 3s ; median over s=1..100 -> 30 + 3*50.5
+    assert out["cum_nowcast"][3] == pytest.approx(30 + 3 * 50.5)
+    # forecast windows start at the reference week: h=0 -> s, h=2 -> 3s
+    assert out["horizon_sum"]["0"][3] == pytest.approx(50.5)
+    assert out["horizon_sum"]["2"][3] == pytest.approx(3 * 50.5)
     assert out["presence"]["1"] == 1.0
+    assert out["cum_through_h"]["0"][3] == pytest.approx(30 + 4 * 50.5)
     assert out["cum_through_h"]["3"][3] == pytest.approx(30 + 7 * 50.5)
 
 
@@ -72,14 +75,19 @@ def test_summary_forecast_only_and_gaps():
     observed = {"2026-10-03": 20, "2026-10-10": 5}
     out = summarize_location(mat, weeks, R, observed)
     assert out["n_nowcast_weeks"] == 0
-    assert out["cum_through_ref"] == [25.0] * 7            # observed only
-    assert out["presence"]["3"] == 0.0
-    # gap: model skips the +2 week -> horizon 2 and 3 unavailable, horizon 1 fine
-    df2 = make_df([WEEKS_FC[0], WEEKS_FC[2]], value=lambda s, w: 1.0)
+    assert out["cum_nowcast"] == [25.0] * 7                # observed only
+    # the reference week (horizon 0) was not submitted: it is a forecast week, never filled from
+    # reported data, so horizon 0 and everything beyond it are unavailable
+    assert out["horizon_sum"]["0"] is None and out["cum_through_h"]["3"] is None
+    out_r = summarize_location(mat, weeks, R, {**observed, R: 4})
+    assert out_r["horizon_sum"]["0"] is None
+    # gap: model submits R, +1 and +3 but skips +2 -> horizons 0 and 1 fine, 2 and 3 unavailable
+    df2 = make_df([R, WEEKS_FC[0], WEEKS_FC[2]], value=lambda s, w: 1.0)
     mat2, weeks2 = samples_matrix(df2)
     out2 = summarize_location(mat2, weeks2, R, observed)
-    assert out2["horizon_sum"]["1"] is not None and out2["horizon_sum"]["2"] is None
-    assert out2["presence"]["1"] == 1.0 and out2["presence"]["3"] is None
+    assert out2["horizon_sum"]["0"][3] == 1.0 and out2["horizon_sum"]["1"][3] == 2.0
+    assert out2["horizon_sum"]["2"] is None and out2["presence"]["3"] is None
+    assert out2["presence"]["1"] == 1.0
 
 
 def test_validator():

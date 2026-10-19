@@ -37,7 +37,7 @@ ENSEMBLE_MODEL_ID = os.environ.get("ENSEMBLE_MODEL_ID", "").strip() or None
 ROUND_NAME = "BDBV 2026 nowcasting and forecasting"
 TARGET = "wk inc confirmed cases"
 QUANTILE_LEVELS = [0.025, 0.1, 0.25, 0.5, 0.75, 0.9, 0.975]
-HORIZONS = [1, 2, 3]
+HORIZONS = [0, 1, 2, 3]   # horizon 0 = the reference week itself; windows run from week R through R+h
 # A round's data version is the latest as_of on or before reference_date minus this many days
 # (the Tuesday closing the submission window; the Monday 5 pm ET release qualifies).
 AS_OF_LAG_DAYS = 4

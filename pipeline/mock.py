@@ -120,7 +120,7 @@ def generate(target: pd.DataFrame, delays: pd.DataFrame, locations: list[str],
     for R in reference_dates:
         Rd = d(R)
         weeks = [iso(Rd - timedelta(days=7 * k)) for k in range(N_NOWCAST_WEEKS - 1, -1, -1)]
-        weeks += [iso(Rd + timedelta(days=7 * h)) for h in config.HORIZONS]
+        weeks += [iso(Rd + timedelta(days=7 * h)) for h in config.HORIZONS if h > 0]   # h=0 is week R itself
         nw = len(weeks)
         team_rows: dict[str, list[pd.DataFrame]] = {m: [] for m in TEAMS}
         pooled: dict[str, list[np.ndarray]] = {}

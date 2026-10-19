@@ -69,7 +69,10 @@ def summarize_location(mat: np.ndarray, weeks: list[str], reference_date: str,
         mat = mat[keep]
     R = d(reference_date)
     widx = {w: i for i, w in enumerate(weeks)}
-    nowcast_weeks = [w for w in weeks if d(w) <= R]
+    # Nowcast weeks have closed (Saturday before the reference date) but are incompletely reported.
+    # The reference week itself (horizon 0) has not finished when submissions are made, so it is a
+    # forecast horizon like +1..+3 and is never filled from reported data.
+    nowcast_weeks = [w for w in weeks if d(w) < R]
     fc_week = {h: iso(R + timedelta(days=7 * h)) for h in horizons}
 
     out: dict = {
@@ -80,18 +83,22 @@ def summarize_location(mat: np.ndarray, weeks: list[str], reference_date: str,
         "horizon_sum": {}, "presence": {}, "cum_through_h": {},
     }
 
-    # cumulative through R: observed for unsubmitted weeks <= R, trajectory for submitted weeks
-    obs_fixed = sum(v for w, v in observed.items() if d(w) <= R and w not in widx)
-    cum_R = np.full(mat.shape[0], float(obs_fixed))
+    # nowcast cumulative through the last closed week (R - 7): reported counts for unsubmitted
+    # closed weeks, trajectory values for submitted ones
+    obs_fixed = sum(v for w, v in observed.items() if d(w) < R and w not in widx)
+    cum_now = np.full(mat.shape[0], float(obs_fixed))
     for w in nowcast_weeks:
-        cum_R += mat[:, widx[w]]
-    out["cum_through_ref"] = qvals(cum_R)
-    out["observed_fixed_through_ref"] = round(float(obs_fixed), 1)
+        cum_now += mat[:, widx[w]]
+    out["cum_nowcast"] = qvals(cum_now)
+    out["nowcast_through"] = iso(R - timedelta(days=7))
+    out["observed_fixed"] = round(float(obs_fixed), 1)
 
+    # Forecast windows run from the reference week (h=0) through R+h; every week in the window must
+    # be submitted, and a gap makes that horizon and all longer ones unavailable.
     run = np.zeros(mat.shape[0])
-    cum_h = cum_R.copy()
+    cum_h = cum_now.copy()
     have_all = True
-    for h in horizons:
+    for h in sorted(horizons):
         w = fc_week[h]
         if w not in widx:
             have_all = False
