@@ -4,7 +4,7 @@
   --past:#2b8fd6; --median:#1f5fa8; --latest:#1b2430;
   --good:#1a9e52; --warn:#d9800a; --bad:#e5484d;
   --font:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
-  --header-h:56px; --footer-h:30px;
+  --header-h:56px; --footer-h:40px; --partner-h:20px;
 }
 *{box-sizing:border-box}
 html,body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font)}
@@ -92,8 +92,25 @@ svg text{fill:var(--muted);font-size:10px}
 .leaflet-container{font-family:var(--font)}
 .leaflet-container a{color:var(--accent)}
 
-footer{display:flex;align-items:center;gap:14px;padding:0 20px;min-height:var(--footer-h);flex-shrink:0;font-size:11px;color:var(--muted);border-top:1px solid var(--line);background:#f7f9fb;flex-wrap:wrap;overflow:hidden}
+footer{display:flex;align-items:center;gap:24px;padding:4px 20px;min-height:var(--footer-h);flex-shrink:0;font-size:11px;color:var(--muted);border-top:1px solid var(--line);background:#f7f9fb;overflow:hidden}
+@media (max-width:1000px){ footer{flex-wrap:wrap;gap:6px 24px} }
 footer .spacer{flex:1}
+.footinfo{flex:1 1 auto;min-width:0;display:flex;flex-wrap:wrap;gap:2px 14px;line-height:1.35}
+/* partner strip: muted marks that recover full colour on hover (cf. the INRB and IDCUP dashboards) */
+.partners{display:inline-flex;align-items:center;gap:22px;flex-shrink:0}
+.partner-group{display:inline-flex;align-items:center;gap:14px}
+.partner-divider{width:1px;height:18px;background:var(--line);display:inline-block}
+.logo{display:inline-flex;align-items:center;height:var(--partner-h);flex-shrink:0;transition:opacity .15s ease}
+.logo img{height:100%;width:auto;display:block;object-fit:contain;transition:filter .15s ease;filter:grayscale(1) brightness(.55) contrast(1.1);opacity:.75}
+.logo:hover img{filter:none;opacity:1}
+/* the ACCIDDA source is a white wordmark: invert it dark, and keep it dark on hover */
+.logo-accidda{height:calc(var(--partner-h) * 1.15)}
+.logo-accidda img{filter:invert(1) brightness(.5) contrast(1.2)}
+.logo-accidda:hover img{filter:invert(1)}
+.logo-insightnet img{filter:grayscale(1) brightness(.6) contrast(1.1)}
+.logo-unikin{height:calc(var(--partner-h) * 1.0)}
+.logo-hubverse{height:calc(var(--partner-h) * 0.95)}
+@media (max-width:1250px){ :root{--partner-h:16px} .partners{gap:14px} .partner-group{gap:10px} }
 
 /* models drawer */
 .drawer-bg{position:fixed;inset:0;background:rgba(27,36,48,.35);z-index:2000;display:none}

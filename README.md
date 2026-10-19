@@ -83,3 +83,10 @@ Follows the motifs of the Insight Net interface prototype (light theme, reported
 grammar, boxplot cumulative panel, choropleth with model selector). Team colours use one ColorBrewer
 Paired pair per team, as in the hub's own plotting scripts; blue is reserved for reported data and the
 hub ensemble.
+
+## Partners
+
+The hub is a joint effort of [Insight Net](https://insightnet.us/) centers ([ACCIDDA](https://accidda.org/)
+and epiEngage) and the [University of Kinshasa](https://www.unikin.ac.cd/), built on the
+[hubverse](https://hubverse.io/). Their marks in `assets/brand/` are shown in the footer; they remain the
+property of their owners and are used here to identify the hub's partners.
