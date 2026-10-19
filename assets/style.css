@@ -41,7 +41,8 @@ select{background:var(--panel-2);color:var(--ink);border:1px solid var(--line);b
 .panel .hd .spacer{flex:1}
 .panel .bd{padding:10px 14px;flex:1;min-height:0;position:relative}
 .ts{grid-column:1;grid-row:1}
-.cum{grid-column:1;grid-row:2}
+.cum{grid-column:1;grid-row:2;max-height:46%}
+.cum .bd{overflow:auto}
 .map{grid-column:2;grid-row:1 / span 2}
 #map{width:100%;height:100%;flex:1;background:#e3e8ee}
 
@@ -104,6 +105,7 @@ footer .spacer{flex:1}
 @media (max-width:1000px){
   body{height:auto}
   .grid{grid-template-columns:1fr;grid-template-rows:420px auto 520px;flex:none}
-  .ts{grid-column:1;grid-row:1}.cum{grid-column:1;grid-row:2}.map{grid-column:1;grid-row:3}
+  .ts{grid-column:1;grid-row:1}.cum{grid-column:1;grid-row:2;max-height:46%}
+.cum .bd{overflow:auto}.map{grid-column:1;grid-row:3}
   header{padding:10px 16px}
 }
