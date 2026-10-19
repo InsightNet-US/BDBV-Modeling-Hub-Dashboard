@@ -85,14 +85,16 @@ def read_delays(hub: Path) -> pd.DataFrame:
     The file has carried either province codes or province names; names are mapped through
     locations.csv so downstream code can always key on the code.
     """
-    df = pd.read_csv(hub / "auxiliary-data" / "weekly-reporting-delays-by-province.csv",
-                     dtype={"location": str, "week_ending": str, "as_of": str})
+    df = pd.read_csv(hub / "auxiliary-data" / "weekly-reporting-delays-by-province.csv", dtype=str)
+    df["days_sym_to_report"] = pd.to_numeric(df["days_sym_to_report"], errors="coerce")
     locs = read_locations(hub)
     prov = locs[locs["location_type"] == "province"]
     name2code = dict(zip(prov["location_name"], prov["location"]))
     codes = set(prov["location"])
-    df["location"] = [l if l in codes else name2code.get(l, l) for l in df["location"].astype(str)]
-    return df
+    # the file has carried a `location` column (codes or names) and, since 2026-10-19, `location_name`
+    src = df["location"] if "location" in df.columns else df["location_name"]
+    df["location"] = [l if l in codes else name2code.get(l, l) for l in src.astype(str)]
+    return df.dropna(subset=["days_sym_to_report"])
 
 
 def read_model_metadata(hub: Path) -> dict[str, dict]:
