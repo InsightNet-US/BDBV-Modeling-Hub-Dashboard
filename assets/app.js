@@ -75,7 +75,8 @@ async function init() {
   // header selectors
   const rs = $('roundSel');
   rs.innerHTML = manifest.rounds.map(r =>
-    `<option value="${r.reference_date}">${fmtDate(r.reference_date, true)} · ${r.n_models} model${r.n_models === 1 ? '' : 's'} · data as of ${fmtDate(r.as_of)}</option>`).join('');
+    `<option value="${r.reference_date}">${fmtDate(r.reference_date, true)} · ${r.n_models} model${r.n_models === 1 ? '' : 's'} · data as of ${fmtDate(r.as_of)}</option>`).join('')
+    || '<option value="">no rounds yet</option>';
   const ls = $('locSel');
   ls.innerHTML = `<option value="${NATIONAL}">DRC · all provinces</option>` +
     manifest.locations.map(l => `<option value="${l.code}">${l.name} · ${l.code}${l.total ? ` (${fmtN(l.total)})` : ''}</option>`).join('');

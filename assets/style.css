@@ -7,7 +7,8 @@
   --header-h:56px; --footer-h:30px;
 }
 *{box-sizing:border-box}
-html,body{margin:0;min-height:100%;background:var(--bg);color:var(--ink);font-family:var(--font)}
+html,body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font)}
+body{display:flex;flex-direction:column;min-height:100vh;height:100vh}
 a{color:var(--accent)}
 button{font-family:inherit}
 
@@ -30,7 +31,7 @@ select{background:var(--panel-2);color:var(--ink);border:1px solid var(--line);b
 .switch input{accent-color:var(--accent);margin:0}
 
 .grid{
-  display:grid;gap:14px;padding:14px;height:calc(100vh - var(--header-h) - var(--footer-h));min-height:640px;
+  display:grid;gap:14px;padding:14px;flex:1;min-height:0;
   grid-template-columns:minmax(380px,42%) 1fr;grid-template-rows:minmax(0,1fr) auto;
 }
 .panel{background:var(--panel);border:1px solid var(--line);border-radius:12px;overflow:hidden;display:flex;flex-direction:column;min-height:0}
@@ -82,7 +83,7 @@ svg text{fill:var(--muted);font-size:10px}
 .leaflet-container{font-family:var(--font)}
 .leaflet-container a{color:var(--accent)}
 
-footer{display:flex;align-items:center;gap:14px;padding:0 20px;height:var(--footer-h);font-size:11px;color:var(--muted);border-top:1px solid var(--line);background:#f7f9fb;flex-wrap:wrap;overflow:hidden}
+footer{display:flex;align-items:center;gap:14px;padding:0 20px;min-height:var(--footer-h);flex-shrink:0;font-size:11px;color:var(--muted);border-top:1px solid var(--line);background:#f7f9fb;flex-wrap:wrap;overflow:hidden}
 footer .spacer{flex:1}
 
 /* models drawer */
@@ -101,7 +102,8 @@ footer .spacer{flex:1}
 .model p{margin:4px 0}
 
 @media (max-width:1000px){
-  .grid{grid-template-columns:1fr;grid-template-rows:420px auto 520px;height:auto}
+  body{height:auto}
+  .grid{grid-template-columns:1fr;grid-template-rows:420px auto 520px;flex:none}
   .ts{grid-column:1;grid-row:1}.cum{grid-column:1;grid-row:2}.map{grid-column:1;grid-row:3}
   header{padding:10px 16px}
 }
