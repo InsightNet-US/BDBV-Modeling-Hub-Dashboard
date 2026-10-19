@@ -40,7 +40,7 @@ function drawTS() {
 
   if (S.round && !anyModel && roundModels().length) {
     empty.style.display = 'block';
-    empty.innerHTML = `<b>No model output for ${locName(loc)}</b>${loc === NATIONAL && !S.manifest.national_in_tasks ? 'The hub collects province-level submissions only; national counts are the sum of reported provincial cases. Pick a province to see nowcasts and forecasts.' : 'No model submitted this location in this round.'}`;
+    empty.innerHTML = `<b>No model output for ${locName(loc)}</b>${loc === NATIONAL ? 'No model submitted a national (CD) series in this round; reported national counts are shown.' : 'No model submitted this location in this round.'}`;
   } else if (!S.round) {
     empty.style.display = 'block';
     empty.innerHTML = `<b>No submissions yet</b>The first accepted reference date is ${fmtDate(S.manifest.accepted_reference_dates[0] || '', true)}. Reported cases are shown.`;

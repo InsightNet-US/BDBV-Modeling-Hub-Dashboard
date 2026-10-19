@@ -37,9 +37,8 @@ def test_mock_passes_hub_validation_and_shape():
     subs = mock.generate(fake_target(), fake_delays(), LOCS, reference_dates=["2026-10-31"], seed=1)
     assert set(m for m, _ in subs) == set(mock.TEAMS) | {mock.ENSEMBLE_ID}
     for (mid, ref), df in subs.items():
-        assert validate_submission(df, ref, mid, set(LOCS)) == [], mid
-        assert set(df.location) == set(LOCS)
-        assert "CD" not in set(df.location)
+        assert validate_submission(df, ref, mid, set(LOCS) | {"CD"}) == [], mid
+        assert set(df.location) == set(LOCS) | {"CD"}
         assert df.target_end_date.nunique() == mock.N_NOWCAST_WEEKS + len(config.HORIZONS)
         # the reference date itself and three forecast Saturdays are present
         assert "2026-10-31" in set(df.target_end_date) and "2026-11-21" in set(df.target_end_date)
@@ -48,6 +47,11 @@ def test_mock_passes_hub_validation_and_shape():
     assert it.value.mean() > 50
     kn = subs[("mockA-renewal", "2026-10-31")].query("location=='KN'")
     assert kn.value.sum() == 0
+    # national trajectory is the per-sample sum of the provincial ones (so each sample stays coherent)
+    df = subs[("mockA-renewal", "2026-10-31")]
+    prov_sum = df[df.location != "CD"].groupby(["output_type_id", "target_end_date"]).value.sum()
+    nat = df[df.location == "CD"].set_index(["output_type_id", "target_end_date"]).value
+    assert np.allclose(prov_sum.sort_index(), nat.sort_index())
 
 
 def test_mock_is_deterministic():

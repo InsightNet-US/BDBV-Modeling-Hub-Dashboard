@@ -16,6 +16,9 @@ from summarize import d, iso, last_complete_week, samples_matrix, select_as_of, 
     validate_submission
 
 
+NATIONAL = "CD"   # national location code; observed national = hub CD rows if present, else sum of provinces
+
+
 def write_json(path: Path, obj) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(obj, separators=(",", ":"), ensure_ascii=False))
@@ -39,10 +42,13 @@ def build_observed(target: pd.DataFrame, locations: list[str], out_dir: Path) ->
         for loc, g in t.groupby("location"):
             m = dict(zip(g["target_end_date"], g["observation"]))
             by_loc[loc] = [float(m.get(w, 0)) for w in weeks]
-        # national total = sum of provinces (observed only)
-        prov = [by_loc[l] for l in locations if l in by_loc]
-        if prov:
-            by_loc["CD_total"] = [float(sum(col)) for col in zip(*prov)]
+        # national series: the hub's own CD rows when present, otherwise the sum of provinces
+        if NATIONAL in by_loc:
+            by_loc["CD_total"] = by_loc[NATIONAL]
+        else:
+            prov = [by_loc[l] for l in locations if l in by_loc]
+            if prov:
+                by_loc["CD_total"] = [float(sum(col)) for col in zip(*prov)]
         write_json(out_dir / "observed" / f"{v}.json", {
             "as_of": v, "weeks": weeks, "last_complete_week": last_complete_week(v),
             "by_location": by_loc})
@@ -81,7 +87,7 @@ def main() -> int:
     locs = hub_io.read_locations(hub)
     loc_names = dict(zip(locs["location"], locs["location_name"]))
     target = hub_io.read_target_data(hub)
-    target = target[target["location"].isin(rc.locations)]
+    target = target[target["location"].isin(set(rc.locations) | {NATIONAL})]
     delays = hub_io.read_delays(hub)
     hz = hub_io.read_health_zone_daily(hub)
     metadata = hub_io.read_model_metadata(hub)
@@ -104,7 +110,7 @@ def main() -> int:
         n_real += 1
         if config.MOCK_MODE == "on":
             continue
-        problems = validate_submission(df, ref, model_id, set(rc.locations))
+        problems = validate_submission(df, ref, model_id, set(rc.locations) | {NATIONAL})
         if problems:
             print(f"WARN {path.name}: {'; '.join(problems[:5])}")
         subs[(model_id, ref)] = df
@@ -115,7 +121,7 @@ def main() -> int:
         subs = mock.generate(target, delays, rc.locations)
         metadata.update(mock.mock_metadata())
         for (mid, ref), df in subs.items():
-            problems = validate_submission(df, ref, mid, set(rc.locations))
+            problems = validate_submission(df, ref, mid, set(rc.locations) | {NATIONAL})
             if problems:
                 raise RuntimeError(f"mock {mid} {ref} fails hub validation: {problems}")
     else:
@@ -145,7 +151,8 @@ def main() -> int:
             locs_out = {}
             for loc, g in df.groupby("location"):
                 mat, weeks = samples_matrix(g)
-                observed = dict(zip(obs_weeks, ov["by_location"].get(loc, [0] * len(obs_weeks))))
+                obs_key = loc if loc in ov["by_location"] else ("CD_total" if loc == NATIONAL else loc)
+                observed = dict(zip(obs_weeks, ov["by_location"].get(obs_key, [0] * len(obs_weeks))))
                 locs_out[loc] = summarize_location(mat, weeks, ref, observed)
                 week_union.update(weeks)
             models_out[mid] = {"locations": locs_out}
@@ -169,9 +176,12 @@ def main() -> int:
     # location ordering: by cumulative cases in the latest data version
     latest = versions[-1]
     lv = json.loads((out_dir / "observed" / f"{latest}.json").read_text())
-    totals = {l: sum(lv["by_location"].get(l, [0])) for l in rc.locations}
+    provinces = [l for l in rc.locations if l != NATIONAL]
+    totals = {l: sum(lv["by_location"].get(l, [0])) for l in provinces}
     locations = [{"code": l, "name": loc_names.get(l, l), "total": totals[l]}
-                 for l in sorted(rc.locations, key=lambda l: (-totals[l], loc_names.get(l, l)))]
+                 for l in sorted(provinces, key=lambda l: (-totals[l], loc_names.get(l, l)))]
+    national_models = sorted({m for r in rounds_out for m in r["models"]
+                              if NATIONAL in json.loads((out_dir / "rounds" / f"{r['reference_date']}.json").read_text())["models"][m]["locations"]})
 
     write_json(out_dir / "manifest.json", {
         "generated_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
@@ -179,7 +189,9 @@ def main() -> int:
         "mock": config.MOCK_MODE == "on",
         "target": config.TARGET, "horizons": config.HORIZONS, "quantile_levels": config.QUANTILE_LEVELS,
         "locations": locations, "national_code": "CD_total",
-        "national_in_tasks": "CD" in rc.locations,
+        "national_in_tasks": NATIONAL in rc.locations,
+        "national_total": sum(lv["by_location"].get("CD_total", [0])),
+        "national_models": national_models,
         "as_of_versions": versions, "latest_as_of": latest,
         "ensemble_model_id": ensemble_id,
         "rounds": sorted(rounds_out, key=lambda r: r["reference_date"], reverse=True),

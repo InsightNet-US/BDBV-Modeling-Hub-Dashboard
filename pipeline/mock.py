@@ -29,6 +29,7 @@ TEAMS = {
                           methods="Gravity-model metapopulation with importation hazard to unaffected provinces."),
 }
 ENSEMBLE_ID = "hub-ensemble"
+NATIONAL_CODE = "CD"   # the hub's national location; mock always submits it alongside the provinces
 
 # provinces adjacent to the affected ones (used by mockC to seed a small importation hazard)
 NEIGHBOURS = {"IT": ["HU", "NK", "TO"], "NK": ["SK", "MA", "TO", "IT"], "HU": ["BU", "TO", "IT"],
@@ -103,7 +104,11 @@ def _eventual_series(obs: dict[str, float], weeks: list[str], as_of: str, loc: s
 def generate(target: pd.DataFrame, delays: pd.DataFrame, locations: list[str],
              reference_dates: list[str] = MOCK_REFERENCE_DATES,
              seed: int = config.MOCK_SEED) -> dict[tuple[str, str], pd.DataFrame]:
-    """Return {(model_id, reference_date): hub-format DataFrame} for all mock models."""
+    """Return {(model_id, reference_date): hub-format DataFrame} for all mock models.
+
+    Each team submits every province in `locations` plus the national series `CD` (the per-sample
+    sum of its provincial trajectories, so each national trajectory is internally coherent).
+    """
     rng = np.random.default_rng(seed)
     latest = sorted(target["as_of"].unique())[-1]
     t = target[target["as_of"] == latest]
@@ -111,6 +116,7 @@ def generate(target: pd.DataFrame, delays: pd.DataFrame, locations: list[str],
     cdf = delay_cdf(delays)
     out: dict[tuple[str, str], pd.DataFrame] = {}
 
+    locations = [l for l in locations if l != NATIONAL_CODE]
     for R in reference_dates:
         Rd = d(R)
         weeks = [iso(Rd - timedelta(days=7 * k)) for k in range(N_NOWCAST_WEEKS - 1, -1, -1)]
@@ -118,6 +124,7 @@ def generate(target: pd.DataFrame, delays: pd.DataFrame, locations: list[str],
         nw = len(weeks)
         team_rows: dict[str, list[pd.DataFrame]] = {m: [] for m in TEAMS}
         pooled: dict[str, list[np.ndarray]] = {}
+        national: dict[str, np.ndarray] = {m: np.zeros((N_SAMPLES, nw)) for m in TEAMS}
         for loc in locations:
             obs = obs_by_loc.get(loc, {})
             ev = _cached_ev(obs_by_loc, loc, weeks, latest, cdf)
@@ -147,7 +154,10 @@ def generate(target: pd.DataFrame, delays: pd.DataFrame, locations: list[str],
                     mats[:, j] = reported[j] + draw
                 pooled.setdefault(loc, []).append(mats)
                 team_rows[mid].append(_to_rows(mats, weeks, R, loc))
+                national[mid] += mats          # national trajectory = per-sample sum over provinces
         for mid in TEAMS:
+            team_rows[mid].append(_to_rows(national[mid], weeks, R, NATIONAL_CODE))
+            pooled.setdefault(NATIONAL_CODE, []).append(national[mid])
             out[(mid, R)] = pd.concat(team_rows[mid], ignore_index=True)
         ens_rows = []
         for loc, mats in pooled.items():

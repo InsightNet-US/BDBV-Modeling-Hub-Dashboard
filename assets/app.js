@@ -36,7 +36,7 @@ function hideTip() { tt.style.opacity = 0; }
 function synNote() { return S.manifest && S.manifest.mock ? '<div class="syn">SYNTHETIC MODEL OUTPUT · not a team submission</div>' : ''; }
 
 function locName(code) {
-  if (code === NATIONAL) return 'DRC (all provinces)';
+  if (code === NATIONAL) return 'DRC (national)';
   const l = S.manifest.locations.find(x => x.code === code); return l ? l.name : code;
 }
 const modelKey = loc => loc === NATIONAL ? 'CD' : loc;
@@ -81,7 +81,7 @@ async function init() {
     `<option value="${r.reference_date}">${fmtDate(r.reference_date, true)} · ${r.n_models} model${r.n_models === 1 ? '' : 's'} · data as of ${fmtDate(r.as_of)}</option>`).join('')
     || '<option value="">no rounds yet</option>';
   const ls = $('locSel');
-  ls.innerHTML = `<option value="${NATIONAL}">DRC · all provinces</option>` +
+  ls.innerHTML = `<option value="${NATIONAL}">DRC · national · CD${manifest.national_total ? ` (${fmtN(manifest.national_total)})` : ''}</option>` +
     manifest.locations.map(l => `<option value="${l.code}">${l.name} · ${l.code}${l.total ? ` (${fmtN(l.total)})` : ''}</option>`).join('');
   $('footProv').innerHTML = `Hub ${manifest.hub.repo}@${manifest.hub.branch} (${manifest.hub.commit}) · latest target data as of <b>${manifest.latest_as_of}</b> · built ${manifest.generated_at.replace('T', ' ').replace('Z', ' UTC')}` +
     (manifest.mock ? ' · <b style="color:#9a5b00">model output is synthetic</b>' : '');

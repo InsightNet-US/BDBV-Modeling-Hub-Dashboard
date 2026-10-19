@@ -23,13 +23,13 @@ function provBounds(codes) {
 function onProv(f, layer) {
   layer.on('mousemove', e => showTip(provTip(f), e.originalEvent.clientX, e.originalEvent.clientY));
   layer.on('mouseover', e => e.target.setStyle({ weight: 2.5, color: '#1b2430' }));
-  layer.on('mouseout', e => { hideTip(); provLayer.resetStyle(e.target); });
+  layer.on('mouseout', e => { hideTip(); e.target.setStyle(provStyle(f)); });
   layer.on('click', () => selectLocation(f.properties.location === S.location ? NATIONAL : f.properties.location));
 }
 function onHz(f, layer) {
   layer.on('mousemove', e => showTip(hzTip(f), e.originalEvent.clientX, e.originalEvent.clientY));
   layer.on('mouseover', e => e.target.setStyle({ weight: 2, color: '#1b2430' }));
-  layer.on('mouseout', e => { hideTip(); hzLayer.resetStyle(e.target); });
+  layer.on('mouseout', e => { hideTip(); e.target.setStyle(hzStyle(f)); });
   layer.on('click', () => { const code = parentCode(f.properties.parent); if (code) selectLocation(code === S.location ? NATIONAL : code); });
 }
 function parentCode(name) { const l = S.manifest.locations.find(x => x.name === name || normName(x.name) === normName(name)); return l ? l.code : null; }
@@ -79,6 +79,22 @@ function hzTip(f) {
     <div class="sm" style="margin-top:4px">${v.known ? '' : 'no cases reported · '}click to select ${p.parent}</div>`;
 }
 
+let provScale = { vmax: 1 }, hzScale = { vmax: 1, cache: new Map() };
+function provStyle(f) {
+  const code = f.properties.location, v = provValue(code);
+  const dim = S.location !== NATIONAL && S.location !== code;
+  if (v == null) return { color: '#6b7684', weight: 1, dashArray: '3 3', fillColor: '#e6e9ee', fillOpacity: dim ? 0.1 : 0.5 };
+  const norm = S.mapMetric === 'presence' ? v : Math.log1p(v) / Math.log1p(provScale.vmax);
+  return { color: '#0b0f14', weight: S.location === code ? 2.5 : 1, dashArray: null, fillColor: colorFor(norm), fillOpacity: dim ? 0.15 : 0.75 };
+}
+function hzStyle(f) {
+  const v = hzScale.cache.get(f) || hzValue(f), p = f.properties;
+  const selName = S.location === NATIONAL ? null : locName(S.location);
+  const dim = selName && normName(p.parent) !== normName(selName);
+  if (v.total > 0) return { color: '#0b0f14', weight: 0.6, dashArray: null, fillColor: colorFor(Math.log1p(v.total) / Math.log1p(hzScale.vmax)), fillOpacity: dim ? 0.15 : 0.8 };
+  return { color: '#8a94a3', weight: 0.4, dashArray: null, fillColor: p.matched ? '#f1f3f6' : '#d9dde3', fillOpacity: dim ? 0.1 : 0.55 };
+}
+
 function drawMap(layerSwitched) {
   if (!map || !S.obsRound) return;
   const prov = S.mapLayer === 'prov';
@@ -91,14 +107,10 @@ function drawMap(layerSwitched) {
   if (prov) {
     const vals = S.manifest.locations.map(l => provValue(l.code)).filter(v => v != null);
     const vmax = S.mapMetric === 'presence' ? 1 : Math.max(1, ...vals);
-    const norm = v => S.mapMetric === 'presence' ? v : Math.log1p(v) / Math.log1p(vmax);
+    provScale = { vmax };
     provLayer.eachLayer(l => {
-      const code = l.feature.properties.location, v = provValue(code);
-      const dim = S.location !== NATIONAL && S.location !== code;
-      l.setStyle(v == null
-        ? { color: '#6b7684', weight: 1, dashArray: '3 3', fillColor: '#e6e9ee', fillOpacity: dim ? 0.1 : 0.5 }
-        : { color: '#0b0f14', weight: S.location === code ? 2.5 : 1, dashArray: null, fillColor: colorFor(norm(v)), fillOpacity: dim ? 0.15 : 0.75 });
-      if (S.location === code) l.bringToFront();
+      l.setStyle(provStyle(l.feature));
+      if (S.location === l.feature.properties.location) l.bringToFront();
     });
     const mt = S.mapMetric === 'presence' ? `P(≥1 case) within <span class="horizonval">${S.horizon}</span> wk` : `Median cases, next <span class="horizonval">${S.horizon}</span> wk`;
     document.getElementById('mapSub').innerHTML = `${mt} · ${S.mapModel ? modelLabel(S.mapModel) : 'no model'}${S.manifest.mock && S.mapModel ? ' <b style="color:#9a5b00">(synthetic)</b>' : ''}${vals.length < S.manifest.locations.length ? ` · ${S.manifest.locations.length - vals.length} province${S.manifest.locations.length - vals.length === 1 ? '' : 's'} without output (dashed)` : ''}`;
@@ -107,14 +119,9 @@ function drawMap(layerSwitched) {
     if (!mapFitted || layerSwitched) { const b = provBounds(AFFECTED); if (b) map.fitBounds(b, { padding: [10, 10] }); mapFitted = true; }
   } else {
     let vmax = 1; const cache = new Map();
-    hzLayer.eachLayer(l => { const v = hzValue(l.feature); cache.set(l, v); vmax = Math.max(vmax, v.total); });
-    hzLayer.eachLayer(l => {
-      const v = cache.get(l), p = l.feature.properties;
-      const dim = selName && normName(p.parent) !== normName(selName);
-      l.setStyle(v.total > 0
-        ? { color: '#0b0f14', weight: 0.6, dashArray: null, fillColor: colorFor(Math.log1p(v.total) / Math.log1p(vmax)), fillOpacity: dim ? 0.15 : 0.8 }
-        : { color: '#8a94a3', weight: 0.4, dashArray: null, fillColor: p.matched ? '#f1f3f6' : '#d9dde3', fillOpacity: dim ? 0.1 : 0.55 });
-    });
+    hzLayer.eachLayer(l => { const v = hzValue(l.feature); cache.set(l.feature, v); vmax = Math.max(vmax, v.total); });
+    hzScale = { vmax, cache };
+    hzLayer.eachLayer(l => l.setStyle(hzStyle(l.feature)));
     const ws = hzWindowWeeks();
     document.getElementById('mapSub').innerHTML = `Confirmed cases by health zone · ${S.hzWindow === 'recent' ? `weeks ending ${fmtDate(ws[0])}–${fmtDate(ws[ws.length - 1])}` : 'outbreak to date'} · as of ${S.hz.as_of}${selName ? ` · ${selName} highlighted` : ''}`;
     document.getElementById('legLo').textContent = '0';
