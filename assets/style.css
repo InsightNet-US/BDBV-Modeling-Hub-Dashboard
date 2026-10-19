@@ -4,7 +4,7 @@
   --past:#2b8fd6; --median:#1f5fa8; --latest:#1b2430;
   --good:#1a9e52; --warn:#d9800a; --bad:#e5484d;
   --font:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
-  --header-h:56px; --footer-h:40px; --partner-h:20px;
+  --header-h:74px; --footer-h:40px; --partner-h:20px;
 }
 *{box-sizing:border-box}
 html,body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font)}
@@ -13,9 +13,12 @@ a{color:var(--accent)}
 button{font-family:inherit}
 
 header{
-  display:flex;align-items:center;gap:14px;padding:10px 20px;min-height:var(--header-h);
-  border-bottom:1px solid var(--line);background:linear-gradient(180deg,#ffffff,#f2f5f9);flex-wrap:wrap
+  display:flex;flex-direction:column;gap:6px;padding:9px 20px 8px;min-height:var(--header-h);
+  border-bottom:1px solid var(--line);background:linear-gradient(180deg,#ffffff,#f2f5f9)
 }
+/* title row, then a row of controls beneath it */
+header .titlebar,header .toolbar{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+header .toolbar{gap:18px}
 header h1{font-size:15px;margin:0;font-weight:600;letter-spacing:.2px;white-space:nowrap}
 header h1 span{color:var(--muted);font-weight:500}
 .badge{font-size:10px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;padding:3px 8px;border-radius:999px;
@@ -29,6 +32,7 @@ body.mock .wm{display:flex}
 #mapWrap .wm{z-index:450}
 .tt .syn{margin-top:5px;padding-top:4px;border-top:1px dashed #f0c889;color:#9a5b00;font-size:10.5px;font-weight:600;letter-spacing:.3px}
 header .spacer{flex:1}
+header .toolbar .spacer{flex:1 1 0}
 .ctrl{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--muted);white-space:nowrap}
 select{accent-color:var(--accent)}
 /* arrow stepper around a select styled as plain accent text (RespiLens-style date control) */
