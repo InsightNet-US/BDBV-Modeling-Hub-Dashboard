@@ -3,13 +3,13 @@
    cumulative totals at +1..+3 weeks. Boxes = 50% interval, whiskers = 95%, bar = median. */
 function drawCum() {
   const svg = document.getElementById('cumChart');
-  const W = svg.clientWidth || 360, R = S.roundRef, loc = S.location, horizon = S.horizon;
+  const W = svg.clientWidth || 360, R = S.roundRef, loc = S.location, mapRel = weekRel(S.mapWeek);
   const sub = document.getElementById('cumSub');
   if (!S.obsRound) { svg.innerHTML = ''; return; }
   const obs = obsMap(S.obsRound, loc), asOf = S.obsRound.as_of;
   const upTo = R || S.obsRound.last_complete_week;
   const reported = Object.keys(obs).filter(w => w <= upTo).reduce((a, w) => a + obs[w], 0);
-  const latestObs = S.showLatest && S.obsLatest.as_of !== asOf
+  const latestObs = S.obsLatest.as_of !== asOf
     ? Object.entries(obsMap(S.obsLatest, loc)).filter(([w]) => w <= upTo).reduce((a, [, v]) => a + v, 0) : null;
   sub.textContent = `${locName(loc)} · through week ending ${fmtDate(upTo, true)}`;
 
@@ -52,6 +52,7 @@ function drawCum() {
   if (!sel.length) s += note(S.round && roundModels().length ? 'no model output for this location' : 'no submissions', yy + gp / 2);
   // nowcast: closed weeks through the Saturday before the reference date
   { const gTop = yy, gH = n * gp, through = R ? fmtDate(addDays(R, -7)) : '';
+    if (mapRel != null && mapRel < 0) s += `<rect x="${mLc - 2}" y="${gTop - 1}" width="${W - mRc - (mLc - 2)}" height="${gH + 2}" fill="var(--accent)" opacity="0.08"/>`;
     s += cat(`Nowcast · closed wks thru ${through}`, gTop + gH / 2 - 4, 'var(--median)');
     sel.forEach((t, k) => { const cy = gTop + k * gp + gp / 2;
       if (t.m.n_nowcast_weeks === 0) s += dot(t.m.cum_nowcast[QI.med], t.color, cy, true) + note('no nowcast weeks submitted (reported only)', cy);
@@ -59,7 +60,7 @@ function drawCum() {
     yy += gH + ggap + 6; }
   // forecast horizons: week 0 (reference week, still in progress) through +3
   H_LIST.forEach(h => { const gTop = yy, gH = n * gp;
-    if (h === horizon) s += `<rect x="${mLc - 2}" y="${gTop - 1}" width="${W - mRc - (mLc - 2)}" height="${gH + 2}" fill="var(--accent)" opacity="0.08"/>`;
+    if (h === mapRel) s += `<rect x="${mLc - 2}" y="${gTop - 1}" width="${W - mRc - (mLc - 2)}" height="${gH + 2}" fill="var(--accent)" opacity="0.08"/>`;
     const when = R ? fmtDate(addDays(R, 7 * h)) : '';
     s += cat(h === 0 ? `Forecast wk 0 · thru ${when}` : `Forecast +${h} wk · thru ${when}`, gTop + gH / 2 - 4);
     sel.forEach((t, k) => { const q = t.m.cum_through_h[h], cy = gTop + k * gp + gp / 2;

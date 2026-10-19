@@ -78,6 +78,8 @@ def summarize_location(mat: np.ndarray, weeks: list[str], reference_date: str,
     out: dict = {
         "weeks": weeks,
         "q": [qvals(mat[:, i]) for i in range(mat.shape[1])],
+        # per-week probability of at least one case (drives the map's P(>=1 case) metric)
+        "presence_wk": [round(float(np.mean(mat[:, i] >= 1)), 3) for i in range(mat.shape[1])],
         "n_samples": int(mat.shape[0]),
         "n_nowcast_weeks": len(nowcast_weeks),
         "horizon_sum": {}, "presence": {}, "cum_through_h": {},

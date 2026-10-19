@@ -12,22 +12,15 @@
 <header>
   <h1>BDBV Modeling Hub <span>· nowcasts &amp; forecasts of weekly confirmed cases</span></h1>
   <span class="badge hidden" id="mockBadge" title="Model output shown here is synthetic demonstration data, not team submissions">Synthetic model output</span>
-  <div class="spacer"></div>
   <div class="ctrl">
-    <label for="roundSel">Reference date</label>
-    <select id="roundSel"></select>
+    <label for="roundSel">Projections from</label>
+    <span class="stepper" id="roundSelStep"><button type="button" class="step" data-dir="-1" aria-label="Earlier round" title="Earlier round"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 5 8 12 15 19"/></svg></button><select id="roundSel" class="stepsel" title="Submission round: the week projections were made (reference date = Saturday ending that week). Click to pick, or step with the arrows."></select><button type="button" class="step" data-dir="1" aria-label="Later round" title="Later round"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 5 16 12 9 19"/></svg></button></span>
+    <span class="sub" id="roundInfo"></span>
   </div>
+  <div class="spacer"></div>
   <div class="ctrl">
     <label for="locSel">Location</label>
     <select id="locSel"></select>
-  </div>
-  <div class="ctrl">
-    <label for="horizon">Horizon</label>
-    <input id="horizon" type="range" min="0" max="3" value="3" step="1" style="width:90px" title="Forecast horizon in weeks. Week 0 is the reference week, which has not finished when forecasts are made.">
-    <span>wk 0 to +<span class="horizonval" id="horizonLabel">3</span></span>
-  </div>
-  <div class="ctrl">
-    <label class="switch" title="Overlay the most recent target data release to show backfill"><input type="checkbox" id="latestToggle" checked> Latest data</label>
   </div>
   <button class="linkbtn" id="modelsBtn" type="button">Models</button>
 </header>
@@ -87,6 +80,8 @@
       </div>
       <span class="tlabel">Model</span>
       <select id="mapModelSel" class="msel"></select>
+      <span class="tlabel">Week</span>
+      <span class="stepper" id="mapWeekSelStep"><button type="button" class="step" data-dir="-1" aria-label="Earlier week" title="Earlier week"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 5 8 12 15 19"/></svg></button><select id="mapWeekSel" class="stepsel" title="Week whose cases are mapped (week ending Saturday), with its offset from the projections-from date. Click to pick, or step with the arrows."></select><button type="button" class="step" data-dir="1" aria-label="Later week" title="Later week"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 5 16 12 9 19"/></svg></button></span>
       <span class="sub" id="mapSub"></span>
       <div class="spacer"></div>
       <div class="legend"><span id="legLo">0</span><span class="bar"></span><span id="legHi">1</span></div>

@@ -1,5 +1,5 @@
-/* Leaflet choropleth of the 26 provinces: a model's median cases over the horizon, or its
-   probability of at least one case within the horizon. */
+/* Leaflet choropleth of the 26 provinces: a model's median cases in the mapped week, or its
+   probability of at least one case in that week. */
 let map, provLayer, mapFitted = false;
 const AFFECTED = ['IT', 'NK', 'HU', 'TO', 'BU', 'SK'];
 
@@ -23,16 +23,16 @@ function onProv(f, layer) {
   layer.on('click', () => selectLocation(f.properties.location === S.location ? NATIONAL : f.properties.location));
 }
 
-/* forecast window label: week 0 (the reference week) alone, or weeks 0 through +h */
-const hzLabel = () => S.horizon === 0 ? 'wk 0' : `wk 0 to +${S.horizon}`;
+/* label for the mapped week: "week ending 7 Nov (forecast +1 wk)" */
+const wkLabel = () => S.mapWeek ? `week ending ${fmtDate(S.mapWeek)} (${weekKind(S.mapWeek)})` : 'no week';
 
 /* ---- values and styles ---- */
 function provValue(code) {
-  const m = S.mapModel ? modelLoc(S.mapModel, code) : null;
+  const m = S.mapModel && S.mapWeek ? modelLoc(S.mapModel, code) : null;
   if (!m) return null;
-  const h = String(S.horizon);
-  if (S.mapMetric === 'presence') return m.presence[h];
-  const q = m.horizon_sum[h]; return q ? q[QI.med] : null;
+  const i = m.weeks.indexOf(S.mapWeek);
+  if (i < 0) return null;
+  return S.mapMetric === 'presence' ? m.presence_wk[i] : m.q[i][QI.med];
 }
 let provScale = { vmax: 1 };
 function provStyle(f) {
@@ -47,15 +47,16 @@ function provTip(f) {
   const upTo = S.roundRef || S.obsRound.last_complete_week;
   const recent = Object.keys(obs).filter(w => w <= upTo).sort().slice(-4).reduce((a, w) => a + obs[w], 0);
   const total = Object.keys(obs).filter(w => w <= upTo).reduce((a, w) => a + obs[w], 0);
-  const m = S.mapModel ? modelLoc(S.mapModel, code) : null, h = String(S.horizon);
+  const m = S.mapModel && S.mapWeek ? modelLoc(S.mapModel, code) : null, i = m ? m.weeks.indexOf(S.mapWeek) : -1;
   let rows = '';
-  if (m) {
-    const q = m.horizon_sum[h];
-    rows += `<div class="row"><span>Median cases, ${hzLabel()}</span><b>${q ? fmtN(q[QI.med]) : '–'} ${q ? `<span class="sm">(${fmtRange(q)})</span>` : ''}</b></div>`;
-    rows += `<div class="row"><span>P(≥1 case), ${hzLabel()}</span><b>${m.presence[h] == null ? '–' : Math.round(m.presence[h] * 100) + '%'}</b></div>`;
-  } else rows += `<div class="row"><span>${S.mapModel ? modelLabel(S.mapModel) : 'Model output'}</span><b>no submission</b></div>`;
+  if (m && i >= 0) {
+    const q = m.q[i];
+    rows += `<div class="row"><span>Median cases, ${wkLabel()}</span><b>${fmtN(q[QI.med])} <span class="sm">(${fmtRange(q)})</span></b></div>`;
+    rows += `<div class="row"><span>P(≥1 case), same week</span><b>${Math.round(m.presence_wk[i] * 100)}%</b></div>`;
+    if (obs[S.mapWeek] != null) rows += `<div class="row"><span>Reported so far, same week <span class="sm">(as of ${fmtDate(S.obsRound.as_of)})</span></span><b>${fmtN(obs[S.mapWeek])}</b></div>`;
+  } else rows += `<div class="row"><span>${S.mapModel ? modelLabel(S.mapModel) : 'Model output'}</span><b>${m ? 'week not submitted' : 'no submission'}</b></div>`;
   rows += `<div class="row"><span>Reported, last 4 wk</span><b>${fmtN(recent)}</b></div><div class="row"><span>Reported to date</span><b>${fmtN(total)}</b></div>`;
-  return `<b>${f.properties.name}</b> <span class="sm">· ${code}</span>${rows}<div class="sm" style="margin-top:4px">click to ${S.location === code ? 'clear selection' : 'select'}</div>${m ? synNote() : ''}`;
+  return `<b>${f.properties.name}</b> <span class="sm">· ${code}</span>${rows}<div class="sm" style="margin-top:4px">click to ${S.location === code ? 'clear selection' : 'select'}</div>${m && i >= 0 ? synNote() : ''}`;
 }
 
 function drawMap() {
@@ -68,7 +69,7 @@ function drawMap() {
     if (S.location === l.feature.properties.location) l.bringToFront();
   });
   const n = S.manifest.locations.length, missing = n - vals.length;
-  const mt = `${S.mapMetric === 'presence' ? 'P(≥1 case)' : 'Median cases'}, <span class="horizonval">${hzLabel()}</span>`;
+  const mt = `${S.mapMetric === 'presence' ? 'P(≥1 case)' : 'Median cases'}, <span class="horizonval">${wkLabel()}</span>`;
   document.getElementById('mapSub').innerHTML = `${mt} · ${S.mapModel ? modelLabel(S.mapModel) : 'no model'}`
     + (S.manifest.mock && S.mapModel ? ' <b style="color:#9a5b00">(synthetic)</b>' : '')
     + (missing ? ` · ${missing} province${missing === 1 ? '' : 's'} without output (dashed)` : '');

@@ -3,13 +3,13 @@
    selected team models (points + 95% intervals). */
 function drawTS() {
   const svg = document.getElementById('tsChart'), empty = document.getElementById('tsEmpty');
-  const R = S.roundRef, loc = S.location, horizon = S.horizon;
+  const R = S.roundRef, loc = S.location, maxH = Math.max(0, ...(S.manifest.horizons || [3]));
   const legend = document.getElementById('tsLegend');
   svg.innerHTML = ''; empty.style.display = 'none';
   if (!S.obsRound) return;
 
   const obs = obsMap(S.obsRound, loc), latest = obsMap(S.obsLatest, loc);
-  const haveLatest = S.showLatest && S.obsLatest && S.obsLatest.as_of !== S.obsRound.as_of;
+  const haveLatest = S.obsLatest && S.obsLatest.as_of !== S.obsRound.as_of;
   const asOf = S.obsRound.as_of, lastComplete = S.obsRound.last_complete_week;
 
   // weeks: union of observed weeks and round weeks, contiguous Saturdays
@@ -23,6 +23,7 @@ function drawTS() {
   }
   const nowIdx = R ? weeks.indexOf(R) : -1;
   const total = weeks.length;
+  const mapIdx = S.mapWeek ? weeks.indexOf(S.mapWeek) : -1, mappable = S.round ? new Set(roundWeeks()) : new Set();
 
   // models
   const ens = S.ensembleId ? modelLoc(S.ensembleId, loc) : null;
@@ -36,7 +37,8 @@ function drawTS() {
     + `<span class="chip"><i style="background:repeating-linear-gradient(135deg,var(--past) 0 2px,#fff 2px 4px)"></i>week in progress</span>`
     + (haveLatest ? `<span class="chip"><i style="border:1.5px solid var(--latest);background:transparent"></i>latest (as of ${fmtDate(S.obsLatest.as_of)})</span>` : '')
     + (ens ? `<span class="chip"><i style="border:1.5px dashed var(--median);background:transparent"></i>Hub ensemble median${showEnsCI ? ' + 95% interval' : ''}</span>` : '')
-    + teams.map(t => `<span class="chip"><i style="background:${t.color}"></i>${t.name}</span>`).join('');
+    + teams.map(t => `<span class="chip"><i style="background:${t.color}"></i>${t.name}</span>`).join('')
+    + (mapIdx >= 0 ? `<span class="chip"><i style="background:var(--accent);opacity:.35"></i>week on map</span>` : '');
 
   if (S.round && !anyModel && roundModels().length) {
     empty.style.display = 'block';
@@ -82,10 +84,15 @@ function drawTS() {
   });
   s += `<text x="${mL}" y="${H - 4}" style="fill:#5b6675;font-size:9px">week ending (Saturday) · cases by symptom onset</text>`;
 
-  // forecast window shading: week 0 (the reference week) through +h
+  // forecast window shading: week 0 (the reference week) through the longest horizon
   if (nowIdx >= 0) {
-    const hx0 = edge(nowIdx), hx1 = edge(Math.min(total, nowIdx + 1 + horizon));
+    const hx0 = edge(nowIdx), hx1 = edge(Math.min(total, nowIdx + 1 + maxH));
     if (hx1 > hx0) s += `<rect x="${hx0}" y="${mT}" width="${hx1 - hx0}" height="${ih}" fill="var(--accent)" opacity="0.07"/>`;
+  }
+  // the week currently shown on the map
+  if (mapIdx >= 0) {
+    s += `<rect x="${edge(mapIdx)}" y="${mT}" width="${slotW}" height="${ih}" fill="var(--accent)" opacity="0.13"/>`;
+    s += `<rect x="${edge(mapIdx)}" y="${mT}" width="${slotW}" height="3" fill="var(--accent)" opacity="0.6"/>`;
   }
 
   // bars
@@ -134,8 +141,10 @@ function drawTS() {
       if (ens) { const q = qAt(ens, w); if (q) rows += `<div class="row"><span style="color:var(--median)">Hub ensemble</span><b>${fmtN(q[QI.med])} <span class="sm">(${fmtRange(q)})</span></b></div>`; }
       teams.forEach(t => { const q = qAt(t.m, w); if (q) rows += `<div class="row"><span style="color:${t.color}">${t.name}</span><b>${fmtN(q[QI.med])} <span class="sm">(${fmtRange(q)})</span></b></div>`; });
       const hasModel = (ens && qAt(ens, w)) || teams.some(t => qAt(t.m, w));
-      showTip(`<b>Week ending ${fmtDate(w, true)}</b>${kind}${rows}${hasModel ? synNote() : ''}`, e.clientX, e.clientY);
+      const mapHint = mappable.has(w) ? `<div class="sm" style="margin-top:4px">${w === S.mapWeek ? 'shown on map' : 'click to show this week on the map'}</div>` : '';
+      showTip(`<b>Week ending ${fmtDate(w, true)}</b>${kind}${rows}${mapHint}${hasModel ? synNote() : ''}`, e.clientX, e.clientY);
     });
     r.addEventListener('mouseleave', hideTip);
+    r.addEventListener('click', () => { const w = weeks[+r.dataset.i]; if (mappable.has(w) && w !== S.mapWeek) setMapWeek(w); });
   });
 }

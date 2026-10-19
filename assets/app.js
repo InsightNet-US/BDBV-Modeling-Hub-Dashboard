@@ -3,7 +3,8 @@
 const S = {
   manifest: null, models: {}, colors: {}, ensembleId: null,
   roundRef: null, round: null, obsRound: null, obsLatest: null, geoProv: null,
-  location: 'CD_total', horizon: 3, showLatest: true, range: 'recent',
+  location: 'CD_total', range: 'recent',
+  mapWeek: null, mapRel: 0,   // week shown on the map and its offset in weeks from the reference date
   tsSelected: new Set(), cumSelected: new Set(),
   mapMetric: 'median', mapModel: null,
   cache: {},
@@ -56,6 +57,40 @@ function modelLoc(mid, loc) {
 function roundModels() { return S.round ? Object.keys(S.round.models).sort(sortModels) : []; }
 function sortModels(a, b) { if (a === S.ensembleId) return -1; if (b === S.ensembleId) return 1; return a.localeCompare(b); }
 function modelsForLocation(loc) { return roundModels().filter(m => modelLoc(m, loc)); }
+/** weeks with model output from any model/location in the current round, oldest first */
+function roundWeeks() {
+  const set = new Set();
+  roundModels().forEach(id => Object.values(S.round.models[id].locations).forEach(l => l.weeks.forEach(w => set.add(w))));
+  return [...set].sort();
+}
+/** offset of a week from the reference date, in weeks (negative = nowcast week) */
+function weekRel(w) { return S.roundRef && w ? Math.round((Date.parse(w) - Date.parse(S.roundRef)) / 6048e5) : null; }
+function weekKind(w) { const r = weekRel(w); return r == null ? '' : r < 0 ? `nowcast ${weekRelLabel(w)}` : r === 0 ? 'forecast wk 0' : `forecast +${r} wk`; }
+/** "+1 wk", "wk 0", "−2 wk": offset of a week from the projections-from date */
+function weekRelLabel(w) { const r = weekRel(w); return r == null ? '' : r === 0 ? 'wk 0' : `${r > 0 ? '+' : '−'}${Math.abs(r)} wk`; }
+/* ---- arrow steppers: prev/next buttons around a select, stepping over its enabled options ---- */
+function wireStepper(selId) {
+  const sel = $(selId), wrap = $(selId + 'Step'); if (!wrap || wrap.dataset.wired) return;
+  wrap.dataset.wired = '1';
+  wrap.querySelectorAll('.step').forEach(b => b.addEventListener('click', () => {
+    const opts = [...sel.options].filter(o => !o.disabled && o.value), i = opts.indexOf(sel.selectedOptions[0]);
+    const j = i + (+b.dataset.dir); if (j < 0 || j >= opts.length) return;
+    sel.value = opts[j].value; sel.dispatchEvent(new Event('change', { bubbles: true }));
+  }));
+  sel.addEventListener('change', () => refreshStepper(selId));
+  refreshStepper(selId);
+}
+function refreshStepper(selId) {
+  const sel = $(selId), wrap = $(selId + 'Step'); if (!wrap) return;
+  const opts = [...sel.options].filter(o => !o.disabled && o.value), i = opts.indexOf(sel.selectedOptions[0]);
+  wrap.querySelector('[data-dir="-1"]').disabled = i <= 0;
+  wrap.querySelector('[data-dir="1"]').disabled = i < 0 || i >= opts.length - 1;
+}
+function setMapWeek(w) {
+  S.mapWeek = w; S.mapRel = weekRel(w) ?? 0;
+  const sel = $('mapWeekSel'); if (sel.value !== w) sel.value = w;
+  sync();
+}
 
 /* ---------- loading ---------- */
 async function getJSON(path) {
@@ -76,9 +111,10 @@ async function init() {
 
   // header selectors
   const rs = $('roundSel');
-  rs.innerHTML = manifest.rounds.map(r =>
-    `<option value="${r.reference_date}">${fmtDate(r.reference_date, true)} · ${r.n_models} model${r.n_models === 1 ? '' : 's'} · data as of ${fmtDate(r.as_of)}</option>`).join('')
+  rs.innerHTML = manifest.rounds.slice().reverse().map(r =>
+    `<option value="${r.reference_date}">${fmtDate(r.reference_date, true)}</option>`).join('')
     || '<option value="">no rounds yet</option>';
+  wireStepper('roundSel');
   const ls = $('locSel');
   ls.innerHTML = `<option value="${NATIONAL}">DRC · national · CD${manifest.national_total ? ` (${fmtN(manifest.national_total)})` : ''}</option>` +
     manifest.locations.map(l => `<option value="${l.code}">${l.name} · ${l.code}${l.total ? ` (${fmtN(l.total)})` : ''}</option>`).join('');
@@ -113,6 +149,19 @@ function afterRound() {
   const sel = $('mapModelSel');
   sel.innerHTML = ms.map(id => `<option value="${id}">${modelLabel(id)}</option>`).join('') || '<option value="">no models</option>';
   sel.value = S.mapModel || '';
+  // mapped week: keep the same offset from the reference date across rounds, default week 0
+  const ws = roundWeeks(), R = S.roundRef, want = R ? addDays(R, 7 * S.mapRel) : null;
+  S.mapWeek = ws.includes(want) ? want : ws.includes(R) ? R : ws[ws.length - 1] || null;
+  // chronological, so the arrows step backwards/forwards in time; label = date plus offset from R
+  const fc = ws.filter(w => weekRel(w) >= 0), nc = ws.filter(w => weekRel(w) < 0);
+  const opt = w => `<option value="${w}">${fmtDate(w, true)} · ${weekRelLabel(w)}</option>`;
+  $('mapWeekSel').innerHTML = (nc.length ? `<optgroup label="Nowcast weeks (ending)">${nc.map(opt).join('')}</optgroup>` : '')
+    + (fc.length ? `<optgroup label="Forecast weeks (ending)">${fc.map(opt).join('')}</optgroup>` : '') || '<option value="">no weeks</option>';
+  $('mapWeekSel').value = S.mapWeek || '';
+  wireStepper('mapWeekSel'); refreshStepper('mapWeekSel');
+  const ri = S.manifest.rounds.find(r => r.reference_date === S.roundRef);
+  $('roundInfo').textContent = ri ? `${ri.n_models} model${ri.n_models === 1 ? '' : 's'} · data as of ${fmtDate(ri.as_of)}` : '';
+  $('roundSel').value = S.roundRef || ''; refreshStepper('roundSel');
   buildDrawer();
   sync();
 }
@@ -152,8 +201,7 @@ function setToggle(groupId, attr, value) {
 function wire() {
   $('roundSel').addEventListener('change', e => loadRound(e.target.value));
   $('locSel').addEventListener('change', e => { S.location = e.target.value; onLocationChange(); });
-  $('horizon').addEventListener('input', e => { S.horizon = +e.target.value; $('horizonLabel').textContent = S.horizon; sync(); });
-  $('latestToggle').addEventListener('change', e => { S.showLatest = e.target.checked; drawTS(); drawCum(); });
+  $('mapWeekSel').addEventListener('change', e => setMapWeek(e.target.value));
   document.querySelectorAll('#rangeToggle button').forEach(b => b.addEventListener('click', () => { S.range = b.dataset.r; setToggle('rangeToggle', 'r', S.range); drawTS(); }));
   document.querySelectorAll('#metricToggle button').forEach(b => b.addEventListener('click', () => { S.mapMetric = b.dataset.m; setToggle('metricToggle', 'm', S.mapMetric); drawMap(); }));
   $('mapModelSel').addEventListener('change', e => { S.mapModel = e.target.value; drawMap(); });

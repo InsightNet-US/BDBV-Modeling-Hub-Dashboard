@@ -65,6 +65,7 @@ def test_summary_full_submission():
     assert out["horizon_sum"]["0"][3] == pytest.approx(50.5)
     assert out["horizon_sum"]["2"][3] == pytest.approx(3 * 50.5)
     assert out["presence"]["1"] == 1.0
+    assert out["presence_wk"] == [1.0] * 7
     assert out["cum_through_h"]["0"][3] == pytest.approx(30 + 4 * 50.5)
     assert out["cum_through_h"]["3"][3] == pytest.approx(30 + 7 * 50.5)
 
@@ -75,6 +76,7 @@ def test_summary_forecast_only_and_gaps():
     observed = {"2026-10-03": 20, "2026-10-10": 5}
     out = summarize_location(mat, weeks, R, observed)
     assert out["n_nowcast_weeks"] == 0
+    assert out["presence_wk"] == [0.0] * 3
     assert out["cum_nowcast"] == [25.0] * 7                # observed only
     # the reference week (horizon 0) was not submitted: it is a forecast week, never filled from
     # reported data, so horizon 0 and everything beyond it are unavailable

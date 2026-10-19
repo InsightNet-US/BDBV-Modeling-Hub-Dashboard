@@ -30,12 +30,18 @@ body.mock .wm{display:flex}
 .tt .syn{margin-top:5px;padding-top:4px;border-top:1px dashed #f0c889;color:#9a5b00;font-size:10.5px;font-weight:600;letter-spacing:.3px}
 header .spacer{flex:1}
 .ctrl{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--muted);white-space:nowrap}
-select,input[type=range]{accent-color:var(--accent)}
+select{accent-color:var(--accent)}
+/* arrow stepper around a select styled as plain accent text (RespiLens-style date control) */
+.stepper{display:inline-flex;align-items:center;gap:0;white-space:nowrap}
+.step{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;background:none;border:0;border-radius:5px;color:var(--muted);cursor:pointer;padding:0}
+.step:hover{background:var(--panel-2);color:var(--ink)}
+.step:disabled{opacity:.25;cursor:default;background:none}
+select.stepsel{appearance:none;-webkit-appearance:none;border:0;background:transparent;color:var(--accent);font-weight:600;font-size:12.5px;padding:2px 3px;cursor:pointer;max-width:none;text-align:center}
+select.stepsel:hover{text-decoration:underline}
+.map .hd select.stepsel{font-size:11.5px}
 select{background:var(--panel-2);color:var(--ink);border:1px solid var(--line);border-radius:6px;padding:5px 8px;font-size:12px;max-width:230px}
 .linkbtn{background:none;border:1px solid var(--line);border-radius:6px;padding:5px 10px;font-size:12px;color:var(--ink);cursor:pointer}
 .linkbtn:hover{background:var(--panel-2)}
-.switch{display:inline-flex;align-items:center;gap:5px;cursor:pointer}
-.switch input{accent-color:var(--accent);margin:0}
 
 .grid{
   display:grid;gap:14px;padding:14px;flex:1;min-height:0;
