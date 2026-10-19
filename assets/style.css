@@ -32,7 +32,7 @@ select{background:var(--panel-2);color:var(--ink);border:1px solid var(--line);b
 
 .grid{
   display:grid;gap:14px;padding:14px;flex:1;min-height:0;
-  grid-template-columns:minmax(380px,42%) 1fr;grid-template-rows:minmax(0,1fr) auto;
+  grid-template-columns:minmax(380px,42%) 1fr;grid-template-rows:minmax(0,1fr);
 }
 .panel{background:var(--panel);border:1px solid var(--line);border-radius:12px;overflow:hidden;display:flex;flex-direction:column;min-height:0}
 .panel .hd{display:flex;align-items:center;gap:8px 10px;flex-wrap:wrap;padding:9px 14px;border-bottom:1px solid var(--line)}
@@ -40,10 +40,11 @@ select{background:var(--panel-2);color:var(--ink);border:1px solid var(--line);b
 .panel .hd .sub{font-size:11px;color:var(--muted)}
 .panel .hd .spacer{flex:1}
 .panel .bd{padding:10px 14px;flex:1;min-height:0;position:relative}
-.ts{grid-column:1;grid-row:1}
-.cum{grid-column:1;grid-row:2;max-height:46%}
+.left{grid-column:1;grid-row:1;display:flex;flex-direction:column;gap:14px;min-height:0}
+.ts{flex:1 1 0;min-height:220px}
+.cum{flex:0 1 auto;max-height:48%}
 .cum .bd{overflow:auto}
-.map{grid-column:2;grid-row:1 / span 2}
+.map{grid-column:2;grid-row:1}
 #map{width:100%;height:100%;flex:1;background:#e3e8ee}
 
 .tlabel{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-right:-4px}
@@ -104,8 +105,7 @@ footer .spacer{flex:1}
 
 @media (max-width:1000px){
   body{height:auto}
-  .grid{grid-template-columns:1fr;grid-template-rows:420px auto 520px;flex:none}
-  .ts{grid-column:1;grid-row:1}.cum{grid-column:1;grid-row:2;max-height:46%}
-.cum .bd{overflow:auto}.map{grid-column:1;grid-row:3}
+  .grid{grid-template-columns:1fr;grid-template-rows:auto 520px;flex:none}
+  .left{grid-row:1}.ts{flex:none;height:400px}.cum{max-height:none}.map{grid-column:1;grid-row:2}
   header{padding:10px 16px}
 }
