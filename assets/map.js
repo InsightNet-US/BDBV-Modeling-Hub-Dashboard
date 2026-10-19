@@ -1,19 +1,14 @@
-/* Leaflet choropleth with two layers: provinces (model output for the active horizon) and
-   health zones (observed confirmed cases from auxiliary data). */
-let map, provLayer, hzLayer, mapFitted = false;
+/* Leaflet choropleth of the 26 provinces: a model's median cases over the horizon, or its
+   probability of at least one case within the horizon. */
+let map, provLayer, mapFitted = false;
 const AFFECTED = ['IT', 'NK', 'HU', 'TO', 'BU', 'SK'];
-const normName = s => (s || '').normalize('NFKD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[-'’]/g, ' ').replace(/[^a-z0-9 ]+/g, ' ').replace(/\s+/g, ' ').trim();
 
 function initMap() {
   map = L.map('map', { zoomControl: true, attributionControl: true }).setView([0.5, 28.5], 6);
   map.attributionControl.setPrefix('');
   L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}', {
     maxZoom: 12, attribution: 'Tiles © Esri — Esri, HERE, Garmin, © OpenStreetMap contributors' }).addTo(map);
-  provLayer = L.geoJSON(S.geoProv, { style: () => ({ color: '#0b0f14', weight: 1, fillColor: '#ddd', fillOpacity: 0.6 }), onEachFeature: onProv });
-  hzLayer = L.geoJSON(S.geoHz, { style: () => ({ color: '#0b0f14', weight: 0.6, fillColor: '#ddd', fillOpacity: 0.6 }), onEachFeature: onHz });
-  // index health-zone case data by normalised name for the join
-  S.hzIndex = {};
-  Object.entries(S.hz.zones).forEach(([name, z]) => { S.hzIndex[normName(name)] = z; });
+  provLayer = L.geoJSON(S.geoProv, { style: f => provStyle(f), onEachFeature: onProv }).addTo(map);
 }
 function provBounds(codes) {
   let b = null;
@@ -23,18 +18,12 @@ function provBounds(codes) {
 function onProv(f, layer) {
   layer.on('mousemove', e => showTip(provTip(f), e.originalEvent.clientX, e.originalEvent.clientY));
   layer.on('mouseover', e => e.target.setStyle({ weight: 2.5, color: '#1b2430' }));
+  // restore the computed choropleth style (not Leaflet's resetStyle, which would reapply the initial style)
   layer.on('mouseout', e => { hideTip(); e.target.setStyle(provStyle(f)); });
   layer.on('click', () => selectLocation(f.properties.location === S.location ? NATIONAL : f.properties.location));
 }
-function onHz(f, layer) {
-  layer.on('mousemove', e => showTip(hzTip(f), e.originalEvent.clientX, e.originalEvent.clientY));
-  layer.on('mouseover', e => e.target.setStyle({ weight: 2, color: '#1b2430' }));
-  layer.on('mouseout', e => { hideTip(); e.target.setStyle(hzStyle(f)); });
-  layer.on('click', () => { const code = parentCode(f.properties.parent); if (code) selectLocation(code === S.location ? NATIONAL : code); });
-}
-function parentCode(name) { const l = S.manifest.locations.find(x => x.name === name || normName(x.name) === normName(name)); return l ? l.code : null; }
 
-/* ---- province values ---- */
+/* ---- values and styles ---- */
 function provValue(code) {
   const m = S.mapModel ? modelLoc(S.mapModel, code) : null;
   if (!m) return null;
@@ -42,8 +31,16 @@ function provValue(code) {
   if (S.mapMetric === 'presence') return m.presence[h];
   const q = m.horizon_sum[h]; return q ? q[QI.med] : null;
 }
+let provScale = { vmax: 1 };
+function provStyle(f) {
+  const code = f.properties.location, v = S.round ? provValue(code) : null;
+  const dim = S.location !== NATIONAL && S.location !== code;
+  if (v == null) return { color: '#6b7684', weight: 1, dashArray: '3 3', fillColor: '#e6e9ee', fillOpacity: dim ? 0.1 : 0.5 };
+  const norm = S.mapMetric === 'presence' ? v : Math.log1p(v) / Math.log1p(provScale.vmax);
+  return { color: '#0b0f14', weight: S.location === code ? 2.5 : 1, dashArray: null, fillColor: colorFor(norm), fillOpacity: dim ? 0.15 : 0.75 };
+}
 function provTip(f) {
-  const code = f.properties.location, v = provValue(code), obs = obsMap(S.obsRound, code);
+  const code = f.properties.location, obs = obsMap(S.obsRound, code);
   const upTo = S.roundRef || S.obsRound.last_complete_week;
   const recent = Object.keys(obs).filter(w => w <= upTo).sort().slice(-4).reduce((a, w) => a + obs[w], 0);
   const total = Object.keys(obs).filter(w => w <= upTo).reduce((a, w) => a + obs[w], 0);
@@ -53,79 +50,26 @@ function provTip(f) {
     const q = m.horizon_sum[h];
     rows += `<div class="row"><span>Median cases, next ${S.horizon} wk</span><b>${q ? fmtN(q[QI.med]) : '–'} ${q ? `<span class="sm">(${fmtRange(q)})</span>` : ''}</b></div>`;
     rows += `<div class="row"><span>P(≥1 case) within ${S.horizon} wk</span><b>${m.presence[h] == null ? '–' : Math.round(m.presence[h] * 100) + '%'}</b></div>`;
-  } else rows += `<div class="row"><span>${modelLabel(S.mapModel || '')}</span><b>no submission</b></div>`;
+  } else rows += `<div class="row"><span>${S.mapModel ? modelLabel(S.mapModel) : 'Model output'}</span><b>no submission</b></div>`;
   rows += `<div class="row"><span>Reported, last 4 wk</span><b>${fmtN(recent)}</b></div><div class="row"><span>Reported to date</span><b>${fmtN(total)}</b></div>`;
   return `<b>${f.properties.name}</b> <span class="sm">· ${code}</span>${rows}<div class="sm" style="margin-top:4px">click to ${S.location === code ? 'clear selection' : 'select'}</div>${m ? synNote() : ''}`;
 }
-/* ---- health-zone values ---- */
-function hzWindowWeeks() {
-  const weeks = S.hz.weeks, upTo = S.obsRound ? S.obsRound.as_of : weeks[weeks.length - 1];
-  const inRange = weeks.filter(w => w <= addDays(upTo, 6));
-  return S.hzWindow === 'recent' ? inRange.slice(-4) : inRange;
-}
-function hzValue(f) {
-  const z = S.hzIndex[normName(f.properties.name)] || S.hzIndex[normName(f.properties.hdx_name)];
-  if (!z) return { total: 0, imp: 0, known: false };
-  const ws = new Set(hzWindowWeeks()); let total = 0, imp = 0;
-  S.hz.weeks.forEach((w, i) => { if (ws.has(w)) { total += z.obs[i] + z.imp[i]; imp += z.imp[i]; } });
-  return { total, imp, known: true };
-}
-function hzTip(f) {
-  const v = hzValue(f), p = f.properties, ws = hzWindowWeeks();
-  const label = S.hzWindow === 'recent' ? `Confirmed, ${fmtDate(ws[0])}–${fmtDate(ws[ws.length - 1])}` : 'Confirmed to date';
-  return `<b>${p.name}</b> <span class="sm">· ${p.parent}${p.matched ? '' : ' · not in hub list'}</span>
-    <div class="row"><span>${label}</span><b>${fmtN(v.total)}</b></div>
-    ${v.total ? `<div class="row"><span>onset date imputed</span><b>${Math.round(100 * v.imp / v.total)}%</b></div>` : ''}
-    <div class="sm" style="margin-top:4px">${v.known ? '' : 'no cases reported · '}click to select ${p.parent}</div>`;
-}
 
-let provScale = { vmax: 1 }, hzScale = { vmax: 1, cache: new Map() };
-function provStyle(f) {
-  const code = f.properties.location, v = provValue(code);
-  const dim = S.location !== NATIONAL && S.location !== code;
-  if (v == null) return { color: '#6b7684', weight: 1, dashArray: '3 3', fillColor: '#e6e9ee', fillOpacity: dim ? 0.1 : 0.5 };
-  const norm = S.mapMetric === 'presence' ? v : Math.log1p(v) / Math.log1p(provScale.vmax);
-  return { color: '#0b0f14', weight: S.location === code ? 2.5 : 1, dashArray: null, fillColor: colorFor(norm), fillOpacity: dim ? 0.15 : 0.75 };
-}
-function hzStyle(f) {
-  const v = hzScale.cache.get(f) || hzValue(f), p = f.properties;
-  const selName = S.location === NATIONAL ? null : locName(S.location);
-  const dim = selName && normName(p.parent) !== normName(selName);
-  if (v.total > 0) return { color: '#0b0f14', weight: 0.6, dashArray: null, fillColor: colorFor(Math.log1p(v.total) / Math.log1p(hzScale.vmax)), fillOpacity: dim ? 0.15 : 0.8 };
-  return { color: '#8a94a3', weight: 0.4, dashArray: null, fillColor: p.matched ? '#f1f3f6' : '#d9dde3', fillOpacity: dim ? 0.1 : 0.55 };
-}
-
-function drawMap(layerSwitched) {
+function drawMap() {
   if (!map || !S.obsRound) return;
-  const prov = S.mapLayer === 'prov';
-  if (prov) { if (map.hasLayer(hzLayer)) map.removeLayer(hzLayer); if (!map.hasLayer(provLayer)) provLayer.addTo(map); }
-  else { if (map.hasLayer(provLayer)) map.removeLayer(provLayer); if (!map.hasLayer(hzLayer)) hzLayer.addTo(map); }
-  const selName = S.location === NATIONAL ? null : locName(S.location);
-  // the health-zone layer is observed data, so the synthetic watermark applies to the province layer only
-  const wm = document.querySelector('#mapWrap .wm'); if (wm) wm.style.display = prov ? '' : 'none';
-
-  if (prov) {
-    const vals = S.manifest.locations.map(l => provValue(l.code)).filter(v => v != null);
-    const vmax = S.mapMetric === 'presence' ? 1 : Math.max(1, ...vals);
-    provScale = { vmax };
-    provLayer.eachLayer(l => {
-      l.setStyle(provStyle(l.feature));
-      if (S.location === l.feature.properties.location) l.bringToFront();
-    });
-    const mt = S.mapMetric === 'presence' ? `P(≥1 case) within <span class="horizonval">${S.horizon}</span> wk` : `Median cases, next <span class="horizonval">${S.horizon}</span> wk`;
-    document.getElementById('mapSub').innerHTML = `${mt} · ${S.mapModel ? modelLabel(S.mapModel) : 'no model'}${S.manifest.mock && S.mapModel ? ' <b style="color:#9a5b00">(synthetic)</b>' : ''}${vals.length < S.manifest.locations.length ? ` · ${S.manifest.locations.length - vals.length} province${S.manifest.locations.length - vals.length === 1 ? '' : 's'} without output (dashed)` : ''}`;
-    document.getElementById('legLo').textContent = '0';
-    document.getElementById('legHi').textContent = S.mapMetric === 'presence' ? '100%' : fmtN(vmax);
-    if (!mapFitted || layerSwitched) { const b = provBounds(AFFECTED); if (b) map.fitBounds(b, { padding: [10, 10] }); mapFitted = true; }
-  } else {
-    let vmax = 1; const cache = new Map();
-    hzLayer.eachLayer(l => { const v = hzValue(l.feature); cache.set(l.feature, v); vmax = Math.max(vmax, v.total); });
-    hzScale = { vmax, cache };
-    hzLayer.eachLayer(l => l.setStyle(hzStyle(l.feature)));
-    const ws = hzWindowWeeks();
-    document.getElementById('mapSub').innerHTML = `Confirmed cases by health zone · ${S.hzWindow === 'recent' ? `weeks ending ${fmtDate(ws[0])}–${fmtDate(ws[ws.length - 1])}` : 'outbreak to date'} · as of ${S.hz.as_of}${selName ? ` · ${selName} highlighted` : ''}`;
-    document.getElementById('legLo').textContent = '0';
-    document.getElementById('legHi').textContent = fmtN(vmax);
-    if (layerSwitched) { const b = S.location !== NATIONAL ? provBounds([S.location]) : provBounds(AFFECTED); if (b) map.fitBounds(b, { padding: [10, 10] }); }
-  }
+  const vals = S.manifest.locations.map(l => S.round ? provValue(l.code) : null).filter(v => v != null);
+  const vmax = S.mapMetric === 'presence' ? 1 : Math.max(1, ...vals);
+  provScale = { vmax };
+  provLayer.eachLayer(l => {
+    l.setStyle(provStyle(l.feature));
+    if (S.location === l.feature.properties.location) l.bringToFront();
+  });
+  const n = S.manifest.locations.length, missing = n - vals.length;
+  const mt = S.mapMetric === 'presence' ? `P(≥1 case) within <span class="horizonval">${S.horizon}</span> wk` : `Median cases, next <span class="horizonval">${S.horizon}</span> wk`;
+  document.getElementById('mapSub').innerHTML = `${mt} · ${S.mapModel ? modelLabel(S.mapModel) : 'no model'}`
+    + (S.manifest.mock && S.mapModel ? ' <b style="color:#9a5b00">(synthetic)</b>' : '')
+    + (missing ? ` · ${missing} province${missing === 1 ? '' : 's'} without output (dashed)` : '');
+  document.getElementById('legLo').textContent = '0';
+  document.getElementById('legHi').textContent = S.mapMetric === 'presence' ? '100%' : fmtN(vmax);
+  if (!mapFitted) { const b = provBounds(AFFECTED); if (b) map.fitBounds(b, { padding: [10, 10] }); mapFitted = true; }
 }

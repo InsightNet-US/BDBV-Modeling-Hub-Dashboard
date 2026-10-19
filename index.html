@@ -6,7 +6,7 @@
 <title>BDBV Modeling Hub — nowcasts and forecasts</title>
 <meta name="description" content="Nowcasts and short-term forecasts of weekly confirmed Bundibugyo virus disease cases by province, from the BDBV Modeling Hub." />
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-<link rel="stylesheet" href="assets/style.css" />
+<link rel="stylesheet" href="assets/style.css?v=dev" />
 </head>
 <body>
 <header>
@@ -80,24 +80,13 @@
   <!-- MAP -->
   <section class="panel map">
     <div class="hd">
-      <div class="toggle" id="layerToggle">
-        <button data-l="prov" class="active">Provinces</button>
-        <button data-l="hz">Health zones</button>
+      <h2>Provinces</h2>
+      <div class="toggle small" id="metricToggle">
+        <button data-m="median" class="active">Median cases</button>
+        <button data-m="presence">P(≥1 case)</button>
       </div>
-      <span id="provCtrls" style="display:contents">
-        <div class="toggle small" id="metricToggle">
-          <button data-m="median" class="active">Median cases</button>
-          <button data-m="presence">P(≥1 case)</button>
-        </div>
-        <span class="tlabel">Model</span>
-        <select id="mapModelSel" class="msel"></select>
-      </span>
-      <span id="hzCtrls" style="display:none">
-        <div class="toggle small" id="hzWindowToggle">
-          <button data-w="recent" class="active">Last 4 wk</button>
-          <button data-w="all">Outbreak to date</button>
-        </div>
-      </span>
+      <span class="tlabel">Model</span>
+      <select id="mapModelSel" class="msel"></select>
       <span class="sub" id="mapSub"></span>
       <div class="spacer"></div>
       <div class="legend"><span id="legLo">0</span><span class="bar"></span><span id="legHi">1</span></div>
@@ -109,7 +98,7 @@
 <footer>
   <span id="footProv"></span>
   <div class="spacer"></div>
-  <span>Boundaries: <a href="https://www.geoboundaries.org/" target="_blank" rel="noopener">geoBoundaries</a> (ODbL) · <a href="https://data.humdata.org/dataset/drc-health-data" target="_blank" rel="noopener">DSNIS health zones via HDX</a> (ODbL)</span>
+  <span>Boundaries: <a href="https://www.geoboundaries.org/" target="_blank" rel="noopener">geoBoundaries</a> (ODbL)</span>
   <span><a href="https://github.com/InsightNet-US/BDBV-Modeling-Hub" target="_blank" rel="noopener">Hub repository</a></span>
 </footer>
 
@@ -123,10 +112,10 @@
 </aside>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script src="assets/palette.js"></script>
-<script src="assets/timeseries.js"></script>
-<script src="assets/cumulative.js"></script>
-<script src="assets/map.js"></script>
-<script src="assets/app.js"></script>
+<script src="assets/palette.js?v=dev"></script>
+<script src="assets/timeseries.js?v=dev"></script>
+<script src="assets/cumulative.js?v=dev"></script>
+<script src="assets/map.js?v=dev"></script>
+<script src="assets/app.js?v=dev"></script>
 </body>
 </html>

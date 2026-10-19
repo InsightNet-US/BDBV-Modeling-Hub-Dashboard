@@ -15,8 +15,8 @@ small JSON summaries under `data/`, and a GitHub Action rebuilds and deploys to 
 - **Cumulative confirmed cases**: reported to date, each model's nowcast of the eventual total through the
   reference date, and projected cumulative totals at +1/+2/+3 weeks.
 - **Map**: provinces coloured by a model's median cases over the horizon or by P(at least one case) within
-  the horizon; a health-zone layer shows reported cases from the hub's auxiliary data. Clicking selects a
-  location.
+  the horizon. Clicking selects a location. (A health-zone layer was removed from the UI for now; the
+  pipeline still writes `observed/health-zones.json` and `geo.py` can rebuild the zone boundaries.)
 - **Reference date selector** to move between rounds. Each round is paired with the latest target-data
   release on or before the Tuesday closing its submission window (`reference_date - 4 days`); the data
   version used is always labelled.

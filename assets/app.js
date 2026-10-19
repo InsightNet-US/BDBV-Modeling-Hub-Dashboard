@@ -2,10 +2,10 @@
    cumulative.js and map.js and read the shared state object S. */
 const S = {
   manifest: null, models: {}, colors: {}, ensembleId: null,
-  roundRef: null, round: null, obsRound: null, obsLatest: null, hz: null, geoProv: null, geoHz: null,
+  roundRef: null, round: null, obsRound: null, obsLatest: null, geoProv: null,
   location: 'CD_total', horizon: 3, showLatest: true, range: 'recent',
   tsSelected: new Set(), cumSelected: new Set(),
-  mapLayer: 'prov', mapMetric: 'median', mapModel: null, hzWindow: 'recent',
+  mapMetric: 'median', mapModel: null,
   cache: {},
 };
 const NATIONAL = 'CD_total';
@@ -65,10 +65,9 @@ async function getJSON(path) {
   return (S.cache[path] = await r.json());
 }
 async function init() {
-  const [manifest, models, geoProv, geoHz, hz] = await Promise.all([
-    getJSON('data/manifest.json'), getJSON('data/models.json'), getJSON('data/geo/provinces.json'),
-    getJSON('data/geo/health-zones.json'), getJSON('data/observed/health-zones.json')]);
-  S.manifest = manifest; S.models = models; S.geoProv = geoProv; S.geoHz = geoHz; S.hz = hz;
+  const [manifest, models, geoProv] = await Promise.all([
+    getJSON('data/manifest.json'), getJSON('data/models.json'), getJSON('data/geo/provinces.json')]);
+  S.manifest = manifest; S.models = models; S.geoProv = geoProv;
   S.ensembleId = manifest.ensemble_model_id && models[manifest.ensemble_model_id] ? manifest.ensemble_model_id : null;
   S.colors = assignColors(models, S.ensembleId);
   S.obsLatest = await getJSON(`data/observed/${manifest.latest_as_of}.json`);
@@ -156,10 +155,7 @@ function wire() {
   $('horizon').addEventListener('input', e => { S.horizon = +e.target.value; $('horizonLabel').textContent = S.horizon; sync(); });
   $('latestToggle').addEventListener('change', e => { S.showLatest = e.target.checked; drawTS(); drawCum(); });
   document.querySelectorAll('#rangeToggle button').forEach(b => b.addEventListener('click', () => { S.range = b.dataset.r; setToggle('rangeToggle', 'r', S.range); drawTS(); }));
-  document.querySelectorAll('#layerToggle button').forEach(b => b.addEventListener('click', () => { S.mapLayer = b.dataset.l; setToggle('layerToggle', 'l', S.mapLayer);
-    $('provCtrls').style.display = S.mapLayer === 'prov' ? 'contents' : 'none'; $('hzCtrls').style.display = S.mapLayer === 'hz' ? 'contents' : 'none'; drawMap(true); }));
   document.querySelectorAll('#metricToggle button').forEach(b => b.addEventListener('click', () => { S.mapMetric = b.dataset.m; setToggle('metricToggle', 'm', S.mapMetric); drawMap(); }));
-  document.querySelectorAll('#hzWindowToggle button').forEach(b => b.addEventListener('click', () => { S.hzWindow = b.dataset.w; setToggle('hzWindowToggle', 'w', S.hzWindow); drawMap(); }));
   $('mapModelSel').addEventListener('change', e => { S.mapModel = e.target.value; drawMap(); });
   $('modelsBtn').addEventListener('click', () => toggleDrawer(true));
   $('drawerClose').addEventListener('click', () => toggleDrawer(false));
