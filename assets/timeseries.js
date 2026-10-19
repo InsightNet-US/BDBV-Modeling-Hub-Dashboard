@@ -133,7 +133,8 @@ function drawTS() {
       if (haveLatest && latest[w] != null) rows += `<div class="row"><span>Latest (as of ${fmtDate(S.obsLatest.as_of)})</span><b>${fmtN(latest[w])}</b></div>`;
       if (ens) { const q = qAt(ens, w); if (q) rows += `<div class="row"><span style="color:var(--median)">Hub ensemble</span><b>${fmtN(q[QI.med])} <span class="sm">(${fmtRange(q)})</span></b></div>`; }
       teams.forEach(t => { const q = qAt(t.m, w); if (q) rows += `<div class="row"><span style="color:${t.color}">${t.name}</span><b>${fmtN(q[QI.med])} <span class="sm">(${fmtRange(q)})</span></b></div>`; });
-      showTip(`<b>Week ending ${fmtDate(w, true)}</b>${kind}${rows}`, e.clientX, e.clientY);
+      const hasModel = (ens && qAt(ens, w)) || teams.some(t => qAt(t.m, w));
+      showTip(`<b>Week ending ${fmtDate(w, true)}</b>${kind}${rows}${hasModel ? synNote() : ''}`, e.clientX, e.clientY);
     });
     r.addEventListener('mouseleave', hideTip);
   });

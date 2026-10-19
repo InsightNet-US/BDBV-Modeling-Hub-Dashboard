@@ -64,7 +64,7 @@ function drawCum() {
     yy += gH + ggap; });
   svg.innerHTML = s;
   svg.querySelectorAll('.cbox').forEach(g => {
-    g.addEventListener('mousemove', e => showTip(`<b>${g.dataset.tip}</b>`, e.clientX, e.clientY));
+    g.addEventListener('mousemove', e => showTip(`<b>${g.dataset.tip}</b>${synNote()}`, e.clientX, e.clientY));
     g.addEventListener('mouseleave', hideTip);
   });
 }

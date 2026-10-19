@@ -55,7 +55,7 @@ function provTip(f) {
     rows += `<div class="row"><span>P(≥1 case) within ${S.horizon} wk</span><b>${m.presence[h] == null ? '–' : Math.round(m.presence[h] * 100) + '%'}</b></div>`;
   } else rows += `<div class="row"><span>${modelLabel(S.mapModel || '')}</span><b>no submission</b></div>`;
   rows += `<div class="row"><span>Reported, last 4 wk</span><b>${fmtN(recent)}</b></div><div class="row"><span>Reported to date</span><b>${fmtN(total)}</b></div>`;
-  return `<b>${f.properties.name}</b> <span class="sm">· ${code}</span>${rows}<div class="sm" style="margin-top:4px">click to ${S.location === code ? 'clear selection' : 'select'}</div>`;
+  return `<b>${f.properties.name}</b> <span class="sm">· ${code}</span>${rows}<div class="sm" style="margin-top:4px">click to ${S.location === code ? 'clear selection' : 'select'}</div>${m ? synNote() : ''}`;
 }
 /* ---- health-zone values ---- */
 function hzWindowWeeks() {
@@ -85,6 +85,8 @@ function drawMap(layerSwitched) {
   if (prov) { if (map.hasLayer(hzLayer)) map.removeLayer(hzLayer); if (!map.hasLayer(provLayer)) provLayer.addTo(map); }
   else { if (map.hasLayer(provLayer)) map.removeLayer(provLayer); if (!map.hasLayer(hzLayer)) hzLayer.addTo(map); }
   const selName = S.location === NATIONAL ? null : locName(S.location);
+  // the health-zone layer is observed data, so the synthetic watermark applies to the province layer only
+  const wm = document.querySelector('#mapWrap .wm'); if (wm) wm.style.display = prov ? '' : 'none';
 
   if (prov) {
     const vals = S.manifest.locations.map(l => provValue(l.code)).filter(v => v != null);
@@ -99,7 +101,7 @@ function drawMap(layerSwitched) {
       if (S.location === code) l.bringToFront();
     });
     const mt = S.mapMetric === 'presence' ? `P(≥1 case) within <span class="horizonval">${S.horizon}</span> wk` : `Median cases, next <span class="horizonval">${S.horizon}</span> wk`;
-    document.getElementById('mapSub').innerHTML = `${mt} · ${S.mapModel ? modelLabel(S.mapModel) : 'no model'}${vals.length < S.manifest.locations.length ? ` · ${S.manifest.locations.length - vals.length} province${S.manifest.locations.length - vals.length === 1 ? '' : 's'} without output (dashed)` : ''}`;
+    document.getElementById('mapSub').innerHTML = `${mt} · ${S.mapModel ? modelLabel(S.mapModel) : 'no model'}${S.manifest.mock && S.mapModel ? ' <b style="color:#9a5b00">(synthetic)</b>' : ''}${vals.length < S.manifest.locations.length ? ` · ${S.manifest.locations.length - vals.length} province${S.manifest.locations.length - vals.length === 1 ? '' : 's'} without output (dashed)` : ''}`;
     document.getElementById('legLo').textContent = '0';
     document.getElementById('legHi').textContent = S.mapMetric === 'presence' ? '100%' : fmtN(vmax);
     if (!mapFitted || layerSwitched) { const b = provBounds(AFFECTED); if (b) map.fitBounds(b, { padding: [10, 10] }); mapFitted = true; }

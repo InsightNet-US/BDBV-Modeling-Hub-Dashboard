@@ -21,6 +21,13 @@ header h1 span{color:var(--muted);font-weight:500}
 .badge{font-size:10px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;padding:3px 8px;border-radius:999px;
   background:#fff4e5;color:#9a5b00;border:1px solid #f0c889;white-space:nowrap}
 .badge.hidden{display:none}
+body.mock .badge{background:#d9800a;color:#fff;border-color:#b86600;font-size:11px;padding:4px 10px}
+.wm{display:none;position:absolute;inset:0;pointer-events:none;z-index:4;overflow:hidden;
+  align-items:center;justify-content:center;font-weight:800;letter-spacing:.35em;text-transform:uppercase;
+  color:rgba(217,128,10,.13);font-size:clamp(28px,6vw,72px);transform:rotate(-24deg);white-space:nowrap;user-select:none}
+body.mock .wm{display:flex}
+#mapWrap .wm{z-index:450}
+.tt .syn{margin-top:5px;padding-top:4px;border-top:1px dashed #f0c889;color:#9a5b00;font-size:10.5px;font-weight:600;letter-spacing:.3px}
 header .spacer{flex:1}
 .ctrl{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--muted);white-space:nowrap}
 select,input[type=range]{accent-color:var(--accent)}

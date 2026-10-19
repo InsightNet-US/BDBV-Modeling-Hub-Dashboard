@@ -32,6 +32,8 @@ function showTip(html, x, y) {
   tt.style.top = Math.min(y + 14, window.innerHeight - h - 8) + 'px';
 }
 function hideTip() { tt.style.opacity = 0; }
+/** footer line appended to any tooltip that shows model output while synthetic data are loaded */
+function synNote() { return S.manifest && S.manifest.mock ? '<div class="syn">SYNTHETIC MODEL OUTPUT · not a team submission</div>' : ''; }
 
 function locName(code) {
   if (code === NATIONAL) return 'DRC (all provinces)';
@@ -71,6 +73,7 @@ async function init() {
   S.colors = assignColors(models, S.ensembleId);
   S.obsLatest = await getJSON(`data/observed/${manifest.latest_as_of}.json`);
   $('mockBadge').classList.toggle('hidden', !manifest.mock);
+  document.body.classList.toggle('mock', !!manifest.mock);
 
   // header selectors
   const rs = $('roundSel');
