@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>BDBV Modeling Hub — nowcasts and forecasts</title>
+<meta name="description" content="Nowcasts and short-term forecasts of weekly confirmed Bundibugyo virus disease cases by province, from the BDBV Modeling Hub." />
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<link rel="stylesheet" href="assets/style.css" />
+</head>
+<body>
+<header>
+  <h1>BDBV Modeling Hub <span>· nowcasts &amp; forecasts of weekly confirmed cases</span></h1>
+  <span class="badge hidden" id="mockBadge" title="Model output shown here is synthetic demonstration data, not team submissions">Synthetic model output</span>
+  <div class="spacer"></div>
+  <div class="ctrl">
+    <label for="roundSel">Reference date</label>
+    <select id="roundSel"></select>
+  </div>
+  <div class="ctrl">
+    <label for="locSel">Location</label>
+    <select id="locSel"></select>
+  </div>
+  <div class="ctrl">
+    <label for="horizon">Horizon</label>
+    <input id="horizon" type="range" min="1" max="3" value="3" step="1" style="width:90px">
+    <span>+<span class="horizonval" id="horizonLabel">3</span> wk</span>
+  </div>
+  <div class="ctrl">
+    <label class="switch" title="Overlay the most recent target data release to show backfill"><input type="checkbox" id="latestToggle" checked> Latest data</label>
+  </div>
+  <button class="linkbtn" id="modelsBtn" type="button">Models</button>
+</header>
+
+<div class="grid">
+  <!-- TIME SERIES -->
+  <section class="panel ts">
+    <div class="hd">
+      <h2>Weekly confirmed cases</h2>
+      <span class="tlabel">Models</span>
+      <div class="dd" id="tsModelDD">
+        <button class="ddbtn" id="tsModelBtn" type="button">Models ▾</button>
+        <div class="ddpanel" id="tsModelPanel"></div>
+      </div>
+      <div class="toggle small" id="rangeToggle">
+        <button data-r="recent" class="active">Recent</button>
+        <button data-r="full">Full outbreak</button>
+      </div>
+      <span class="sub" id="tsSub"></span>
+      <div class="spacer"></div>
+      <span class="legend" id="tsLegend"></span>
+    </div>
+    <div class="bd">
+      <svg id="tsChart" width="100%" height="100%" preserveAspectRatio="none"></svg>
+      <div class="note" id="tsEmpty" style="display:none"></div>
+    </div>
+  </section>
+
+  <!-- CUMULATIVE -->
+  <section class="panel cum">
+    <div class="hd">
+      <h2>Cumulative confirmed cases</h2>
+      <span class="sub" id="cumSub"></span>
+      <div class="spacer"></div>
+      <span class="tlabel">Models</span>
+      <div class="dd" id="cumModelDD">
+        <button class="ddbtn" id="cumModelBtn" type="button">Models ▾</button>
+        <div class="ddpanel" id="cumModelPanel"></div>
+      </div>
+    </div>
+    <div class="bd" style="padding-top:6px">
+      <svg id="cumChart" width="100%" height="200" preserveAspectRatio="none"></svg>
+    </div>
+  </section>
+
+  <!-- MAP -->
+  <section class="panel map">
+    <div class="hd">
+      <div class="toggle" id="layerToggle">
+        <button data-l="prov" class="active">Provinces</button>
+        <button data-l="hz">Health zones</button>
+      </div>
+      <span id="provCtrls" style="display:contents">
+        <div class="toggle small" id="metricToggle">
+          <button data-m="median" class="active">Median cases</button>
+          <button data-m="presence">P(≥1 case)</button>
+        </div>
+        <span class="tlabel">Model</span>
+        <select id="mapModelSel" class="msel"></select>
+      </span>
+      <span id="hzCtrls" style="display:none">
+        <div class="toggle small" id="hzWindowToggle">
+          <button data-w="recent" class="active">Last 4 wk</button>
+          <button data-w="all">Outbreak to date</button>
+        </div>
+      </span>
+      <span class="sub" id="mapSub"></span>
+      <div class="spacer"></div>
+      <div class="legend"><span id="legLo">0</span><span class="bar"></span><span id="legHi">1</span></div>
+    </div>
+    <div id="map"></div>
+  </section>
+</div>
+
+<footer>
+  <span id="footProv"></span>
+  <div class="spacer"></div>
+  <span>Boundaries: <a href="https://www.geoboundaries.org/" target="_blank" rel="noopener">geoBoundaries</a> (ODbL) · <a href="https://data.humdata.org/dataset/drc-health-data" target="_blank" rel="noopener">DSNIS health zones via HDX</a> (ODbL)</span>
+  <span><a href="https://github.com/InsightNet-US/BDBV-Modeling-Hub" target="_blank" rel="noopener">Hub repository</a></span>
+</footer>
+
+<div class="tt" id="tt"></div>
+<div class="drawer-bg" id="drawerBg"></div>
+<aside class="drawer" id="drawer" aria-label="Models">
+  <button class="close" id="drawerClose" aria-label="Close">×</button>
+  <h2>Models in this round</h2>
+  <div class="sub" id="drawerSub" style="font-size:12px;color:var(--muted)"></div>
+  <div id="drawerBody"></div>
+</aside>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="assets/palette.js"></script>
+<script src="assets/timeseries.js"></script>
+<script src="assets/cumulative.js"></script>
+<script src="assets/map.js"></script>
+<script src="assets/app.js"></script>
+</body>
+</html>

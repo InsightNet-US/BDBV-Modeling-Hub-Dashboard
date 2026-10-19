@@ -1,0 +1,8 @@
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+hub/
+.cache/
+.DS_Store
+pipeline/geo-src/

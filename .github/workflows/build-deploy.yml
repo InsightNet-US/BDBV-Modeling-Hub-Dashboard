@@ -1,0 +1,96 @@
+name: Build data and deploy to GitHub Pages
+
+on:
+  schedule:
+    - cron: "0 6 * * *"        # daily 06:00 UTC: after the Monday 5 pm ET target-data release and any merged submissions
+  workflow_dispatch:
+    inputs:
+      hub_branch:
+        description: Hub branch to read (falls back to main if missing)
+        default: hub-additions
+      mock_mode:
+        description: "Synthetic model output: on or off (overrides the MOCK_MODE repository variable)"
+        default: ""
+  push:
+    branches: [main]
+    paths-ignore:
+      - "data/observed/**"
+      - "data/rounds/**"
+      - "data/manifest.json"
+      - "data/models.json"
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: build-deploy
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      HUB_BRANCH: ${{ github.event.inputs.hub_branch || 'hub-additions' }}
+      MOCK_MODE: ${{ github.event.inputs.mock_mode || vars.MOCK_MODE || 'off' }}
+      ENSEMBLE_MODEL_ID: ${{ vars.ENSEMBLE_MODEL_ID }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Clone the hub (requested branch, falling back to main)
+        run: |
+          set -e
+          if ! git clone --depth 1 --branch "$HUB_BRANCH" https://github.com/InsightNet-US/BDBV-Modeling-Hub.git hub 2>/dev/null; then
+            echo "::warning::branch $HUB_BRANCH not found on the hub; using main"
+            git clone --depth 1 --branch main https://github.com/InsightNet-US/BDBV-Modeling-Hub.git hub
+          fi
+          echo "hub at $(git -C hub rev-parse --short HEAD) ($(git -C hub rev-parse --abbrev-ref HEAD))"
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: pipeline/requirements.txt
+
+      - name: Install pipeline dependencies
+        run: pip install -r pipeline/requirements.txt
+
+      - name: Run pipeline tests
+        run: python -m pytest pipeline/tests -q
+
+      - name: Build data/
+        env:
+          HUB_DIR: ${{ github.workspace }}/hub
+        run: python pipeline/build.py
+
+      - name: Commit refreshed data
+        if: github.event_name != 'pull_request'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/
+          if git diff --cached --quiet; then echo "data unchanged"; else
+            git commit -m "data: refresh from hub $(git -C hub rev-parse --short HEAD) (MOCK_MODE=$MOCK_MODE)"
+            git push
+          fi
+
+      - name: Assemble site
+        run: |
+          mkdir -p _site
+          cp index.html _site/
+          cp -r assets data _site/
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
