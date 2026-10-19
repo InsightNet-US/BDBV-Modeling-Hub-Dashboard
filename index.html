@@ -23,7 +23,8 @@
   <div class="spacer"></div>
   <div class="ctrl">
     <label for="locSel">Location</label>
-    <select id="locSel"></select>
+    <select id="locSel" title="Country or province"></select>
+    <select id="hzSel" class="hidden" title="Health zone within the selected province"></select>
   </div>
   <button class="linkbtn" id="modelsBtn" type="button">Models</button>
   </div>
@@ -77,7 +78,10 @@
   <!-- MAP -->
   <section class="panel map">
     <div class="hd">
-      <h2>Provinces</h2>
+      <div class="toggle small" id="layerToggle" title="Map level">
+        <button data-l="prov" class="active">Provinces</button>
+        <button data-l="hz">Health zones</button>
+      </div>
       <div class="toggle small" id="metricToggle">
         <button data-m="median" class="active">Median cases</button>
         <button data-m="presence">P(≥1 case)</button>

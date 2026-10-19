@@ -65,6 +65,8 @@ def read_target_data(hub: Path) -> pd.DataFrame:
     df = pd.read_csv(hub / "target-data" / "time-series.csv", dtype={"location": str, "as_of": str,
                                                                       "target_end_date": str})
     df = df[df["target"] == config.TARGET].copy()
+    if "location_type" not in df.columns:
+        df["location_type"] = ""
     df["observation"] = pd.to_numeric(df["observation"], errors="coerce").fillna(0)
     return df
 
@@ -78,8 +80,19 @@ def read_health_zone_daily(hub: Path) -> pd.DataFrame:
 
 
 def read_delays(hub: Path) -> pd.DataFrame:
-    return pd.read_csv(hub / "auxiliary-data" / "weekly-reporting-delays-by-province.csv",
-                       dtype={"location": str, "week_ending": str, "as_of": str})
+    """Reporting delays with `location` normalised to the hub's province code.
+
+    The file has carried either province codes or province names; names are mapped through
+    locations.csv so downstream code can always key on the code.
+    """
+    df = pd.read_csv(hub / "auxiliary-data" / "weekly-reporting-delays-by-province.csv",
+                     dtype={"location": str, "week_ending": str, "as_of": str})
+    locs = read_locations(hub)
+    prov = locs[locs["location_type"] == "province"]
+    name2code = dict(zip(prov["location_name"], prov["location"]))
+    codes = set(prov["location"])
+    df["location"] = [l if l in codes else name2code.get(l, l) for l in df["location"].astype(str)]
+    return df
 
 
 def read_model_metadata(hub: Path) -> dict[str, dict]:

@@ -3,13 +3,13 @@
 const S = {
   manifest: null, models: {}, colors: {}, ensembleId: null,
   roundRef: null, round: null, obsRound: null, obsLatest: null, geoProv: null,
-  location: 'CD_total', range: 'recent',
+  location: 'CD', range: 'recent', locIndex: {},
   mapWeek: null, mapRel: 0,   // week shown on the map and its offset in weeks from the reference date
   tsSelected: new Set(), cumSelected: new Set(),
-  mapMetric: 'median', mapModel: null,
+  mapMetric: 'median', mapModel: null, mapLayer: 'prov', geoHZ: null,
   cache: {},
 };
-const NATIONAL = 'CD_total';
+const NATIONAL = 'CD';
 const $ = id => document.getElementById(id);
 const QI = { lo95: 0, lo80: 1, lo50: 2, med: 3, hi50: 4, hi80: 5, hi95: 6 };
 
@@ -36,11 +36,17 @@ function hideTip() { tt.style.opacity = 0; }
 /** footer line appended to any tooltip that shows model output while synthetic data are loaded */
 function synNote() { return S.manifest && S.manifest.mock ? '<div class="syn">SYNTHETIC MODEL OUTPUT · not a team submission</div>' : ''; }
 
+function locInfo(code) { return S.locIndex[code] || null; }
 function locName(code) {
   if (code === NATIONAL) return 'DRC (national)';
-  const l = S.manifest.locations.find(x => x.code === code); return l ? l.name : code;
+  const l = locInfo(code); if (!l) return code;
+  return l.type === 'health zone' ? `${l.name} · ${locName(l.parent).replace(' (national)', '')}` : l.name;
 }
-const modelKey = loc => loc === NATIONAL ? 'CD' : loc;
+/** province code giving the geographic context of a location (null for the country) */
+function locProvince(code) { const l = locInfo(code); return !l || l.type === 'country' ? null : l.type === 'province' ? code : l.parent; }
+const isZone = code => (locInfo(code) || {}).type === 'health zone';
+const provinces = () => S.manifest.locations.filter(l => l.type === 'province');
+const zonesOf = p => S.manifest.locations.filter(l => l.type === 'health zone' && l.parent === p);
 function modelName(id) { const m = S.models[id]; return m ? (m.model_name && m.model_name !== id ? `${m.team_abbr}-${m.model_abbr}` : id) : id; }
 function modelLabel(id) { return id === S.ensembleId ? 'Hub ensemble' : modelName(id); }
 function modelColor(id) { return S.colors[id] || '#888'; }
@@ -52,7 +58,7 @@ function obsMap(ov, loc) {
 }
 /** model summary for (model, location) in the current round, or null */
 function modelLoc(mid, loc) {
-  const m = S.round && S.round.models[mid]; return m ? (m.locations[modelKey(loc)] || null) : null;
+  const m = S.round && S.round.models[mid]; return m ? (m.locations[loc] || null) : null;
 }
 function roundModels() { return S.round ? Object.keys(S.round.models).sort(sortModels) : []; }
 function sortModels(a, b) { if (a === S.ensembleId) return -1; if (b === S.ensembleId) return 1; return a.localeCompare(b); }
@@ -103,6 +109,7 @@ async function init() {
   const [manifest, models, geoProv] = await Promise.all([
     getJSON('data/manifest.json'), getJSON('data/models.json'), getJSON('data/geo/provinces.json')]);
   S.manifest = manifest; S.models = models; S.geoProv = geoProv;
+  manifest.locations.forEach(l => { S.locIndex[l.code] = l; });
   S.ensembleId = manifest.ensemble_model_id && models[manifest.ensemble_model_id] ? manifest.ensemble_model_id : null;
   S.colors = assignColors(models, S.ensembleId);
   S.obsLatest = await getJSON(`data/observed/${manifest.latest_as_of}.json`);
@@ -115,9 +122,10 @@ async function init() {
     `<option value="${r.reference_date}">${fmtDate(r.reference_date, true)}</option>`).join('')
     || '<option value="">no rounds yet</option>';
   wireStepper('roundSel');
-  const ls = $('locSel');
-  ls.innerHTML = `<option value="${NATIONAL}">DRC · national · CD${manifest.national_total ? ` (${fmtN(manifest.national_total)})` : ''}</option>` +
-    manifest.locations.map(l => `<option value="${l.code}">${l.name} · ${l.code}${l.total ? ` (${fmtN(l.total)})` : ''}</option>`).join('');
+  const ls = $('locSel'), nat = locInfo(NATIONAL) || { total: 0 };
+  ls.innerHTML = `<option value="${NATIONAL}">DRC · national${nat.total ? ` (${fmtN(nat.total)})` : ''}</option>` +
+    provinces().map(l => `<option value="${l.code}">${l.name}${l.total ? ` (${fmtN(l.total)})` : ''}</option>`).join('');
+  buildZoneSelect(null);
   $('footProv').innerHTML = `Hub ${manifest.hub.repo}@${manifest.hub.branch} (${manifest.hub.commit}) · latest target data as of <b>${manifest.latest_as_of}</b> · built ${manifest.generated_at.replace('T', ' ').replace('Z', ' UTC')}` +
     (manifest.mock ? ' · <b style="color:#9a5b00">model output is synthetic</b>' : '');
 
@@ -201,6 +209,8 @@ function setToggle(groupId, attr, value) {
 function wire() {
   $('roundSel').addEventListener('change', e => loadRound(e.target.value));
   $('locSel').addEventListener('change', e => { S.location = e.target.value; onLocationChange(); });
+  $('hzSel').addEventListener('change', e => { S.location = e.target.value || locProvince(S.location) || NATIONAL; onLocationChange(); });
+  document.querySelectorAll('#layerToggle button').forEach(b => b.addEventListener('click', () => setLayer(b.dataset.l, b.dataset.l === 'hz' ? locProvince(S.location) : null)));
   $('mapWeekSel').addEventListener('change', e => setMapWeek(e.target.value));
   document.querySelectorAll('#rangeToggle button').forEach(b => b.addEventListener('click', () => { S.range = b.dataset.r; setToggle('rangeToggle', 'r', S.range); drawTS(); }));
   document.querySelectorAll('#metricToggle button').forEach(b => b.addEventListener('click', () => { S.mapMetric = b.dataset.m; setToggle('metricToggle', 'm', S.mapMetric); drawMap(); }));
@@ -214,10 +224,28 @@ function wire() {
   const ro = new ResizeObserver(() => { if (raf) return; raf = requestAnimationFrame(() => { raf = null; drawTS(); drawCum(); if (map) map.invalidateSize(); }); });
   ro.observe(document.querySelector('.ts .bd')); ro.observe(document.querySelector('.cum .bd')); ro.observe(document.getElementById('map'));
 }
+/** zone dropdown: hidden for the country, otherwise "whole province" plus its zones by cumulative cases */
+function buildZoneSelect(prov) {
+  const sel = $('hzSel');
+  if (!prov) { sel.classList.add('hidden'); sel.innerHTML = ''; return; }
+  const zs = zonesOf(prov);
+  sel.innerHTML = `<option value="">Whole province</option>` +
+    zs.map(z => `<option value="${z.code}">${z.name}${z.total ? ` (${fmtN(z.total)})` : ''}</option>`).join('');
+  sel.classList.toggle('hidden', !zs.length);
+  sel.value = isZone(S.location) ? S.location : '';
+}
+let lastProv = null;
 function onLocationChange() {
-  $('locSel').value = S.location;
+  const prov = locProvince(S.location);
+  $('locSel').value = prov || NATIONAL;
+  buildZoneSelect(prov);
   buildModelDropdown('tsModelBtn', 'tsModelPanel', S.tsSelected, true);
   buildModelDropdown('cumModelBtn', 'cumModelPanel', S.cumSelected, false);
+  // a zone selection switches the map to the zone layer and zooms to its province; on the zone layer a
+  // change of province refocuses the map
+  const provChanged = prov !== lastProv; lastProv = prov;
+  if (isZone(S.location) && S.mapLayer !== 'hz') { setLayer('hz', prov); return; }
+  if (provChanged && S.mapLayer === 'hz') fitProvince(prov);
   sync();
 }
 function selectLocation(code) { S.location = code; onLocationChange(); }

@@ -24,6 +24,7 @@ header h1 span{color:var(--muted);font-weight:500}
 .badge{font-size:10px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;padding:3px 8px;border-radius:999px;
   background:#fff4e5;color:#9a5b00;border:1px solid #f0c889;white-space:nowrap}
 .badge.hidden{display:none}
+.hidden{display:none !important}
 body.mock .badge{background:#d9800a;color:#fff;border-color:#b86600;font-size:11px;padding:4px 10px}
 .wm{display:none;position:absolute;inset:0;pointer-events:none;z-index:4;overflow:hidden;
   align-items:center;justify-content:center;font-weight:800;letter-spacing:.35em;text-transform:uppercase;
