@@ -9,12 +9,14 @@ function initMap() {
   L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}', {
     maxZoom: 12, attribution: 'Tiles © Esri — Esri, HERE, Garmin, © OpenStreetMap contributors' }).addTo(map);
   provLayer = L.geoJSON(S.geoProv, { style: f => featStyle(f, 'prov'), onEachFeature: (f, l) => onFeat(f, l, 'prov') }).addTo(map);
-  provOutline = L.geoJSON(S.geoProv, { style: { fill: false, color: '#1b2430', weight: 1.4, opacity: 0.7 }, interactive: false });
 }
+/* zone polygons plus province outlines dissolved from them (so the borders coincide exactly) */
 async function ensureHZ() {
   if (hzLayer) return;
-  if (!S.geoHZ) S.geoHZ = await getJSON('data/geo/health-zones.json');
-  hzLayer = L.geoJSON(S.geoHZ, { style: f => featStyle(f, 'hz'), onEachFeature: (f, l) => onFeat(f, l, 'hz') });
+  const [hz, outline] = await Promise.all([getJSON('data/geo/health-zones.json'), getJSON('data/geo/hz-provinces.json')]);
+  S.geoHZ = hz;
+  hzLayer = L.geoJSON(hz, { style: f => featStyle(f, 'hz'), onEachFeature: (f, l) => onFeat(f, l, 'hz') });
+  provOutline = L.geoJSON(outline, { style: { fill: false, color: '#1b2430', weight: 1.6, opacity: 0.75 }, interactive: false });
 }
 /** switch the map level; optionally refocus on a province once the layer is ready */
 function setLayer(layer, fitProv) {
@@ -28,7 +30,7 @@ function setLayer(layer, fitProv) {
       provOutline.bringToFront();
     } else {
       if (hzLayer && map.hasLayer(hzLayer)) map.removeLayer(hzLayer);
-      if (map.hasLayer(provOutline)) map.removeLayer(provOutline);
+      if (provOutline && map.hasLayer(provOutline)) map.removeLayer(provOutline);
       if (!map.hasLayer(provLayer)) provLayer.addTo(map);
     }
     if (fitProv) fitProvince(fitProv);
@@ -85,8 +87,8 @@ function featStyle(f, level) {
   const w = level === 'hz' ? 0.6 : 1;
   if (!code) return { color: '#9aa3ad', weight: 0.5, dashArray: '2 3', fillColor: '#eceff3', fillOpacity: 0.3 };
   if (v == null) return { color: '#6b7684', weight: selected ? 2.5 : w, dashArray: selected ? null : '3 3', fillColor: '#e6e9ee', fillOpacity: dim ? 0.1 : 0.5 };
-  const norm = S.mapMetric === 'presence' ? v : Math.log1p(v) / Math.log1p(scale.vmax);
-  return { color: '#0b0f14', weight: selected ? 2.5 : w, dashArray: null, fillColor: colorFor(norm), fillOpacity: dim ? 0.15 : 0.75 };
+  const fill = S.mapMetric === 'presence' ? colorForP(v) : colorFor(Math.log1p(v) / Math.log1p(scale.vmax));
+  return { color: '#0b0f14', weight: selected ? 2.5 : w, dashArray: null, fillColor: fill, fillOpacity: dim ? 0.15 : 0.8 };
 }
 function featTip(f, level) {
   const code = f.properties.location;
@@ -125,7 +127,8 @@ function drawMap() {
   document.getElementById('mapSub').innerHTML = `${mt} · ${S.mapModel ? modelLabel(S.mapModel) : 'no model'}`
     + (S.manifest.mock && S.mapModel ? ' <b style="color:#9a5b00">(synthetic)</b>' : '')
     + (missing ? ` · ${missing} ${unit}${missing === 1 ? '' : 's'}${where} without output (dashed)` : '');
-  document.getElementById('legLo').textContent = '0';
+  document.getElementById('legLo').textContent = S.mapMetric === 'presence' ? '0%' : '0';
   document.getElementById('legHi').textContent = S.mapMetric === 'presence' ? '100%' : fmtN(scale.vmax);
+  document.querySelector('.map .legend .bar').style.background = S.mapMetric === 'presence' ? P_GRADIENT : N_GRADIENT;
   if (!mapFitted) { fitProvince(null); mapFitted = true; }
 }

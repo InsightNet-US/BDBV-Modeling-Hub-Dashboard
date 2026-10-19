@@ -30,7 +30,17 @@ function assignColors(models, ensembleId) {
   });
   return out;
 }
-/* 0..1 -> hazard ramp used by the map and its legend */
+/* 0..1 -> single-hue sequential ramp (light to deep purple) for probabilities */
+const P_STOPS = ['#f4f1f9', '#cdc0e3', '#9e86c8', '#6f4fa8', '#44207d'];
+function colorForP(p) {
+  p = Math.max(0, Math.min(1, p));
+  const x = p * (P_STOPS.length - 1), i = Math.min(P_STOPS.length - 2, Math.floor(x));
+  return mix(P_STOPS[i], P_STOPS[i + 1], x - i);
+}
+const P_GRADIENT = `linear-gradient(90deg,${P_STOPS.join(',')})`;
+const N_GRADIENT = 'linear-gradient(90deg,#12324a,#1e5f86,#2f9e5e,#f2c14e,#e8683f,#c0392b)';
+
+/* 0..1 -> multi-hue ramp for case counts (log-scaled by the caller) */
 function colorFor(p) {
   const stops = [[0.0, [18, 50, 74]], [0.25, [30, 95, 134]], [0.5, [47, 158, 94]], [0.7, [242, 193, 78]], [0.85, [232, 104, 63]], [1.0, [192, 57, 43]]];
   p = Math.max(0, Math.min(1, p));

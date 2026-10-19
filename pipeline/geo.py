@@ -6,6 +6,7 @@ Sources
 
 Simplification uses mapshaper (topology preserving) via npx. Run:
     .venv/bin/python pipeline/geo.py            # expects downloads in pipeline/geo-src (see README)
+    .venv/bin/python pipeline/geo.py hz-provinces   # province outlines dissolved from the zone polygons
 """
 from __future__ import annotations
 
@@ -154,6 +155,17 @@ def build_health_zones(tmp: Path) -> None:
         print("hub health zones with no polygon:", hub_unused[:60])
 
 
+def build_hz_provinces() -> None:
+    """Province outlines dissolved from the (code-stamped) zone polygons, so the zone layer's province
+    borders coincide exactly with the zone edges. Run after build.py has stamped `parent` codes."""
+    src = OUT / "health-zones.json"
+    out = OUT / "hz-provinces.json"
+    mapshaper(["-i", str(src), "-dissolve", "parent", "copy-fields=parent", "-each", "location=parent",
+               "-filter-fields", "location", "-o", "precision=0.001", "format=geojson", str(out)])
+    n = len(json.loads(out.read_text())["features"])
+    print(f"hz-provinces: {n} dissolved province outlines, {out.stat().st_size // 1024} KB")
+
+
 def main() -> int:
     tmp = config.ROOT / "pipeline" / "geo-src" / "tmp"
     tmp.mkdir(parents=True, exist_ok=True)
@@ -162,6 +174,8 @@ def main() -> int:
         build_provinces(tmp)
     if which in ("all", "hz"):
         build_health_zones(tmp)
+    if which in ("all", "hz", "hz-provinces"):
+        build_hz_provinces()
     return 0
 
 
