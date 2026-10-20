@@ -32,7 +32,7 @@ function drawTS() {
   const anyModel = ens || teams.length;
   const qAt = (m, w) => { const i = m.weeks.indexOf(w); return i < 0 ? null : m.q[i]; };
 
-  document.getElementById('tsSub').textContent = `${locName(loc)} · ${R ? 'reference date ' + fmtDate(R, true) : ''} · data as of ${asOf}`;
+  document.getElementById('tsSub').textContent = [locName(loc), R ? 'reference date ' + fmtDate(R, true) : '', `data as of ${asOf}`].filter(Boolean).join(' · ');
   legend.innerHTML = `<span class="chip"><i style="background:var(--past)"></i>reported (as of ${fmtDate(asOf)})</span>`
     + `<span class="chip"><i style="background:repeating-linear-gradient(135deg,var(--past) 0 2px,#fff 2px 4px)"></i>week in progress</span>`
     + (haveLatest ? `<span class="chip"><i style="border:1.5px solid var(--latest);background:transparent"></i>latest (as of ${fmtDate(S.obsLatest.as_of)})</span>` : '')
