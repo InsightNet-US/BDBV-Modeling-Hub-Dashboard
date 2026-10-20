@@ -10,7 +10,7 @@ DATA_DIR = Path(os.environ.get("DATA_DIR") or ROOT / "data").resolve()
 GEO_SRC = ROOT / "data" / "geo"   # committed boundary files + alias table, copied into DATA_DIR when it differs
 
 HUB_REPO = os.environ.get("HUB_REPO", "InsightNet-US/BDBV-Modeling-Hub")
-HUB_BRANCH = os.environ.get("HUB_BRANCH", "hub-additions")
+HUB_BRANCH = os.environ.get("HUB_BRANCH", "main")
 HUB_BRANCH_FALLBACK = os.environ.get("HUB_BRANCH_FALLBACK", "main")
 
 

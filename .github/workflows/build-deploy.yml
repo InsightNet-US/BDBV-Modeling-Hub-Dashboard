@@ -7,7 +7,7 @@ on:
     inputs:
       hub_branch:
         description: Hub branch to read (falls back to main if missing)
-        default: hub-additions
+        default: main
   push:
     branches: [main]
     paths-ignore:
@@ -31,7 +31,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     env:
-      HUB_BRANCH: ${{ github.event.inputs.hub_branch || 'hub-additions' }}
+      HUB_BRANCH: ${{ github.event.inputs.hub_branch || 'main' }}
       HUB_DIR: ${{ github.workspace }}/hub
       ENSEMBLE_MODEL_ID: ${{ vars.ENSEMBLE_MODEL_ID }}
     steps:

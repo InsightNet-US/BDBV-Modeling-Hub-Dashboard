@@ -68,7 +68,7 @@ scripts/assemble-site.sh     stages the Pages artifact: live site at the root, m
 
 ```sh
 python3.12 -m venv .venv && .venv/bin/pip install -r pipeline/requirements.txt
-git clone --depth 1 --branch hub-additions https://github.com/InsightNet-US/BDBV-Modeling-Hub.git hub
+git clone --depth 1 https://github.com/InsightNet-US/BDBV-Modeling-Hub.git hub
 MOCK_MODE=on .venv/bin/python pipeline/build.py       # synthetic output into data/ (or HUB_DIR=/path/to/hub ...)
 .venv/bin/python -m http.server 8000                   # open http://localhost:8000/ (the gate asks for "testme")
 .venv/bin/python -m pytest pipeline/tests
