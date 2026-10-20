@@ -1,6 +1,8 @@
 /* Leaflet choropleth at province or health-zone level: a model's median cases in the mapped week,
    or its probability of at least one case in that week. The zone boundaries (~1.4 MB) load on first
-   use. Province outlines stay on top of the zone layer for orientation. */
+   use. Province outlines stay on top of the zone layer for orientation. The selected location is
+   marked by a heavier border only; nothing else is dimmed. */
+const SEL_W = { prov: 3.5, hz: 3 }, OUTLINE_W = 1.6;
 let map, provLayer, hzLayer, provOutline, mapFitted = false;
 
 function initMap() {
@@ -16,7 +18,7 @@ async function ensureHZ() {
   const [hz, outline] = await Promise.all([getJSON('data/geo/health-zones.json'), getJSON('data/geo/hz-provinces.json')]);
   S.geoHZ = hz;
   hzLayer = L.geoJSON(hz, { style: f => featStyle(f, 'hz'), onEachFeature: (f, l) => onFeat(f, l, 'hz') });
-  provOutline = L.geoJSON(outline, { style: { fill: false, color: '#1b2430', weight: 1.6, opacity: 0.75 }, interactive: false });
+  provOutline = L.geoJSON(outline, { style: f => outlineStyle(f), interactive: false });
 }
 /** switch the map level; optionally refocus on a province once the layer is ready */
 function setLayer(layer, fitProv) {
@@ -53,7 +55,7 @@ function fitProvince(prov) {
 }
 function onFeat(f, layer, level) {
   layer.on('mousemove', e => showTip(featTip(f, level), e.originalEvent.clientX, e.originalEvent.clientY));
-  layer.on('mouseover', e => { if (f.properties.location) e.target.setStyle({ weight: 2.5, color: '#1b2430' }); });
+  layer.on('mouseover', e => { if (f.properties.location && f.properties.location !== S.location) e.target.setStyle({ weight: 2.5, color: '#1b2430' }); });
   // restore the computed choropleth style (not Leaflet's resetStyle, which would reapply the initial style)
   layer.on('mouseout', e => { hideTip(); e.target.setStyle(featStyle(f, level)); });
   layer.on('click', () => {
@@ -74,21 +76,20 @@ function locValue(code) {
   if (i < 0) return null;
   return S.mapMetric === 'presence' ? m.presence_wk[i] : m.q[i][QI.med];
 }
-/** is this feature outside the current geographic focus (the selected province)? */
-function dimmed(f, level) {
-  const prov = locProvince(S.location), code = f.properties.location;
-  if (!prov) return false;
-  return level === 'prov' ? code !== prov : f.properties.parent !== prov;
-}
 let scale = { vmax: 1 };
 function featStyle(f, level) {
   const code = f.properties.location, v = S.round ? locValue(code) : null;
-  const dim = dimmed(f, level), selected = code && code === S.location;
-  const w = level === 'hz' ? 0.6 : 1;
+  const selected = code && code === S.location;
+  const w = selected ? SEL_W[level] : level === 'hz' ? 0.6 : 1;
   if (!code) return { color: '#9aa3ad', weight: 0.5, dashArray: '2 3', fillColor: '#eceff3', fillOpacity: 0.3 };
-  if (v == null) return { color: '#6b7684', weight: selected ? 2.5 : w, dashArray: selected ? null : '3 3', fillColor: '#e6e9ee', fillOpacity: dim ? 0.1 : 0.5 };
+  if (v == null) return { color: selected ? '#0b0f14' : '#6b7684', weight: w, dashArray: selected ? null : '3 3', fillColor: '#e6e9ee', fillOpacity: 0.5 };
   const fill = S.mapMetric === 'presence' ? colorForP(v) : colorFor(Math.log1p(v) / Math.log1p(scale.vmax));
-  return { color: '#0b0f14', weight: selected ? 2.5 : w, dashArray: null, fillColor: fill, fillOpacity: dim ? 0.15 : 0.8 };
+  return { color: '#0b0f14', weight: w, dashArray: null, fillColor: fill, fillOpacity: 0.8 };
+}
+/* dissolved province outline on the zone layer: heavier for the province in focus */
+function outlineStyle(f) {
+  const sel = f.properties.location === locProvince(S.location) && !isZone(S.location);
+  return { fill: false, color: sel ? '#0b0f14' : '#1b2430', weight: sel ? SEL_W.prov : OUTLINE_W, opacity: sel ? 1 : 0.75 };
 }
 function featTip(f, level) {
   const code = f.properties.location;
@@ -115,18 +116,21 @@ function drawMap() {
   if (!map || !S.obsRound) return;
   const level = S.mapLayer, layer = level === 'hz' ? hzLayer : provLayer;
   if (!layer) return;
-  // colour scale over the features in focus (whole country, or the selected province)
-  const feats = []; layer.eachLayer(l => { if (l.feature.properties.location && !dimmed(l.feature, level)) feats.push(l.feature); });
+  // colour scale over every hub location on the active layer
+  const feats = []; layer.eachLayer(l => { if (l.feature.properties.location) feats.push(l.feature); });
   const vals = feats.map(f => S.round ? locValue(f.properties.location) : null).filter(v => v != null);
   scale = { vmax: S.mapMetric === 'presence' ? 1 : Math.max(1, ...vals) };
   layer.eachLayer(l => { l.setStyle(featStyle(l.feature, level)); if (l.feature.properties.location === S.location) l.bringToFront(); });
-  if (level === 'hz' && map.hasLayer(provOutline)) provOutline.bringToFront();
+  if (level === 'hz' && provOutline && map.hasLayer(provOutline)) {
+    const sel = locProvince(S.location);
+    provOutline.bringToFront();
+    provOutline.eachLayer(l => { l.setStyle(outlineStyle(l.feature)); if (l.feature.properties.location === sel) l.bringToFront(); });
+  }
   const missing = feats.length - vals.length, unit = level === 'hz' ? 'zone' : 'province';
-  const where = locProvince(S.location) && level === 'hz' ? ` in ${locName(locProvince(S.location))}` : '';
   const mt = `${S.mapMetric === 'presence' ? 'P(≥1 case)' : 'Median cases'}, <span class="horizonval">${wkLabel()}</span>`;
   document.getElementById('mapSub').innerHTML = `${mt} · ${S.mapModel ? modelLabel(S.mapModel) : 'no model'}`
     + (S.manifest.mock && S.mapModel ? ' <b style="color:#9a5b00">(synthetic)</b>' : '')
-    + (missing ? ` · ${missing} ${unit}${missing === 1 ? '' : 's'}${where} without output (dashed)` : '');
+    + (missing ? ` · ${missing} ${unit}${missing === 1 ? '' : 's'} without output (dashed)` : '');
   document.getElementById('legLo').textContent = S.mapMetric === 'presence' ? '0%' : '0';
   document.getElementById('legHi').textContent = S.mapMetric === 'presence' ? '100%' : fmtN(scale.vmax);
   document.querySelector('.map .legend .bar').style.background = S.mapMetric === 'presence' ? P_GRADIENT : N_GRADIENT;
