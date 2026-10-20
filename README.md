@@ -97,7 +97,8 @@ hub ensemble.
 
 ## Partners
 
-The hub is a joint effort of [Insight Net](https://insightnet.us/) centers ([ACCIDDA](https://accidda.org/)
-and epiEngage) and the [University of Kinshasa](https://www.unikin.ac.cd/), built on the
-[hubverse](https://hubverse.io/). Their marks in `assets/brand/` are shown in the footer; they remain the
+The hub is a joint effort of the DRC's [Institut National de Santé Publique](https://insp.cd/) (INSP), the
+[Kinshasa School of Public Health](https://espkinshasa.net/) and [Insight Net](https://insightnet.us/) centers
+([ACCIDDA](https://accidda.org/) and [epiENGAGE](https://epiengage.org/)), built on the
+[hubverse](https://hubverse.io/). Unused marks (UNIKIN crest, white ACCIDDA wordmark) stay in `assets/brand/`. Their marks in `assets/brand/` are shown in the footer; they remain the
 property of their owners and are used here to identify the hub's partners.

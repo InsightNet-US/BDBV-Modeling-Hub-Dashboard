@@ -126,8 +126,10 @@ async function init() {
   ls.innerHTML = `<option value="${NATIONAL}">DRC · national${nat.total ? ` (${fmtN(nat.total)})` : ''}</option>` +
     provinces().map(l => `<option value="${l.code}">${l.name}${l.total ? ` (${fmtN(l.total)})` : ''}</option>`).join('');
   buildZoneSelect(null);
-  $('footProv').innerHTML = `Hub ${manifest.hub.repo}@${manifest.hub.branch} (${manifest.hub.commit}) · latest target data as of <b>${manifest.latest_as_of}</b> · built ${manifest.generated_at.replace('T', ' ').replace('Z', ' UTC')}` +
-    (manifest.mock ? ' · <b style="color:#9a5b00">model output is synthetic</b>' : '');
+  // separate spans so the footer wraps between items, not mid-sentence
+  $('footProv').innerHTML = [`Hub ${manifest.hub.repo}@${manifest.hub.branch} (${manifest.hub.commit})`,
+    `latest target data as of <b>${manifest.latest_as_of}</b>`, `built ${manifest.generated_at.replace('T', ' ').replace('Z', ' UTC')}`,
+    manifest.mock ? '<b style="color:#9a5b00">model output is synthetic</b>' : ''].filter(Boolean).map(t => `<span>${t}</span>`).join('');
 
   initMap();
   wire();

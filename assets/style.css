@@ -107,6 +107,7 @@ footer{display:flex;align-items:center;gap:24px;padding:4px 20px;min-height:var(
 @media (max-width:1000px){ footer{flex-wrap:wrap;gap:6px 24px} }
 footer .spacer{flex:1}
 .footinfo{flex:1 1 auto;min-width:0;display:flex;flex-wrap:wrap;gap:2px 14px;line-height:1.35}
+#footProv{display:contents}
 /* partner strip: muted marks that recover full colour on hover (cf. the INRB and IDCUP dashboards) */
 .partners{display:inline-flex;align-items:center;gap:22px;flex-shrink:0}
 .partner-group{display:inline-flex;align-items:center;gap:14px}
@@ -114,12 +115,12 @@ footer .spacer{flex:1}
 .logo{display:inline-flex;align-items:center;height:var(--partner-h);flex-shrink:0;transition:opacity .15s ease}
 .logo img{height:100%;width:auto;display:block;object-fit:contain;transition:filter .15s ease;filter:grayscale(1) brightness(.55) contrast(1.1);opacity:.75}
 .logo:hover img{filter:none;opacity:1}
-/* the ACCIDDA source is a white wordmark: invert it dark, and keep it dark on hover */
-.logo-accidda{height:calc(var(--partner-h) * 1.15)}
-.logo-accidda img{filter:invert(1) brightness(.5) contrast(1.2)}
-.logo-accidda:hover img{filter:invert(1)}
-.logo-insightnet img{filter:grayscale(1) brightness(.6) contrast(1.1)}
-.logo-unikin{height:calc(var(--partner-h) * 1.0)}
+/* per-mark heights so the wordmarks read at a similar optical size */
+.logo-insightnet{height:calc(var(--partner-h) * 0.85)}
+.logo-accidda{height:calc(var(--partner-h) * 1.0)}
+.logo-epiengage{height:calc(var(--partner-h) * 1.1)}
+.logo-insp{height:calc(var(--partner-h) * 1.15)}
+.logo-esp{height:calc(var(--partner-h) * 1.1)}
 .logo-hubverse{height:calc(var(--partner-h) * 0.95)}
 @media (max-width:1250px){ :root{--partner-h:16px} .partners{gap:14px} .partner-group{gap:10px} }
 
