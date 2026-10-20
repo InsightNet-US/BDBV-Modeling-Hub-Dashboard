@@ -120,7 +120,7 @@ footer .spacer{flex:1}
 .logo-accidda{height:calc(var(--partner-h) * 1.0)}
 .logo-epiengage{height:calc(var(--partner-h) * 1.1)}
 .logo-insp{height:calc(var(--partner-h) * 1.15)}
-.logo-esp{height:calc(var(--partner-h) * 0.9)}  /* KSPH letters cut from the school's full logo */
+.logo-esp{height:calc(var(--partner-h) * 1.15)}  /* ESP shield + KSPH letters */
 .logo-hubverse{height:calc(var(--partner-h) * 0.95)}
 @media (max-width:1250px){ :root{--partner-h:16px} .partners{gap:14px} .partner-group{gap:10px} }
 
