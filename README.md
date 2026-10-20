@@ -100,5 +100,5 @@ hub ensemble.
 The hub is a joint effort of the DRC's [Institut National de Santé Publique](https://insp.cd/) (INSP), the
 [Kinshasa School of Public Health](https://espkinshasa.net/) and [Insight Net](https://insightnet.us/) centers
 ([ACCIDDA](https://accidda.org/) and [epiENGAGE](https://epiengage.org/)), built on the
-[hubverse](https://hubverse.io/). Unused marks (UNIKIN crest, white ACCIDDA wordmark) stay in `assets/brand/`. Their marks in `assets/brand/` are shown in the footer; they remain the
+[hubverse](https://hubverse.io/). The KSPH mark is the lettering cut from the school's full logo (kept as `esp-kinshasa.png`); the UNIKIN crest and white ACCIDDA wordmark also stay in `assets/brand/`, unused. Their marks in `assets/brand/` are shown in the footer; they remain the
 property of their owners and are used here to identify the hub's partners.
