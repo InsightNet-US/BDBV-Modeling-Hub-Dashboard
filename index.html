@@ -9,6 +9,14 @@
 <link rel="stylesheet" href="assets/style.css?v=dev" />
 </head>
 <body>
+<div id="gate" class="gate hidden" role="dialog" aria-labelledby="gateTitle">
+  <div class="card">
+    <h2 id="gateTitle">Test dashboard</h2>
+    <p>This copy shows <b>synthetic model output</b> for development and demonstration. Enter the test phrase to continue, or go to the <a href="../">live dashboard</a>.</p>
+    <div class="row"><input id="gateInput" type="password" autocomplete="off" placeholder="test phrase" aria-label="Test phrase"><button type="button" id="gateBtn">Open</button></div>
+    <div class="err" id="gateErr"></div>
+  </div>
+</div>
 <header>
   <div class="titlebar">
     <h1>BDBV Modeling Hub <span>· nowcasts &amp; forecasts of weekly confirmed cases</span></h1>
@@ -29,6 +37,7 @@
   <button class="linkbtn" id="modelsBtn" type="button">Models</button>
   </div>
 </header>
+<div id="mockBanner" class="mockbanner hidden" role="note">SYNTHETIC MODEL OUTPUT · demonstration data, not team submissions · <a id="liveLink" href="../" class="hidden">go to the live dashboard</a></div>
 
 <div class="grid">
  <div class="left">
@@ -52,7 +61,7 @@
     <div class="bd">
       <svg id="tsChart" width="100%" height="100%" preserveAspectRatio="none"></svg>
       <div class="note" id="tsEmpty" style="display:none"></div>
-      <div class="wm" aria-hidden="true">Synthetic</div>
+      <div class="wm" aria-hidden="true"><span>Synthetic</span></div>
     </div>
   </section>
 
@@ -70,7 +79,7 @@
     </div>
     <div class="bd" style="padding-top:6px">
       <svg id="cumChart" width="100%" height="200" preserveAspectRatio="none"></svg>
-      <div class="wm" aria-hidden="true">Synthetic</div>
+      <div class="wm" aria-hidden="true"><span>Synthetic</span></div>
     </div>
   </section>
  </div>
@@ -94,7 +103,7 @@
       <div class="spacer"></div>
       <div class="legend"><span id="legLo">0</span><span class="bar"></span><span id="legHi">1</span></div>
     </div>
-    <div id="mapWrap" style="position:relative;flex:1;min-height:0;display:flex"><div id="map"></div><div class="wm" aria-hidden="true">Synthetic</div></div>
+    <div id="mapWrap" style="position:relative;flex:1;min-height:0;display:flex"><div id="map"></div><div class="wm" aria-hidden="true"><span>Synthetic</span></div></div>
   </section>
 </div>
 

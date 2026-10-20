@@ -105,6 +105,30 @@ async function getJSON(path) {
   if (!r.ok) throw new Error(`${path}: ${r.status}`);
   return (S.cache[path] = await r.json());
 }
+/* Mock-dashboard gate: a phrase whose SHA-256 is in the manifest, remembered per browser. It only keeps
+   people from stumbling onto synthetic output; nothing on a static site is secret. */
+const GATE_KEY = 'bdbv-mock-unlocked';
+async function sha256(s) {
+  const b = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(s));
+  return [...new Uint8Array(b)].map(x => x.toString(16).padStart(2, '0')).join('');
+}
+function gate(hash) {
+  let have = null; try { have = localStorage.getItem(GATE_KEY); } catch (e) { /* storage blocked: ask every time */ }
+  if (have === hash) return Promise.resolve();
+  const g = $('gate'), inp = $('gateInput'), err = $('gateErr');
+  g.classList.remove('hidden'); inp.focus();
+  return new Promise(resolve => {
+    const go = async () => {
+      if (!(crypto && crypto.subtle)) { err.textContent = 'Open this page over https (or localhost) to unlock it.'; return; }
+      if (await sha256(inp.value.trim()) === hash) {
+        try { localStorage.setItem(GATE_KEY, hash); } catch (e) { /* fine */ }
+        g.classList.add('hidden'); resolve();
+      } else { err.textContent = 'That is not the test phrase.'; inp.select(); }
+    };
+    $('gateBtn').addEventListener('click', go);
+    inp.addEventListener('keydown', e => { if (e.key === 'Enter') go(); });
+  });
+}
 async function init() {
   const [manifest, models, geoProv] = await Promise.all([
     getJSON('data/manifest.json'), getJSON('data/models.json'), getJSON('data/geo/provinces.json')]);
@@ -115,6 +139,11 @@ async function init() {
   S.obsLatest = await getJSON(`data/observed/${manifest.latest_as_of}.json`);
   $('mockBadge').classList.toggle('hidden', !manifest.mock);
   document.body.classList.toggle('mock', !!manifest.mock);
+  if (manifest.mock) {
+    $('mockBanner').classList.remove('hidden');
+    $('liveLink').classList.toggle('hidden', !/\/mock\/?$/.test(location.pathname.replace(/index\.html$/, '')));
+    if (manifest.mock_gate) await gate(manifest.mock_gate);
+  }
 
   // header selectors
   const rs = $('roundSel');

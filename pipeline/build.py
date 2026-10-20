@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import csv
+import hashlib
 import json
 import re
 import shutil
@@ -75,7 +76,7 @@ def build_observed(target: pd.DataFrame, out_dir: Path) -> dict:
 # ---------------------------------------------------------------- geo
 def load_aliases() -> dict[tuple[str, str], tuple[str, str]]:
     """HDX (norm name, norm province) -> hub (name, parent name)."""
-    path = config.DATA_DIR / "geo" / "hz-aliases.csv"
+    path = config.GEO_SRC / "hz-aliases.csv"
     out = {}
     if path.exists():
         with path.open() as fh:
@@ -166,6 +167,9 @@ def main() -> int:
     metadata = hub_io.read_model_metadata(hub)
 
     out_dir = config.DATA_DIR
+    if out_dir != config.GEO_SRC.parent.resolve():   # building outside the repo's data/: bring the boundaries along
+        out_dir.mkdir(parents=True, exist_ok=True)
+        shutil.copytree(config.GEO_SRC, out_dir / "geo", dirs_exist_ok=True)
     for sub in ("observed", "rounds"):
         shutil.rmtree(out_dir / sub, ignore_errors=True)
     obs_info = build_observed(target, out_dir)
@@ -264,6 +268,8 @@ def main() -> int:
         "generated_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
         "hub": {"repo": config.HUB_REPO, "branch": info.branch, "commit": info.commit},
         "mock": config.MOCK_MODE == "on",
+        "mock_gate": (hashlib.sha256(config.MOCK_PASSPHRASE.encode()).hexdigest()
+                      if config.MOCK_MODE == "on" and config.MOCK_PASSPHRASE else None),
         "target": config.TARGET, "horizons": config.HORIZONS, "quantile_levels": config.QUANTILE_LEVELS,
         "locations": loc_table, "national_code": NATIONAL,
         "as_of_versions": versions, "latest_as_of": latest,

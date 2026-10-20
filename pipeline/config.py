@@ -5,7 +5,9 @@ import os
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-DATA_DIR = ROOT / "data"
+# Output folder. The committed one is ROOT/data; the mock build in CI writes elsewhere (DATA_DIR env).
+DATA_DIR = Path(os.environ.get("DATA_DIR") or ROOT / "data").resolve()
+GEO_SRC = ROOT / "data" / "geo"   # committed boundary files + alias table, copied into DATA_DIR when it differs
 
 HUB_REPO = os.environ.get("HUB_REPO", "InsightNet-US/BDBV-Modeling-Hub")
 HUB_BRANCH = os.environ.get("HUB_BRANCH", "hub-additions")
@@ -30,6 +32,10 @@ def hub_dir() -> Path:
 MOCK_MODE = os.environ.get("MOCK_MODE", "off").strip().lower()
 if MOCK_MODE not in ("on", "off"):
     raise ValueError("MOCK_MODE must be 'on' or 'off'")
+
+# Phrase that unlocks the mock dashboard (its SHA-256 goes into the manifest; the page compares hashes).
+# Only a nudge against stumbling onto synthetic output: everything on a static site is public.
+MOCK_PASSPHRASE = os.environ.get("MOCK_PASSPHRASE", "testme").strip()
 
 # Explicit ensemble model id; if empty, the single model flagged ensemble_of_hub_models wins.
 ENSEMBLE_MODEL_ID = os.environ.get("ENSEMBLE_MODEL_ID", "").strip() or None

@@ -8,9 +8,6 @@ on:
       hub_branch:
         description: Hub branch to read (falls back to main if missing)
         default: hub-additions
-      mock_mode:
-        description: "Synthetic model output: on or off (overrides the MOCK_MODE repository variable)"
-        default: ""
   push:
     branches: [main]
     paths-ignore:
@@ -28,12 +25,14 @@ concurrency:
   group: build-deploy
   cancel-in-progress: false
 
+# Two builds from the same hub checkout: the real dashboard at the site root (data/ committed to this repo)
+# and a synthetic-output copy at /mock/ for development and demos (never committed, gated by a passphrase).
 jobs:
   build:
     runs-on: ubuntu-latest
     env:
       HUB_BRANCH: ${{ github.event.inputs.hub_branch || 'hub-additions' }}
-      MOCK_MODE: ${{ github.event.inputs.mock_mode || vars.MOCK_MODE || 'off' }}
+      HUB_DIR: ${{ github.workspace }}/hub
       ENSEMBLE_MODEL_ID: ${{ vars.ENSEMBLE_MODEL_ID }}
     steps:
       - uses: actions/checkout@v4
@@ -59,29 +58,30 @@ jobs:
       - name: Run pipeline tests
         run: python -m pytest pipeline/tests -q
 
-      - name: Build data/
+      - name: Build data/ (real submissions)
         env:
-          HUB_DIR: ${{ github.workspace }}/hub
+          MOCK_MODE: "off"
         run: python pipeline/build.py
 
       - name: Commit refreshed data
-        if: github.event_name != 'pull_request'
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add data/
           if git diff --cached --quiet; then echo "data unchanged"; else
-            git commit -m "data: refresh from hub $(git -C hub rev-parse --short HEAD) (MOCK_MODE=$MOCK_MODE)"
+            git commit -m "data: refresh from hub $(git -C hub rev-parse --short HEAD)"
             git push
           fi
 
+      - name: Build the mock copy (synthetic submissions)
+        env:
+          MOCK_MODE: "on"
+          DATA_DIR: ${{ github.workspace }}/_mock/data
+          MOCK_PASSPHRASE: ${{ vars.MOCK_PASSPHRASE || 'testme' }}
+        run: python pipeline/build.py
+
       - name: Assemble site
-        run: |
-          mkdir -p _site
-          cp index.html _site/
-          cp -r assets data _site/
-          # cache-bust local assets so browsers pick up new JS/CSS on every deploy
-          sed -i "s/?v=dev/?v=${GITHUB_SHA::7}/g" _site/index.html
+        run: scripts/assemble-site.sh _site _mock/data "${GITHUB_SHA::7}"
 
       - uses: actions/upload-pages-artifact@v3
         with:

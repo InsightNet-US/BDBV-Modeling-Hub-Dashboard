@@ -28,9 +28,24 @@ header h1 span{color:var(--muted);font-weight:500}
 body.mock .badge{background:#d9800a;color:#fff;border-color:#b86600;font-size:11px;padding:4px 10px}
 .wm{display:none;position:absolute;inset:0;pointer-events:none;z-index:4;overflow:hidden;
   align-items:center;justify-content:center;font-weight:800;letter-spacing:.35em;text-transform:uppercase;
-  color:rgba(217,128,10,.13);font-size:clamp(28px,6vw,72px);transform:rotate(-24deg);white-space:nowrap;user-select:none}
+  color:rgba(217,128,10,.2);font-size:clamp(28px,6vw,72px);white-space:nowrap;user-select:none;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Ctext x='120' y='120' text-anchor='middle' dominant-baseline='middle' transform='rotate(-30 120 120)' font-family='Helvetica,Arial,sans-serif' font-size='30' font-weight='800' letter-spacing='3' fill='%23d9800a' fill-opacity='.2'%3ESYNTHETIC%3C/text%3E%3C/svg%3E");
+  background-size:240px 240px}
+.wm span{transform:rotate(-24deg)}
 body.mock .wm{display:flex}
 #mapWrap .wm{z-index:450}
+/* mock-only banner under the header (cannot be dismissed) */
+.mockbanner{background:#d9800a;color:#fff;font-size:12px;font-weight:600;letter-spacing:.3px;padding:5px 20px;text-align:center;flex-shrink:0}
+.mockbanner a{color:#fff;font-weight:700}
+/* passphrase gate shown over the mock dashboard until unlocked */
+.gate{position:fixed;inset:0;z-index:5000;background:var(--bg);display:flex;align-items:center;justify-content:center;padding:16px}
+.gate .card{background:#fff;border:1px solid var(--line);border-radius:12px;padding:22px 26px;max-width:440px;width:100%;box-shadow:0 10px 30px rgba(27,36,48,.12)}
+.gate h2{margin:0 0 8px;font-size:16px}
+.gate p{margin:0 0 14px;font-size:13px;color:var(--muted);line-height:1.45}
+.gate .row{display:flex;gap:8px}
+.gate input{flex:1;font:inherit;font-size:14px;padding:8px 10px;border:1px solid var(--line);border-radius:8px}
+.gate button{font:inherit;font-size:13px;font-weight:600;padding:8px 14px;border-radius:8px;border:1px solid #b86600;background:#d9800a;color:#fff;cursor:pointer}
+.gate .err{color:var(--bad);font-size:12px;min-height:16px;margin-top:8px}
 .tt .syn{margin-top:5px;padding-top:4px;border-top:1px dashed #f0c889;color:#9a5b00;font-size:10.5px;font-weight:600;letter-spacing:.3px}
 header .spacer{flex:1}
 header .toolbar .spacer{flex:1 1 0}
