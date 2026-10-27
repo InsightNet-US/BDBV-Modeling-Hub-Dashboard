@@ -49,7 +49,7 @@ const WHERE = {
 /* sample values for the example column, per language */
 const SAMPLE = {
   en: { n: 3, d: '24 Oct', loc: 'Ituri', list: 'OHTJHU-BM, CEPH-Rtrend_BDBV', name: 'OHTJHU-BM', rel: '−2 wk', kind: 'forecast +1 wk', wk: 'week ending 7 Nov (forecast +1 wk)', prov: 'Nord Kivu', s: 'Hub target data', repo: 'InsightNet-US/BDBV-Modeling-Hub', branch: 'main', commit: '07b9844', msg: 'data/manifest.json: 404' },
-  fr: { n: 3, d: '24 oct.', loc: 'Ituri', list: 'OHTJHU-BM, CEPH-Rtrend_BDBV', name: 'OHTJHU-BM', rel: '−2 sem.', kind: 'prévision +1 sem.', wk: 'semaine se terminant le 7 nov. (prévision +1 sem.)', prov: 'Nord Kivu', s: 'Données cibles du hub', repo: 'InsightNet-US/BDBV-Modeling-Hub', branch: 'main', commit: '07b9844', msg: 'data/manifest.json: 404' },
+  fr: { n: 3, d: '24 oct.', loc: 'Ituri', list: 'OHTJHU-BM, CEPH-Rtrend_BDBV', name: 'OHTJHU-BM', rel: '−2 sem.', kind: 'prévision +1 sem.', wk: 'semaine se terminant le 7 nov. (prévision +1 sem.)', prov: 'Nord Kivu', s: 'Données observées du hub', repo: 'InsightNet-US/BDBV-Modeling-Hub', branch: 'main', commit: '07b9844', msg: 'data/manifest.json: 404' },
 };
 const fill = (s, vars) => String(s).replace(/\{(\w+)\}/g, (m, k) => (k in vars ? vars[k] : m));
 const strip = s => String(s).replace(/<[^>]+>/g, (m) => (m === '</b>' ? ' — ' : ''));

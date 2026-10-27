@@ -32,7 +32,10 @@ function drawCum() {
     s += `<text x="${xx}" y="${H - 5}" text-anchor="middle" style="font-size:9px">${fmtN(val)}</text>`; }
   const esc = x => String(x).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
   const section = (txt, yy) => `<text x="8" y="${yy}" style="fill:#5f6b7a;font-size:9px;font-weight:700;letter-spacing:.4px">${txt.toUpperCase()}</text>`;
-  const cat = (txt, cy, col) => `<text x="${mLc - 6}" y="${cy + 3}" text-anchor="end" style="fill:${col || 'var(--muted)'};font-size:9px">${txt}</text>`;
+  // a label may carry two lines separated by \n (long French labels); the pair is centred on cy
+  const cat = (txt, cy, col) => { const lines = txt.split('\n'), st = `fill:${col || 'var(--muted)'};font-size:9px`;
+    return lines.length === 1 ? `<text x="${mLc - 6}" y="${cy + 3}" text-anchor="end" style="${st}">${txt}</text>`
+      : `<text x="${mLc - 6}" y="${cy - 2}" text-anchor="end" style="${st}">${lines[0]}<tspan x="${mLc - 6}" dy="9.5">${lines[1]}</tspan></text>`; };
   const valTxt = (v, x, cy) => `<text x="${x + 5}" y="${cy + 3}" style="fill:var(--muted);font-size:8.5px">${fmtN(v)}</text>`;
   const box = (q, color, cy, bh, tip) => { bh = bh || 9;
     return `<g class="cbox" data-tip="${esc(tip)}"><line x1="${px(q[QI.lo95])}" y1="${cy}" x2="${px(q[QI.hi95])}" y2="${cy}" stroke="${color}" stroke-width="1.5" opacity="0.7"/>`
