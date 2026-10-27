@@ -1,14 +1,15 @@
 # Glossaire anglais–français du tableau de bord / English–French glossary
 
-Ce document fixe la terminologie française du tableau de bord du BDBV Modeling Hub. Il est à relire par
-une ou un collègue francophone avant que le français soit proposé sur le site public. La liste complète
+Ce document fixe la terminologie française du tableau de bord du BDBV Modeling Hub, relue par des
+collègues francophones (première relecture appliquée le 2026-10-27, français ouvert sur le site public le
+même jour ; les corrections restent bienvenues). La liste complète
 des chaînes traduites, avec un exemple pour chacune, est dans [`strings.md`](strings.md) (générée à
 partir de `assets/i18n.js`).
 
-**Où voir le résultat :** la version de test du tableau de bord,
-<https://insightnet-us.github.io/BDBV-Modeling-Hub-Dashboard/mock/?lang=fr> (phrase de test : `testme`),
-avec le sélecteur EN | FR dans la barre d'outils. Les données de modèles y sont synthétiques ; seul le
-texte de l'interface est à relire.
+**Où voir le résultat :** le tableau de bord public,
+<https://insightnet-us.github.io/BDBV-Modeling-Hub-Dashboard/?lang=fr>, avec le sélecteur EN | FR dans la
+barre d'outils (la version de test avec des données simulées reste à
+<https://insightnet-us.github.io/BDBV-Modeling-Hub-Dashboard/mock/?lang=fr>, phrase de test `testme`).
 
 **Comment relire :** corrigez directement la colonne « Français retenu » ici et la colonne « French » de
 `strings.md` (pull request), ou envoyez vos remarques par courriel en citant le terme anglais. Les

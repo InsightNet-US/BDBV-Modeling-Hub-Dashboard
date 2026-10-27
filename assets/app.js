@@ -136,9 +136,9 @@ function gate(hash) {
     inp.addEventListener('keydown', e => { if (e.key === 'Enter') go(); });
   });
 }
-/* Language: English everywhere; French only where the manifest is mock (or I18N_LIVE is flipped after the
-   translation review). The choice is remembered per browser; ?lang=xx in the URL overrides it. */
-const I18N_LIVE = false;
+/* Language: English and French. I18N_LIVE enables the switch on the live site (set false to confine it to
+   the mock copy again). The choice is remembered per browser; ?lang=xx in the URL overrides it. */
+const I18N_LIVE = true;
 const LANG_KEY = 'bdbv-lang';
 function langEnabled() { return !!(S.manifest && (S.manifest.mock || I18N_LIVE)); }
 function setLang(lang, store) {
