@@ -63,6 +63,12 @@ function modelLoc(mid, loc) {
 function roundModels() { return S.round ? Object.keys(S.round.models).sort(sortModels) : []; }
 function sortModels(a, b) { if (a === S.ensembleId) return -1; if (b === S.ensembleId) return 1; return a.localeCompare(b); }
 function modelsForLocation(loc) { return roundModels().filter(m => modelLoc(m, loc)); }
+/** the model that submitted the most locations in the current round (ties: first in menu order) */
+function widestModel(ms) {
+  let best = null, n = -1;
+  ms.forEach(id => { const k = Object.keys(S.round.models[id].locations).length; if (k > n) { best = id; n = k; } });
+  return best;
+}
 /** weeks with model output from any model/location in the current round, oldest first */
 function roundWeeks() {
   const set = new Set();
@@ -173,16 +179,17 @@ async function loadRound(ref) {
   afterRound();
 }
 function afterRound() {
-  // default model selections: ensemble backbone (+CI) or first team
-  const ms = roundModels();
+  // default model selections: the hub ensemble when there is one, otherwise every model; the map
+  // starts on the ensemble or, failing that, the model covering the most locations
+  const ms = roundModels(), hasEns = S.ensembleId && ms.includes(S.ensembleId);
   for (const set of [S.tsSelected, S.cumSelected]) {
     [...set].forEach(id => { if (!ms.includes(id) && id !== 'ensembleCI') set.delete(id); });
     if (!set.size && ms.length) {
-      if (S.ensembleId && ms.includes(S.ensembleId)) { set.add(S.ensembleId); }
-      else set.add(ms[0]);
+      if (hasEns) set.add(S.ensembleId);
+      else ms.forEach(id => set.add(id));
     }
   }
-  if (!S.mapModel || !ms.includes(S.mapModel)) S.mapModel = (S.ensembleId && ms.includes(S.ensembleId)) ? S.ensembleId : ms[0] || null;
+  if (!S.mapModel || !ms.includes(S.mapModel)) S.mapModel = hasEns ? S.ensembleId : widestModel(ms);
   buildModelDropdown('tsModelBtn', 'tsModelPanel', S.tsSelected, true);
   buildModelDropdown('cumModelBtn', 'cumModelPanel', S.cumSelected, false);
   const sel = $('mapModelSel');
@@ -217,12 +224,16 @@ function buildModelDropdown(btnId, panelId, selSet, isTS) {
     const label = isEns && isTS ? 'Ensemble 95% interval' : modelLabel(id);
     return `<label class="${dis ? 'disabled' : ''}" title="${dis ? 'No submission for ' + locName(S.location) : ''}"><input type="checkbox" value="${id}" ${selSet.has(id) ? 'checked' : ''} ${dis ? 'disabled' : ''}>${sw}${label}</label>`;
   }).join('') || '<div class="hint">No submissions in this round</div>';
+  // label: models selected AND submitted for the location (the ensemble median is always drawn on the chart)
   const refresh = () => {
+    const hasEns = S.ensembleId && avail.has(S.ensembleId), ensOn = hasEns && selSet.has(S.ensembleId);
     const teams = [...selSet].filter(id => id !== S.ensembleId && avail.has(id));
-    const ens = S.ensembleId && selSet.has(S.ensembleId);
-    btn.textContent = (isTS
-      ? (teams.length ? `Ensemble + ${teams.length} model${teams.length > 1 ? 's' : ''}` : (ens ? 'Ensemble + interval' : (S.ensembleId ? 'Ensemble' : 'none')))
-      : (selSet.size === 0 ? 'none' : selSet.size === 1 ? modelLabel([...selSet][0]) : `${selSet.size} models`)) + ' ▾';
+    const plus = `Ensemble + ${teams.length} model${teams.length > 1 ? 's' : ''}`;
+    let label;
+    if (isTS && hasEns) label = teams.length ? plus : ensOn ? 'Ensemble + interval' : 'Ensemble';
+    else if (ensOn) label = teams.length ? plus : 'Ensemble';
+    else label = teams.length === 0 ? 'none' : teams.length === 1 ? modelLabel(teams[0]) : teams.length === ms.length ? 'All models' : `${teams.length} models`;
+    btn.textContent = label + ' ▾';
   };
   refresh();
   panel.querySelectorAll('input').forEach(cb => cb.addEventListener('change', () => {

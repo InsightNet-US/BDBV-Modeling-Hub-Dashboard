@@ -42,7 +42,9 @@ function drawTS() {
 
   if (S.round && !anyModel && roundModels().length) {
     empty.style.display = 'block';
-    empty.innerHTML = `<b>No model output for ${locName(loc)}</b>${loc === NATIONAL ? 'No model submitted a national (CD) series in this round; reported national counts are shown.' : 'No model submitted this location in this round.'}`;
+    const others = modelsForLocation(loc).filter(id => id !== S.ensembleId);
+    if (others.length) empty.innerHTML = `<b>None of the selected models covers ${locName(loc)}</b>${others.length === 1 ? 'One model' : others.length + ' models'} submitted it in this round: ${others.map(modelLabel).join(', ')}. Tick ${others.length === 1 ? 'it' : 'them'} in the Models menu.`;
+    else empty.innerHTML = `<b>No model output for ${locName(loc)}</b>${loc === NATIONAL ? 'No model submitted a national (CD) series in this round; reported national counts are shown.' : 'No model submitted this location in this round.'}`;
   } else if (!S.round) {
     empty.style.display = 'block';
     empty.innerHTML = `<b>No submissions yet</b>The first accepted reference date is ${fmtDate(S.manifest.accepted_reference_dates[0] || '', true)}. Reported cases are shown.`;

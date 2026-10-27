@@ -24,7 +24,8 @@ small JSON summaries under `data/`, and a GitHub Action rebuilds and deploys to 
 - **Locations** follow the hub's hierarchy: country `CD`, provinces `CD-XX`, health zones `CD-XX-NN`
   (548 locations in `auxiliary-data/locations.csv`). The header has a country/province selector and,
   for a province, a zone selector. Every panel works at any level; models that did not submit a location
-  are greyed out in the model menus.
+  are greyed out in the model menus. With a hub ensemble the panels start on the ensemble alone; without one
+  every model is selected and the map starts on the model covering the most locations.
 - **"Projections from" control** (arrows, or click the date) to move between rounds, by the week the
   projections were made (reference date). Each round is paired with the latest target-data release on or before the Tuesday
   closing its submission window (`reference_date - 4 days`); the data version used is always labelled.
