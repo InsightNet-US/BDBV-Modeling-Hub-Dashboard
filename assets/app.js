@@ -14,16 +14,17 @@ const $ = id => document.getElementById(id);
 const QI = { lo95: 0, lo80: 1, lo50: 2, med: 3, hi50: 4, hi80: 5, hi95: 6 };
 
 /* ---------- helpers shared by panels ---------- */
-const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 function fmtDate(iso, withYear) {
   const [y, m, d] = iso.split('-').map(Number);
-  return `${d} ${MONTHS[m - 1]}${withYear ? ' ' + y : ''}`;
+  return `${d} ${t('months')[m - 1]}${withYear ? ' ' + y : ''}`;
 }
 function addDays(iso, n) {
   const t = new Date(iso + 'T00:00:00Z'); t.setUTCDate(t.getUTCDate() + n);
   return t.toISOString().slice(0, 10);
 }
-const fmtN = v => v == null ? '–' : Math.round(v).toLocaleString();
+// explicit locales so the output does not depend on the browser; French groups thousands with U+202F
+const fmtN = v => v == null ? '–' : LANG === 'fr' ? Math.round(v).toLocaleString('en-US').replace(/,/g, '\u202f') : Math.round(v).toLocaleString('en-US');
+const fmtPct = p => `${Math.round(p * 100)}${LANG === 'fr' ? '\u202f%' : '%'}`;
 const fmtRange = q => q ? `${fmtN(q[QI.lo95])}–${fmtN(q[QI.hi95])}` : '';
 const tt = $('tt');
 function showTip(html, x, y) {
@@ -34,13 +35,13 @@ function showTip(html, x, y) {
 }
 function hideTip() { tt.style.opacity = 0; }
 /** footer line appended to any tooltip that shows model output while synthetic data are loaded */
-function synNote() { return S.manifest && S.manifest.mock ? '<div class="syn">SYNTHETIC MODEL OUTPUT · not a team submission</div>' : ''; }
+function synNote() { return S.manifest && S.manifest.mock ? `<div class="syn">${t('tip.syn')}</div>` : ''; }
 
 function locInfo(code) { return S.locIndex[code] || null; }
 function locName(code) {
-  if (code === NATIONAL) return 'DRC (national)';
+  if (code === NATIONAL) return t('loc.national');
   const l = locInfo(code); if (!l) return code;
-  return l.type === 'health zone' ? `${l.name} · ${locName(l.parent).replace(' (national)', '')}` : l.name;
+  return l.type === 'health zone' ? `${l.name} · ${l.parent === NATIONAL ? t('loc.nationalShort') : locName(l.parent)}` : l.name;
 }
 /** province code giving the geographic context of a location (null for the country) */
 function locProvince(code) { const l = locInfo(code); return !l || l.type === 'country' ? null : l.type === 'province' ? code : l.parent; }
@@ -48,7 +49,7 @@ const isZone = code => (locInfo(code) || {}).type === 'health zone';
 const provinces = () => S.manifest.locations.filter(l => l.type === 'province');
 const zonesOf = p => S.manifest.locations.filter(l => l.type === 'health zone' && l.parent === p);
 function modelName(id) { const m = S.models[id]; return m ? (m.model_name && m.model_name !== id ? `${m.team_abbr}-${m.model_abbr}` : id) : id; }
-function modelLabel(id) { return id === S.ensembleId ? 'Hub ensemble' : modelName(id); }
+function modelLabel(id) { return id === S.ensembleId ? t('model.ensemble') : modelName(id); }
 function modelColor(id) { return S.colors[id] || '#888'; }
 /** observed counts {week: n} for a location in an observed-data version object */
 function obsMap(ov, loc) {
@@ -77,9 +78,9 @@ function roundWeeks() {
 }
 /** offset of a week from the reference date, in weeks (negative = nowcast week) */
 function weekRel(w) { return S.roundRef && w ? Math.round((Date.parse(w) - Date.parse(S.roundRef)) / 6048e5) : null; }
-function weekKind(w) { const r = weekRel(w); return r == null ? '' : r < 0 ? `nowcast ${weekRelLabel(w)}` : r === 0 ? 'forecast wk 0' : `forecast +${r} wk`; }
+function weekKind(w) { const r = weekRel(w); return r == null ? '' : r < 0 ? t('week.nowcastKind', { rel: weekRelLabel(w) }) : r === 0 ? t('week.fc0') : t('week.fcPos', { n: r }); }
 /** "+1 wk", "wk 0", "−2 wk": offset of a week from the projections-from date */
-function weekRelLabel(w) { const r = weekRel(w); return r == null ? '' : r === 0 ? 'wk 0' : `${r > 0 ? '+' : '−'}${Math.abs(r)} wk`; }
+function weekRelLabel(w) { const r = weekRel(w); return r == null ? '' : r === 0 ? t('week.h0') : t(r > 0 ? 'week.hPos' : 'week.hNeg', { n: Math.abs(r) }); }
 /* ---- arrow steppers: prev/next buttons around a select, stepping over its enabled options ---- */
 function wireStepper(selId) {
   const sel = $(selId), wrap = $(selId + 'Step'); if (!wrap || wrap.dataset.wired) return;
@@ -125,15 +126,48 @@ function gate(hash) {
   g.classList.remove('hidden'); inp.focus();
   return new Promise(resolve => {
     const go = async () => {
-      if (!(crypto && crypto.subtle)) { err.textContent = 'Open this page over https (or localhost) to unlock it.'; return; }
+      if (!(crypto && crypto.subtle)) { err.textContent = t('gate.https'); return; }
       if (await sha256(inp.value.trim()) === hash) {
         try { localStorage.setItem(GATE_KEY, hash); } catch (e) { /* fine */ }
         g.classList.add('hidden'); resolve();
-      } else { err.textContent = 'That is not the test phrase.'; inp.select(); }
+      } else { err.textContent = t('gate.wrong'); inp.select(); }
     };
     $('gateBtn').addEventListener('click', go);
     inp.addEventListener('keydown', e => { if (e.key === 'Enter') go(); });
   });
+}
+/* Language: English everywhere; French only where the manifest is mock (or I18N_LIVE is flipped after the
+   translation review). The choice is remembered per browser; ?lang=xx in the URL overrides it. */
+const I18N_LIVE = false;
+const LANG_KEY = 'bdbv-lang';
+function langEnabled() { return !!(S.manifest && (S.manifest.mock || I18N_LIVE)); }
+function setLang(lang, store) {
+  if (!langEnabled()) lang = 'en';
+  LANG = I18N[lang] ? lang : 'en';
+  if (store) { try { localStorage.setItem(LANG_KEY, LANG); } catch (e) { /* fine */ } }
+  setToggle('langToggle', 'lang', LANG);
+  applyStatic();
+  if (S.manifest) buildHeader();
+  setBasemap(LANG);
+  if (S.obsRound) afterRound();
+}
+/** header selectors and footer provenance; re-run on a language change, keeping the current selection */
+function buildHeader() {
+  const manifest = S.manifest, rs = $('roundSel');
+  rs.innerHTML = manifest.rounds.slice().reverse().map(r =>
+    `<option value="${r.reference_date}">${fmtDate(r.reference_date, true)}</option>`).join('')
+    || `<option value="">${t('hdr.noRounds')}</option>`;
+  rs.value = S.roundRef || '';
+  wireStepper('roundSel'); refreshStepper('roundSel');
+  const ls = $('locSel'), nat = locInfo(NATIONAL) || { total: 0 };
+  ls.innerHTML = `<option value="${NATIONAL}">${t('loc.nationalOpt')}${nat.total ? ` (${fmtN(nat.total)})` : ''}</option>` +
+    provinces().map(l => `<option value="${l.code}">${l.name}${l.total ? ` (${fmtN(l.total)})` : ''}</option>`).join('');
+  ls.value = locProvince(S.location) || NATIONAL;
+  buildZoneSelect(locProvince(S.location));
+  // separate spans so the footer wraps between items, not mid-sentence
+  $('footProv').innerHTML = [t('foot.hub', { repo: manifest.hub.repo, branch: manifest.hub.branch, commit: manifest.hub.commit }),
+    t('foot.latest', { d: `<b>${manifest.latest_as_of}</b>` }), t('foot.built', { d: manifest.generated_at.replace('T', ' ').replace('Z', ' UTC') }),
+    manifest.mock ? `<b style="color:#9a5b00">${t('foot.synthetic')}</b>` : ''].filter(Boolean).map(x => `<span>${x}</span>`).join('');
 }
 async function init() {
   const [manifest, models, geoProv] = await Promise.all([
@@ -148,23 +182,18 @@ async function init() {
   if (manifest.mock) {
     $('mockBanner').classList.remove('hidden');
     $('liveLink').classList.toggle('hidden', !/\/mock\/?$/.test(location.pathname.replace(/index\.html$/, '')));
-    if (manifest.mock_gate) await gate(manifest.mock_gate);
   }
-
-  // header selectors
-  const rs = $('roundSel');
-  rs.innerHTML = manifest.rounds.slice().reverse().map(r =>
-    `<option value="${r.reference_date}">${fmtDate(r.reference_date, true)}</option>`).join('')
-    || '<option value="">no rounds yet</option>';
-  wireStepper('roundSel');
-  const ls = $('locSel'), nat = locInfo(NATIONAL) || { total: 0 };
-  ls.innerHTML = `<option value="${NATIONAL}">DRC · national${nat.total ? ` (${fmtN(nat.total)})` : ''}</option>` +
-    provinces().map(l => `<option value="${l.code}">${l.name}${l.total ? ` (${fmtN(l.total)})` : ''}</option>`).join('');
-  buildZoneSelect(null);
-  // separate spans so the footer wraps between items, not mid-sentence
-  $('footProv').innerHTML = [`Hub ${manifest.hub.repo}@${manifest.hub.branch} (${manifest.hub.commit})`,
-    `latest target data as of <b>${manifest.latest_as_of}</b>`, `built ${manifest.generated_at.replace('T', ' ').replace('Z', ' UTC')}`,
-    manifest.mock ? '<b style="color:#9a5b00">model output is synthetic</b>' : ''].filter(Boolean).map(t => `<span>${t}</span>`).join('');
+  // language (before the gate so the gate card is already translated)
+  let lang = 'en';
+  if (langEnabled()) {
+    $('langToggle').classList.remove('hidden');
+    const q = new URLSearchParams(location.search).get('lang');
+    let stored = null; try { stored = localStorage.getItem(LANG_KEY); } catch (e) { /* fine */ }
+    lang = q || stored || 'en';
+    document.querySelectorAll('[data-lang]').forEach(b => b.addEventListener('click', e => { e.preventDefault(); setLang(b.dataset.lang, true); }));
+  }
+  setLang(lang, langEnabled() && !!new URLSearchParams(location.search).get('lang'));   // a ?lang= link is remembered like a click
+  if (manifest.mock && manifest.mock_gate) await gate(manifest.mock_gate);
 
   initMap();
   wire();
@@ -193,7 +222,7 @@ function afterRound() {
   buildModelDropdown('tsModelBtn', 'tsModelPanel', S.tsSelected, true);
   buildModelDropdown('cumModelBtn', 'cumModelPanel', S.cumSelected, false);
   const sel = $('mapModelSel');
-  sel.innerHTML = ms.map(id => `<option value="${id}">${modelLabel(id)}</option>`).join('') || '<option value="">no models</option>';
+  sel.innerHTML = ms.map(id => `<option value="${id}">${modelLabel(id)}</option>`).join('') || `<option value="">${t('map.noModels')}</option>`;
   sel.value = S.mapModel || '';
   // mapped week: keep the same offset from the reference date across rounds, default week 0
   const ws = roundWeeks(), R = S.roundRef, want = R ? addDays(R, 7 * S.mapRel) : null;
@@ -201,12 +230,12 @@ function afterRound() {
   // chronological, so the arrows step backwards/forwards in time; label = date plus offset from R
   const fc = ws.filter(w => weekRel(w) >= 0), nc = ws.filter(w => weekRel(w) < 0);
   const opt = w => `<option value="${w}">${fmtDate(w, true)} · ${weekRelLabel(w)}</option>`;
-  $('mapWeekSel').innerHTML = (nc.length ? `<optgroup label="Nowcast weeks (ending)">${nc.map(opt).join('')}</optgroup>` : '')
-    + (fc.length ? `<optgroup label="Forecast weeks (ending)">${fc.map(opt).join('')}</optgroup>` : '') || '<option value="">no weeks</option>';
+  $('mapWeekSel').innerHTML = (nc.length ? `<optgroup label="${t('map.nowcastWeeks')}">${nc.map(opt).join('')}</optgroup>` : '')
+    + (fc.length ? `<optgroup label="${t('map.forecastWeeks')}">${fc.map(opt).join('')}</optgroup>` : '') || `<option value="">${t('map.noWeeks')}</option>`;
   $('mapWeekSel').value = S.mapWeek || '';
   wireStepper('mapWeekSel'); refreshStepper('mapWeekSel');
   const ri = S.manifest.rounds.find(r => r.reference_date === S.roundRef);
-  $('roundInfo').textContent = ri ? `${ri.n_models} model${ri.n_models === 1 ? '' : 's'} · data as of ${fmtDate(ri.as_of)}` : '';
+  $('roundInfo').textContent = ri ? tn('hdr.roundInfo', ri.n_models, { d: fmtDate(ri.as_of) }) : '';
   $('roundSel').value = S.roundRef || ''; refreshStepper('roundSel');
   buildDrawer();
   sync();
@@ -216,23 +245,23 @@ function afterRound() {
 function buildModelDropdown(btnId, panelId, selSet, isTS) {
   const btn = $(btnId), panel = $(panelId), ms = roundModels();
   const avail = new Set(modelsForLocation(S.location));
-  const hint = S.ensembleId && ms.includes(S.ensembleId) && isTS ? '<div class="hint">Ensemble median always shown</div>' : '';
+  const hint = S.ensembleId && ms.includes(S.ensembleId) && isTS ? `<div class="hint">${t('dd.hintEns')}</div>` : '';
   panel.innerHTML = hint + ms.map(id => {
     const isEns = id === S.ensembleId, dis = !avail.has(id);
     const sw = isEns ? `<span class="sw" style="border:1.5px dashed ${modelColor(id)};background:transparent"></span>`
                      : `<span class="sw" style="background:${modelColor(id)}"></span>`;
-    const label = isEns && isTS ? 'Ensemble 95% interval' : modelLabel(id);
-    return `<label class="${dis ? 'disabled' : ''}" title="${dis ? 'No submission for ' + locName(S.location) : ''}"><input type="checkbox" value="${id}" ${selSet.has(id) ? 'checked' : ''} ${dis ? 'disabled' : ''}>${sw}${label}</label>`;
-  }).join('') || '<div class="hint">No submissions in this round</div>';
+    const label = isEns && isTS ? t('dd.ensCI') : modelLabel(id);
+    return `<label class="${dis ? 'disabled' : ''}" title="${dis ? t('dd.noSub', { loc: locName(S.location) }) : ''}"><input type="checkbox" value="${id}" ${selSet.has(id) ? 'checked' : ''} ${dis ? 'disabled' : ''}>${sw}${label}</label>`;
+  }).join('') || `<div class="hint">${t('dd.none')}</div>`;
   // label: models selected AND submitted for the location (the ensemble median is always drawn on the chart)
   const refresh = () => {
     const hasEns = S.ensembleId && avail.has(S.ensembleId), ensOn = hasEns && selSet.has(S.ensembleId);
     const teams = [...selSet].filter(id => id !== S.ensembleId && avail.has(id));
-    const plus = `Ensemble + ${teams.length} model${teams.length > 1 ? 's' : ''}`;
+    const plus = tn('dd.plus', teams.length);
     let label;
-    if (isTS && hasEns) label = teams.length ? plus : ensOn ? 'Ensemble + interval' : 'Ensemble';
-    else if (ensOn) label = teams.length ? plus : 'Ensemble';
-    else label = teams.length === 0 ? 'none' : teams.length === 1 ? modelLabel(teams[0]) : teams.length === ms.length ? 'All models' : `${teams.length} models`;
+    if (isTS && hasEns) label = teams.length ? plus : ensOn ? t('dd.ensInterval') : t('dd.ens');
+    else if (ensOn) label = teams.length ? plus : t('dd.ens');
+    else label = teams.length === 0 ? t('dd.noneSel') : teams.length === 1 ? modelLabel(teams[0]) : teams.length === ms.length ? t('dd.all') : tn('dd.nModels', teams.length);
     btn.textContent = label + ' ▾';
   };
   refresh();
@@ -271,7 +300,7 @@ function buildZoneSelect(prov) {
   const sel = $('hzSel');
   if (!prov) { sel.classList.add('hidden'); sel.innerHTML = ''; return; }
   const zs = zonesOf(prov);
-  sel.innerHTML = `<option value="">Whole province</option>` +
+  sel.innerHTML = `<option value="">${t('loc.wholeProvince')}</option>` +
     zs.map(z => `<option value="${z.code}">${z.name}${z.total ? ` (${fmtN(z.total)})` : ''}</option>`).join('');
   sel.classList.toggle('hidden', !zs.length);
   sel.value = isZone(S.location) ? S.location : '';
@@ -297,16 +326,17 @@ function sync() { drawTS(); drawCum(); drawMap(); }
 function toggleDrawer(open) { $('drawer').classList.toggle('open', open); $('drawerBg').classList.toggle('open', open); }
 function buildDrawer() {
   const ms = roundModels();
-  $('drawerSub').textContent = S.roundRef ? `Reference date ${fmtDate(S.roundRef, true)} · ${ms.length} model${ms.length === 1 ? '' : 's'}` : 'No round loaded';
+  const note = t('drawer.englishNote');   // metadata texts come from the hub in English
+  $('drawerSub').innerHTML = (S.roundRef ? tn('drawer.sub', ms.length, { d: fmtDate(S.roundRef, true) }) : t('drawer.noRound')) + (note && ms.length ? `<br><i>${note}</i>` : '');
   $('drawerBody').innerHTML = ms.map(id => {
     const m = S.models[id] || {}, nloc = Object.keys((S.round.models[id] || {}).locations || {}).length;
-    const links = [m.website_url && `<a href="${m.website_url}" target="_blank" rel="noopener">website</a>`, m.repo_url && `<a href="${m.repo_url}" target="_blank" rel="noopener">code</a>`].filter(Boolean).join(' · ');
-    return `<div class="model"><h3><i style="background:${modelColor(id)}"></i>${m.model_name || id} <span class="tag">${id}</span>${m.ensemble_of_hub_models ? '<span class="tag">ensemble</span>' : ''}${m.mock ? '<span class="tag" style="color:#9a5b00;border-color:#f0c889">synthetic</span>' : ''}</h3>
+    const links = [m.website_url && `<a href="${m.website_url}" target="_blank" rel="noopener">${t('drawer.website')}</a>`, m.repo_url && `<a href="${m.repo_url}" target="_blank" rel="noopener">${t('drawer.code')}</a>`].filter(Boolean).join(' · ');
+    return `<div class="model"><h3><i style="background:${modelColor(id)}"></i>${m.model_name || id} <span class="tag">${id}</span>${m.ensemble_of_hub_models ? `<span class="tag">${t('drawer.tagEns')}</span>` : ''}${m.mock ? `<span class="tag" style="color:#9a5b00;border-color:#f0c889">${t('drawer.tagSyn')}</span>` : ''}</h3>
       <div class="team">${m.team_name || ''}</div>
       ${m.methods ? `<p>${m.methods}</p>` : ''}
-      ${m.data_inputs ? `<p class="sm" style="color:var(--muted)">Data: ${m.data_inputs}</p>` : ''}
-      <p style="color:var(--muted)">${nloc} location${nloc === 1 ? '' : 's'} submitted${m.license ? ` · ${m.license}` : ''}${links ? ' · ' + links : ''}</p></div>`;
-  }).join('') || '<p style="color:var(--muted)">No submissions yet for this round.</p>';
+      ${m.data_inputs ? `<p class="sm" style="color:var(--muted)">${t('drawer.data', { s: m.data_inputs })}</p>` : ''}
+      <p style="color:var(--muted)">${tn('drawer.nloc', nloc)}${m.license ? ` · ${m.license}` : ''}${links ? ' · ' + links : ''}</p></div>`;
+  }).join('') || `<p style="color:var(--muted)">${t('drawer.empty')}</p>`;
 }
 
-init().catch(e => { console.error(e); document.body.insertAdjacentHTML('afterbegin', `<div style="background:#fde8e8;color:#8a1c1c;padding:10px 20px;font-size:13px">Failed to load dashboard data: ${e.message}</div>`); });
+init().catch(e => { console.error(e); const msg = typeof t === 'function' ? t('err.load', { msg: e.message }) : 'Failed to load dashboard data: ' + e.message; document.body.insertAdjacentHTML('afterbegin', `<div style="background:#fde8e8;color:#8a1c1c;padding:10px 20px;font-size:13px">${msg}</div>`); });

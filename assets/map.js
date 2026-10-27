@@ -4,12 +4,31 @@
    marked by a heavier border only; nothing else is dimmed. */
 const SEL_W = { prov: 3.5, hz: 3 }, OUTLINE_W = 1.6;
 let map, provLayer, hzLayer, provOutline, mapFitted = false;
+let base = null, baseKind = null, zoomCtl = null;
+/* Basemaps: Esri light grey (English labels) by default. A French-labelled basemap can be set in FR_TILES
+   (e.g. CARTO Positron, which needs a free API key tied to the site's domain:
+   'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png?api_key=…' with attribution
+   '© OpenStreetMap contributors © CARTO'); until then French keeps the Esri tiles. Same maxZoom on both so
+   zoom behaviour does not change with the language. */
+const FR_TILES = null;   // { url, options } or null
+const BASEMAPS = {
+  en: () => L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}', {
+    maxZoom: 12, attribution: 'Tiles © Esri — Esri, HERE, Garmin, © OpenStreetMap contributors' }),
+  fr: () => L.tileLayer(FR_TILES.url, Object.assign({ maxZoom: 12 }, FR_TILES.options || {})),
+};
+/** tile layer and zoom-control titles for a language; a no-op until the map exists */
+function setBasemap(lang) {
+  if (!map) return;
+  const kind = lang === 'fr' && FR_TILES ? 'fr' : 'en';
+  if (kind !== baseKind) { if (base) map.removeLayer(base); base = BASEMAPS[kind]().addTo(map); base.bringToBack(); baseKind = kind; }
+  if (zoomCtl) map.removeControl(zoomCtl);
+  zoomCtl = L.control.zoom({ zoomInTitle: t('map.zoomIn'), zoomOutTitle: t('map.zoomOut') }).addTo(map);
+}
 
 function initMap() {
-  map = L.map('map', { zoomControl: true, attributionControl: true }).setView([0.5, 28.5], 6);
+  map = L.map('map', { zoomControl: false, attributionControl: true }).setView([0.5, 28.5], 6);
   map.attributionControl.setPrefix('');
-  L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}', {
-    maxZoom: 12, attribution: 'Tiles © Esri — Esri, HERE, Garmin, © OpenStreetMap contributors' }).addTo(map);
+  setBasemap(LANG);
   provLayer = L.geoJSON(S.geoProv, { style: f => featStyle(f, 'prov'), onEachFeature: (f, l) => onFeat(f, l, 'prov') }).addTo(map);
 }
 /* zone polygons plus province outlines dissolved from them (so the borders coincide exactly) */
@@ -66,7 +85,7 @@ function onFeat(f, layer, level) {
 }
 
 /* label for the mapped week: "week ending 7 Nov (forecast +1 wk)" */
-const wkLabel = () => S.mapWeek ? `week ending ${fmtDate(S.mapWeek)} (${weekKind(S.mapWeek)})` : 'no week';
+const wkLabel = () => S.mapWeek ? t('map.wkLabel', { d: fmtDate(S.mapWeek), kind: weekKind(S.mapWeek) }) : t('map.noWeek');
 
 /* ---- values and styles ---- */
 function locValue(code) {
@@ -93,7 +112,7 @@ function outlineStyle(f) {
 }
 function featTip(f, level) {
   const code = f.properties.location;
-  if (!code) return `<b>${f.properties.name}</b><div class="sm">zone not in the hub's location list</div>`;
+  if (!code) return `<b>${f.properties.name}</b><div class="sm">${t('map.tipNotInHub')}</div>`;
   const obs = obsMap(S.obsRound, code);
   const upTo = S.roundRef || S.obsRound.last_complete_week;
   const recent = Object.keys(obs).filter(w => w <= upTo).sort().slice(-4).reduce((a, w) => a + obs[w], 0);
@@ -102,14 +121,14 @@ function featTip(f, level) {
   let rows = '';
   if (m && i >= 0) {
     const q = m.q[i];
-    rows += `<div class="row"><span>Median cases, ${wkLabel()}</span><b>${fmtN(q[QI.med])} <span class="sm">(${fmtRange(q)})</span></b></div>`;
-    rows += `<div class="row"><span>P(≥1 case), same week</span><b>${Math.round(m.presence_wk[i] * 100)}%</b></div>`;
-    if (obs[S.mapWeek] != null) rows += `<div class="row"><span>Reported so far, same week <span class="sm">(as of ${fmtDate(S.obsRound.as_of)})</span></span><b>${fmtN(obs[S.mapWeek])}</b></div>`;
-  } else rows += `<div class="row"><span>${S.mapModel ? modelLabel(S.mapModel) : 'Model output'}</span><b>${m ? 'week not submitted' : 'no submission'}</b></div>`;
-  rows += `<div class="row"><span>Reported, last 4 wk</span><b>${fmtN(recent)}</b></div><div class="row"><span>Reported to date</span><b>${fmtN(total)}</b></div>`;
-  const ctx = level === 'hz' ? ` <span class="sm">· health zone, ${locName(f.properties.parent)}</span>` : ` <span class="sm">· ${code}</span>`;
-  const act = code === S.location ? (level === 'hz' ? 'back to the province' : 'clear selection') : 'select';
-  return `<b>${f.properties.name}</b>${ctx}${rows}<div class="sm" style="margin-top:4px">click to ${act}</div>${m && i >= 0 ? synNote() : ''}`;
+    rows += `<div class="row"><span>${t('map.tipMedian', { wk: wkLabel() })}</span><b>${fmtN(q[QI.med])} <span class="sm">(${fmtRange(q)})</span></b></div>`;
+    rows += `<div class="row"><span>${t('map.tipPresence')}</span><b>${fmtPct(m.presence_wk[i])}</b></div>`;
+    if (obs[S.mapWeek] != null) rows += `<div class="row"><span>${t('map.tipReportedSame')} <span class="sm">${t('map.tipAsOf', { d: fmtDate(S.obsRound.as_of) })}</span></span><b>${fmtN(obs[S.mapWeek])}</b></div>`;
+  } else rows += `<div class="row"><span>${S.mapModel ? modelLabel(S.mapModel) : t('map.tipOutput')}</span><b>${t(m ? 'map.tipWeekNotSub' : 'map.tipNoSub')}</b></div>`;
+  rows += `<div class="row"><span>${t('map.tipLast4')}</span><b>${fmtN(recent)}</b></div><div class="row"><span>${t('map.tipToDate')}</span><b>${fmtN(total)}</b></div>`;
+  const ctx = level === 'hz' ? ` <span class="sm">${t('map.ctxZone', { prov: locName(f.properties.parent) })}</span>` : ` <span class="sm">· ${code}</span>`;
+  const act = t(code === S.location ? (level === 'hz' ? 'map.actBack' : 'map.actClear') : 'map.actSelect');
+  return `<b>${f.properties.name}</b>${ctx}${rows}<div class="sm" style="margin-top:4px">${act}</div>${m && i >= 0 ? synNote() : ''}`;
 }
 
 function drawMap() {
@@ -126,13 +145,13 @@ function drawMap() {
     provOutline.bringToFront();
     provOutline.eachLayer(l => { l.setStyle(outlineStyle(l.feature)); if (l.feature.properties.location === sel) l.bringToFront(); });
   }
-  const missing = feats.length - vals.length, unit = level === 'hz' ? 'zone' : 'province';
-  const mt = `${S.mapMetric === 'presence' ? 'P(≥1 case)' : 'Median cases'}, <span class="horizonval">${wkLabel()}</span>`;
-  document.getElementById('mapSub').innerHTML = `${mt} · ${S.mapModel ? modelLabel(S.mapModel) : 'no model'}`
-    + (S.manifest.mock && S.mapModel ? ' <b style="color:#9a5b00">(synthetic)</b>' : '')
-    + (missing ? ` · ${missing} ${unit}${missing === 1 ? '' : 's'} without output (dashed)` : '');
-  document.getElementById('legLo').textContent = S.mapMetric === 'presence' ? '0%' : '0';
-  document.getElementById('legHi').textContent = S.mapMetric === 'presence' ? '100%' : fmtN(scale.vmax);
+  const missing = feats.length - vals.length;
+  const mt = `${t(S.mapMetric === 'presence' ? 'map.subPresence' : 'map.subMedian')}, <span class="horizonval">${wkLabel()}</span>`;
+  document.getElementById('mapSub').innerHTML = `${mt} · ${S.mapModel ? modelLabel(S.mapModel) : t('map.noModel')}`
+    + (S.manifest.mock && S.mapModel ? ` <b style="color:#9a5b00">${t('map.synthetic')}</b>` : '')
+    + (missing ? ` · ${tn(level === 'hz' ? 'map.missingZones' : 'map.missingProvinces', missing)}` : '');
+  document.getElementById('legLo').textContent = S.mapMetric === 'presence' ? fmtPct(0) : '0';
+  document.getElementById('legHi').textContent = S.mapMetric === 'presence' ? fmtPct(1) : fmtN(scale.vmax);
   document.querySelector('.map .legend .bar').style.background = S.mapMetric === 'presence' ? P_GRADIENT : N_GRADIENT;
   if (!mapFitted) { fitProvince(null); mapFitted = true; }
 }

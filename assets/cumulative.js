@@ -11,61 +11,62 @@ function drawCum() {
   const reported = Object.keys(obs).filter(w => w <= upTo).reduce((a, w) => a + obs[w], 0);
   const latestObs = S.obsLatest.as_of !== asOf
     ? Object.entries(obsMap(S.obsLatest, loc)).filter(([w]) => w <= upTo).reduce((a, [, v]) => a + v, 0) : null;
-  sub.textContent = `${locName(loc)} · through week ending ${fmtDate(upTo, true)}`;
+  sub.textContent = t('cum.sub', { loc: locName(loc), d: fmtDate(upTo, true) });
 
-  const sel = roundModels().filter(id => S.cumSelected.has(id)).map(id => ({ id, name: modelLabel(id), color: modelColor(id), m: modelLoc(id, loc) })).filter(t => t.m);
+  const sel = roundModels().filter(id => S.cumSelected.has(id)).map(id => ({ id, name: modelLabel(id), color: modelColor(id), m: modelLoc(id, loc) })).filter(tm => tm.m);
   const H_LIST = S.manifest.horizons;
   const n = Math.max(1, sel.length);
-  const mLc = 162, mRc = 56, mT = 8, mB = 18, gp = 13, ggap = 6;
+  const mLc = LANG === 'fr' ? 190 : 162, mRc = 56, mT = 8, mB = 18, gp = 13, ggap = 6;   // wider label gutter for French
   const H = mT + 8 + 15 + 23 + (latestObs != null ? 16 : 0) + 4 + 15 + (H_LIST.length + 1) * (n * gp + ggap) + 6 + mB;
   svg.setAttribute('height', H);
   const y0 = H - mB;
   const maxOf = arr => arr.length ? Math.max(...arr) : 0;
   const xmax = Math.max(reported, latestObs || 0,
-    maxOf(sel.map(t => t.m.cum_nowcast[QI.hi95])),
-    maxOf(sel.flatMap(t => H_LIST.map(h => (t.m.cum_through_h[h] || [0])[QI.hi95] || 0)))) * 1.06 || 1;
+    maxOf(sel.map(tm => tm.m.cum_nowcast[QI.hi95])),
+    maxOf(sel.flatMap(tm => H_LIST.map(h => (tm.m.cum_through_h[h] || [0])[QI.hi95] || 0)))) * 1.06 || 1;
   const px = v => mLc + (v / xmax) * (W - mLc - mRc);
 
   let s = '';
   for (let g = 0; g <= 4; g++) { const val = xmax * g / 4, xx = px(val);
     s += `<line x1="${xx}" y1="${mT}" x2="${xx}" y2="${y0}" stroke="var(--line)"/>`;
     s += `<text x="${xx}" y="${H - 5}" text-anchor="middle" style="font-size:9px">${fmtN(val)}</text>`; }
-  const section = (t, yy) => `<text x="8" y="${yy}" style="fill:#5f6b7a;font-size:9px;font-weight:700;letter-spacing:.4px">${t.toUpperCase()}</text>`;
-  const cat = (t, cy, col) => `<text x="${mLc - 6}" y="${cy + 3}" text-anchor="end" style="fill:${col || 'var(--muted)'};font-size:9px">${t}</text>`;
+  const esc = x => String(x).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
+  const section = (txt, yy) => `<text x="8" y="${yy}" style="fill:#5f6b7a;font-size:9px;font-weight:700;letter-spacing:.4px">${txt.toUpperCase()}</text>`;
+  const cat = (txt, cy, col) => `<text x="${mLc - 6}" y="${cy + 3}" text-anchor="end" style="fill:${col || 'var(--muted)'};font-size:9px">${txt}</text>`;
   const valTxt = (v, x, cy) => `<text x="${x + 5}" y="${cy + 3}" style="fill:var(--muted);font-size:8.5px">${fmtN(v)}</text>`;
   const box = (q, color, cy, bh, tip) => { bh = bh || 9;
-    return `<g class="cbox" data-tip="${tip}"><line x1="${px(q[QI.lo95])}" y1="${cy}" x2="${px(q[QI.hi95])}" y2="${cy}" stroke="${color}" stroke-width="1.5" opacity="0.7"/>`
+    return `<g class="cbox" data-tip="${esc(tip)}"><line x1="${px(q[QI.lo95])}" y1="${cy}" x2="${px(q[QI.hi95])}" y2="${cy}" stroke="${color}" stroke-width="1.5" opacity="0.7"/>`
       + `<line x1="${px(q[QI.lo95])}" y1="${cy - 4}" x2="${px(q[QI.lo95])}" y2="${cy + 4}" stroke="${color}" stroke-width="1.5" opacity="0.7"/>`
       + `<line x1="${px(q[QI.hi95])}" y1="${cy - 4}" x2="${px(q[QI.hi95])}" y2="${cy + 4}" stroke="${color}" stroke-width="1.5" opacity="0.7"/>`
       + `<rect x="${px(q[QI.lo50])}" y="${cy - bh / 2}" width="${Math.max(1, px(q[QI.hi50]) - px(q[QI.lo50]))}" height="${bh}" fill="${color}" fill-opacity="0.35" stroke="${color}" stroke-width="1.2"/>`
       + `<line x1="${px(q[QI.med])}" y1="${cy - bh / 2}" x2="${px(q[QI.med])}" y2="${cy + bh / 2}" stroke="#1b2430" stroke-width="1.4"/>`
       + valTxt(q[QI.med], px(q[QI.hi95]), cy) + `</g>`; };
   const dot = (v, color, cy, hollow) => `<circle cx="${px(v)}" cy="${cy}" r="4.5" fill="${hollow ? '#fff' : color}" stroke="${hollow ? color : '#fff'}" stroke-width="${hollow ? 1.5 : 1}"/>` + valTxt(v, px(v), cy);
-  const note = (t, cy) => `<text x="${mLc + 4}" y="${cy + 3}" style="fill:#8a94a3;font-size:9px;font-style:italic">${t}</text>`;
+  const note = (txt, cy) => `<text x="${mLc + 4}" y="${cy + 3}" style="fill:#8a94a3;font-size:9px;font-style:italic">${txt}</text>`;
 
   let yy = mT + 8;
-  s += section('To date', yy); yy += 15;
-  { const cy = yy + 7; s += cat(`Reported (as of ${fmtDate(asOf)})`, cy, 'var(--past)') + dot(reported, 'var(--past)', cy); yy += 23; }
-  if (latestObs != null) { const cy = yy; s += cat(`Latest (as of ${fmtDate(S.obsLatest.as_of)})`, cy, 'var(--latest)') + dot(latestObs, 'var(--latest)', cy, true); yy += 16; }
+  s += section(t('cum.toDate'), yy); yy += 15;
+  { const cy = yy + 7; s += cat(t('cum.reported', { d: fmtDate(asOf) }), cy, 'var(--past)') + dot(reported, 'var(--past)', cy); yy += 23; }
+  if (latestObs != null) { const cy = yy; s += cat(t('cum.latest', { d: fmtDate(S.obsLatest.as_of) }), cy, 'var(--latest)') + dot(latestObs, 'var(--latest)', cy, true); yy += 16; }
   yy += 4;
-  s += section('Eventual cumulative', yy); yy += 15;
-  if (!sel.length) s += note(S.round && roundModels().length ? 'no model output for this location' : 'no submissions', yy + gp / 2);
+  s += section(t('cum.eventual'), yy); yy += 15;
+  if (!sel.length) s += note(t(S.round && roundModels().length ? 'cum.noOutput' : 'cum.noSub'), yy + gp / 2);
   // nowcast: closed weeks through the Saturday before the reference date
   { const gTop = yy, gH = n * gp, through = R ? fmtDate(addDays(R, -7)) : '';
     if (mapRel != null && mapRel < 0) s += `<rect x="${mLc - 2}" y="${gTop - 1}" width="${W - mRc - (mLc - 2)}" height="${gH + 2}" fill="var(--accent)" opacity="0.08"/>`;
-    s += cat(`Nowcast · closed wks thru ${through}`, gTop + gH / 2 - 4, 'var(--median)');
-    sel.forEach((t, k) => { const cy = gTop + k * gp + gp / 2;
-      if (t.m.n_nowcast_weeks === 0) s += dot(t.m.cum_nowcast[QI.med], t.color, cy, true) + note('no nowcast weeks submitted (reported only)', cy);
-      else s += box(t.m.cum_nowcast, t.color, cy, 9, `${t.name}: eventual confirmed cases in weeks closed by ${through} (${t.m.n_nowcast_weeks} nowcast wk)`); });
+    s += cat(t('cum.nowcastCat', { d: through }), gTop + gH / 2 - 4, 'var(--median)');
+    sel.forEach((tm, k) => { const cy = gTop + k * gp + gp / 2;
+      if (tm.m.n_nowcast_weeks === 0) s += dot(tm.m.cum_nowcast[QI.med], tm.color, cy, true) + note(t('cum.noNowcast'), cy);
+      else s += box(tm.m.cum_nowcast, tm.color, cy, 9, tn('cum.nowcastTip', tm.m.n_nowcast_weeks, { name: tm.name, d: through })); });
     yy += gH + ggap + 6; }
   // forecast horizons: week 0 (reference week, still in progress) through +3
   H_LIST.forEach(h => { const gTop = yy, gH = n * gp;
     if (h === mapRel) s += `<rect x="${mLc - 2}" y="${gTop - 1}" width="${W - mRc - (mLc - 2)}" height="${gH + 2}" fill="var(--accent)" opacity="0.08"/>`;
     const when = R ? fmtDate(addDays(R, 7 * h)) : '';
-    s += cat(h === 0 ? `Forecast wk 0 · thru ${when}` : `Forecast +${h} wk · thru ${when}`, gTop + gH / 2 - 4);
-    sel.forEach((t, k) => { const q = t.m.cum_through_h[h], cy = gTop + k * gp + gp / 2;
-      if (q) s += box(q, t.color, cy, 9, `${t.name}: cumulative confirmed through week ${h === 0 ? '0' : '+' + h} (${when})`);
-      else s += note('not submitted', cy); });
+    s += cat(h === 0 ? t('cum.fcCat0', { d: when }) : t('cum.fcCat', { n: h, d: when }), gTop + gH / 2 - 4);
+    sel.forEach((tm, k) => { const q = tm.m.cum_through_h[h], cy = gTop + k * gp + gp / 2;
+      if (q) s += box(q, tm.color, cy, 9, h === 0 ? t('cum.fcTip0', { name: tm.name, d: when }) : t('cum.fcTip', { name: tm.name, n: h, d: when }));
+      else s += note(t('cum.notSubmitted'), cy); });
     yy += gH + ggap; });
   svg.innerHTML = s;
   svg.querySelectorAll('.cbox').forEach(g => {

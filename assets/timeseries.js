@@ -28,26 +28,26 @@ function drawTS() {
   // models
   const ens = S.ensembleId ? modelLoc(S.ensembleId, loc) : null;
   const showEnsCI = !!(ens && S.tsSelected.has(S.ensembleId));
-  const teams = roundModels().filter(id => id !== S.ensembleId && S.tsSelected.has(id)).map(id => ({ id, name: modelLabel(id), color: modelColor(id), m: modelLoc(id, loc) })).filter(t => t.m);
+  const teams = roundModels().filter(id => id !== S.ensembleId && S.tsSelected.has(id)).map(id => ({ id, name: modelLabel(id), color: modelColor(id), m: modelLoc(id, loc) })).filter(tm => tm.m);
   const anyModel = ens || teams.length;
   const qAt = (m, w) => { const i = m.weeks.indexOf(w); return i < 0 ? null : m.q[i]; };
 
-  document.getElementById('tsSub').textContent = [locName(loc), R ? 'reference date ' + fmtDate(R, true) : '', `data as of ${asOf}`].filter(Boolean).join(' · ');
-  legend.innerHTML = `<span class="chip"><i style="background:var(--past)"></i>reported (as of ${fmtDate(asOf)})</span>`
-    + `<span class="chip"><i style="background:repeating-linear-gradient(135deg,var(--past) 0 2px,#fff 2px 4px)"></i>week in progress</span>`
-    + (haveLatest ? `<span class="chip"><i style="border:1.5px solid var(--latest);background:transparent"></i>latest (as of ${fmtDate(S.obsLatest.as_of)})</span>` : '')
-    + (ens ? `<span class="chip"><i style="border:1.5px dashed var(--median);background:transparent"></i>Hub ensemble median${showEnsCI ? ' + 95% interval' : ''}</span>` : '')
-    + teams.map(t => `<span class="chip"><i style="background:${t.color}"></i>${t.name}</span>`).join('')
-    + (mapIdx >= 0 ? `<span class="chip"><i style="background:var(--accent);opacity:.35"></i>week on map</span>` : '');
+  document.getElementById('tsSub').textContent = [locName(loc), R ? t('ts.sub.ref', { d: fmtDate(R, true) }) : '', t('ts.sub.asOf', { d: asOf })].filter(Boolean).join(' · ');
+  legend.innerHTML = `<span class="chip"><i style="background:var(--past)"></i>${t('ts.leg.reported', { d: fmtDate(asOf) })}</span>`
+    + `<span class="chip"><i style="background:repeating-linear-gradient(135deg,var(--past) 0 2px,#fff 2px 4px)"></i>${t('ts.leg.inProgress')}</span>`
+    + (haveLatest ? `<span class="chip"><i style="border:1.5px solid var(--latest);background:transparent"></i>${t('ts.leg.latest', { d: fmtDate(S.obsLatest.as_of) })}</span>` : '')
+    + (ens ? `<span class="chip"><i style="border:1.5px dashed var(--median);background:transparent"></i>${t(showEnsCI ? 'ts.leg.ensMedianCI' : 'ts.leg.ensMedian')}</span>` : '')
+    + teams.map(tm => `<span class="chip"><i style="background:${tm.color}"></i>${tm.name}</span>`).join('')
+    + (mapIdx >= 0 ? `<span class="chip"><i style="background:var(--accent);opacity:.35"></i>${t('ts.leg.weekOnMap')}</span>` : '');
 
   if (S.round && !anyModel && roundModels().length) {
     empty.style.display = 'block';
     const others = modelsForLocation(loc).filter(id => id !== S.ensembleId);
-    if (others.length) empty.innerHTML = `<b>None of the selected models covers ${locName(loc)}</b>${others.length === 1 ? 'One model' : others.length + ' models'} submitted it in this round: ${others.map(modelLabel).join(', ')}. Tick ${others.length === 1 ? 'it' : 'them'} in the Models menu.`;
-    else empty.innerHTML = `<b>No model output for ${locName(loc)}</b>${loc === NATIONAL ? 'No model submitted a national (CD) series in this round; reported national counts are shown.' : 'No model submitted this location in this round.'}`;
+    if (others.length) empty.innerHTML = tn('ts.emptyOthers', others.length, { loc: locName(loc), list: others.map(modelLabel).join(', ') });
+    else empty.innerHTML = t(loc === NATIONAL ? 'ts.emptyNational' : 'ts.emptyLoc', { loc: locName(loc) });
   } else if (!S.round) {
     empty.style.display = 'block';
-    empty.innerHTML = `<b>No submissions yet</b>The first accepted reference date is ${fmtDate(S.manifest.accepted_reference_dates[0] || '', true)}. Reported cases are shown.`;
+    empty.innerHTML = t('ts.emptyNoSub', { d: fmtDate(S.manifest.accepted_reference_dates[0] || '', true) });
   }
   // measure after the header (sub + legend) has been updated, since it can wrap and change the height
   const W = svg.clientWidth || 600, H = svg.clientHeight || 300;
@@ -59,7 +59,7 @@ function drawTS() {
     if (obs[w] != null) vals.push(obs[w]);
     if (haveLatest && latest[w] != null) vals.push(latest[w]);
     if (ens) { const q = qAt(ens, w); if (q) vals.push(q[QI.med], showEnsCI ? q[QI.hi95] : 0); }
-    teams.forEach(t => { const q = qAt(t.m, w); if (q) vals.push(q[QI.hi95]); });
+    teams.forEach(tm => { const q = qAt(tm.m, w); if (q) vals.push(q[QI.hi95]); });
   });
   // nice integer ticks: step from {1,2,5}x10^k, axis top = first tick at or above the data max
   const rawMax = Math.max(...vals) * 1.08, ticks = 4;
@@ -81,10 +81,10 @@ function drawTS() {
   weeks.forEach((w, i) => {
     s += `<line x1="${bx(i)}" y1="${y0}" x2="${bx(i)}" y2="${y0 + 4}" stroke="var(--muted)"/>`;
     const m = w.slice(0, 7);
-    if (m !== lastMonth && bx(i) - lastLabelX > 44) { s += `<text x="${bx(i)}" y="${y0 + 16}" text-anchor="middle">${fmtDate(w)}</text>`; lastLabelX = bx(i); }
+    if (m !== lastMonth && bx(i) - lastLabelX > (LANG === 'fr' ? 52 : 44)) { s += `<text x="${bx(i)}" y="${y0 + 16}" text-anchor="middle">${fmtDate(w)}</text>`; lastLabelX = bx(i); }
     lastMonth = m;
   });
-  s += `<text x="${mL}" y="${H - 4}" style="fill:#5b6675;font-size:9px">week ending (Saturday) · cases by symptom onset</text>`;
+  s += `<text x="${mL}" y="${H - 4}" style="fill:#5b6675;font-size:9px">${t('ts.axis')}</text>`;
 
   // forecast window shading: week 0 (the reference week) through the longest horizon
   if (nowIdx >= 0) {
@@ -115,12 +115,12 @@ function drawTS() {
       s += `<line x1="${cx - cap}" y1="${yl}" x2="${cx + cap}" y2="${yl}" stroke="var(--muted)" stroke-width="1.5"/>`; }
     // team overlays
     const nB = teams.length, jw = slotW * 0.26;
-    teams.forEach((t, k) => { const q = qAt(t.m, w); if (!q) return;
+    teams.forEach((tm, k) => { const q = qAt(tm.m, w); if (!q) return;
       const off = (nB <= 1 ? 0 : (k / (nB - 1) - 0.5)) * 2 * jw, x = cx + off;
-      s += `<line x1="${x}" y1="${y(q[QI.hi95])}" x2="${x}" y2="${y(q[QI.lo95])}" stroke="${t.color}" stroke-width="1.8" opacity="0.6"/>`;
-      s += `<line x1="${x - 2}" y1="${y(q[QI.hi95])}" x2="${x + 2}" y2="${y(q[QI.hi95])}" stroke="${t.color}" stroke-width="1.5" opacity="0.8"/>`;
-      s += `<line x1="${x - 2}" y1="${y(q[QI.lo95])}" x2="${x + 2}" y2="${y(q[QI.lo95])}" stroke="${t.color}" stroke-width="1.5" opacity="0.8"/>`;
-      s += `<circle cx="${x}" cy="${y(q[QI.med])}" r="3" fill="${t.color}" stroke="#fff" stroke-width="0.6"/>`; });
+      s += `<line x1="${x}" y1="${y(q[QI.hi95])}" x2="${x}" y2="${y(q[QI.lo95])}" stroke="${tm.color}" stroke-width="1.8" opacity="0.6"/>`;
+      s += `<line x1="${x - 2}" y1="${y(q[QI.hi95])}" x2="${x + 2}" y2="${y(q[QI.hi95])}" stroke="${tm.color}" stroke-width="1.5" opacity="0.8"/>`;
+      s += `<line x1="${x - 2}" y1="${y(q[QI.lo95])}" x2="${x + 2}" y2="${y(q[QI.lo95])}" stroke="${tm.color}" stroke-width="1.5" opacity="0.8"/>`;
+      s += `<circle cx="${x}" cy="${y(q[QI.med])}" r="3" fill="${tm.color}" stroke="#fff" stroke-width="0.6"/>`; });
     s += `<rect class="hit" data-i="${i}" x="${cx - slotW / 2}" y="${mT}" width="${slotW}" height="${ih}" fill="transparent"/>`;
   });
 
@@ -134,17 +134,17 @@ function drawTS() {
   svg.querySelectorAll('.hit').forEach(r => {
     r.addEventListener('mousemove', e => {
       const i = +r.dataset.i, w = weeks[i], rel = nowIdx >= 0 ? i - nowIdx : null;
-      const hasModelHere = (ens && qAt(ens, w)) || teams.some(t => qAt(t.m, w));
-      const kind = rel == null ? '' : rel >= 0 ? ` · forecast wk ${rel === 0 ? '0 (reference week)' : '+' + rel}` : hasModelHere ? ' · nowcast' : '';
+      const hasModelHere = (ens && qAt(ens, w)) || teams.some(tm => qAt(tm.m, w));
+      const kind = rel == null ? '' : rel === 0 ? t('tip.kindFc0') : rel > 0 ? t('tip.kindFc', { n: rel }) : hasModelHere ? t('tip.kindNc') : '';
       let rows = '';
-      if (obs[w] != null) rows += `<div class="row"><span>Reported (as of ${fmtDate(asOf)})${w > lastComplete ? ' <span class="sm">week in progress</span>' : ''}</span><b>${fmtN(obs[w])}</b></div>`;
-      else if (rel != null && rel <= 0) rows += `<div class="row"><span>Reported</span><b>no data yet</b></div>`;
-      if (haveLatest && latest[w] != null) rows += `<div class="row"><span>Latest (as of ${fmtDate(S.obsLatest.as_of)})</span><b>${fmtN(latest[w])}</b></div>`;
-      if (ens) { const q = qAt(ens, w); if (q) rows += `<div class="row"><span style="color:var(--median)">Hub ensemble</span><b>${fmtN(q[QI.med])} <span class="sm">(${fmtRange(q)})</span></b></div>`; }
-      teams.forEach(t => { const q = qAt(t.m, w); if (q) rows += `<div class="row"><span style="color:${t.color}">${t.name}</span><b>${fmtN(q[QI.med])} <span class="sm">(${fmtRange(q)})</span></b></div>`; });
-      const hasModel = (ens && qAt(ens, w)) || teams.some(t => qAt(t.m, w));
-      const mapHint = mappable.has(w) ? `<div class="sm" style="margin-top:4px">${w === S.mapWeek ? 'shown on map' : 'click to show this week on the map'}</div>` : '';
-      showTip(`<b>Week ending ${fmtDate(w, true)}</b>${kind}${rows}${mapHint}${hasModel ? synNote() : ''}`, e.clientX, e.clientY);
+      if (obs[w] != null) rows += `<div class="row"><span>${t('tip.reported', { d: fmtDate(asOf) })}${w > lastComplete ? ` <span class="sm">${t('tip.inProgress')}</span>` : ''}</span><b>${fmtN(obs[w])}</b></div>`;
+      else if (rel != null && rel <= 0) rows += `<div class="row"><span>${t('tip.reportedLbl')}</span><b>${t('tip.noData')}</b></div>`;
+      if (haveLatest && latest[w] != null) rows += `<div class="row"><span>${t('tip.latest', { d: fmtDate(S.obsLatest.as_of) })}</span><b>${fmtN(latest[w])}</b></div>`;
+      if (ens) { const q = qAt(ens, w); if (q) rows += `<div class="row"><span style="color:var(--median)">${t('tip.ensemble')}</span><b>${fmtN(q[QI.med])} <span class="sm">(${fmtRange(q)})</span></b></div>`; }
+      teams.forEach(tm => { const q = qAt(tm.m, w); if (q) rows += `<div class="row"><span style="color:${tm.color}">${tm.name}</span><b>${fmtN(q[QI.med])} <span class="sm">(${fmtRange(q)})</span></b></div>`; });
+      const hasModel = (ens && qAt(ens, w)) || teams.some(tm => qAt(tm.m, w));
+      const mapHint = mappable.has(w) ? `<div class="sm" style="margin-top:4px">${t(w === S.mapWeek ? 'tip.shownOnMap' : 'tip.clickMap')}</div>` : '';
+      showTip(`<b>${t('tip.weekEnding', { d: fmtDate(w, true) })}</b>${kind}${rows}${mapHint}${hasModel ? synNote() : ''}`, e.clientX, e.clientY);
     });
     r.addEventListener('mouseleave', hideTip);
     r.addEventListener('click', () => { const w = weeks[+r.dataset.i]; if (mappable.has(w) && w !== S.mapWeek) setMapWeek(w); });

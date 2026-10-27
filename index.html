@@ -11,48 +11,50 @@
 <body>
 <div id="gate" class="gate hidden" role="dialog" aria-labelledby="gateTitle">
   <div class="card">
-    <h2 id="gateTitle">Test dashboard</h2>
-    <p>This copy shows <b>synthetic model output</b> for development and demonstration. Enter the test phrase to continue, or go to the <a href="../">live dashboard</a>.</p>
-    <div class="row"><input id="gateInput" type="password" autocomplete="off" placeholder="test phrase" aria-label="Test phrase"><button type="button" id="gateBtn">Open</button></div>
+    <div class="langlinks" aria-label="Language"><a href="#" data-lang="en">EN</a> · <a href="#" data-lang="fr">FR</a></div>
+    <h2 id="gateTitle" data-i18n="gate.title">Test dashboard</h2>
+    <p><span data-i18n="gate.p1">This copy shows </span><b data-i18n="gate.p2">synthetic model output</b><span data-i18n="gate.p3"> for development and demonstration. Enter the test phrase to continue, or go to the </span><a href="../" data-i18n="gate.live">live dashboard</a><span data-i18n="gate.p4">.</span></p>
+    <div class="row"><input id="gateInput" type="password" autocomplete="off" placeholder="test phrase" aria-label="Test phrase" data-i18n-ph="gate.ph" data-i18n-aria="gate.aria"><button type="button" id="gateBtn" data-i18n="gate.open">Open</button></div>
     <div class="err" id="gateErr"></div>
   </div>
 </div>
 <header>
   <div class="titlebar">
-    <h1>BDBV Modeling Hub <span>· nowcasts &amp; forecasts of weekly confirmed cases</span></h1>
-    <span class="badge hidden" id="mockBadge" title="Model output shown here is synthetic demonstration data, not team submissions">Synthetic model output</span>
+    <h1>BDBV Modeling Hub <span class="tagline" data-i18n="hdr.subtitle">· nowcasts &amp; forecasts of weekly confirmed cases</span></h1>
+    <span class="badge hidden" id="mockBadge" title="Model output shown here is synthetic demonstration data, not team submissions" data-i18n="badge.synthetic" data-i18n-title="badge.title">Synthetic model output</span>
   </div>
   <div class="toolbar">
   <div class="ctrl">
-    <label for="roundSel">Projections from</label>
-    <span class="stepper" id="roundSelStep"><button type="button" class="step" data-dir="-1" aria-label="Earlier round" title="Earlier round"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 5 8 12 15 19"/></svg></button><select id="roundSel" class="stepsel" title="Submission round: the week projections were made (reference date = Saturday ending that week). Click to pick, or step with the arrows."></select><button type="button" class="step" data-dir="1" aria-label="Later round" title="Later round"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 5 16 12 9 19"/></svg></button></span>
+    <label for="roundSel" data-i18n="hdr.projFrom">Projections from</label>
+    <span class="stepper" id="roundSelStep"><button type="button" class="step" data-dir="-1" aria-label="Earlier round" title="Earlier round" data-i18n-aria="hdr.earlierRound" data-i18n-title="hdr.earlierRound"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 5 8 12 15 19"/></svg></button><select id="roundSel" class="stepsel" title="Submission round: the week projections were made (reference date = Saturday ending that week). Click to pick, or step with the arrows." data-i18n-title="hdr.roundTitle"></select><button type="button" class="step" data-dir="1" aria-label="Later round" title="Later round" data-i18n-aria="hdr.laterRound" data-i18n-title="hdr.laterRound"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 5 16 12 9 19"/></svg></button></span>
     <span class="sub" id="roundInfo"></span>
   </div>
   <div class="spacer"></div>
   <div class="ctrl">
-    <label for="locSel">Location</label>
-    <select id="locSel" title="Country or province"></select>
-    <select id="hzSel" class="hidden" title="Health zone within the selected province"></select>
+    <label for="locSel" data-i18n="hdr.location">Location</label>
+    <select id="locSel" title="Country or province" data-i18n-title="hdr.locTitle"></select>
+    <select id="hzSel" class="hidden" title="Health zone within the selected province" data-i18n-title="hdr.hzTitle"></select>
   </div>
-  <button class="linkbtn" id="modelsBtn" type="button">Models</button>
+  <div class="toggle small hidden" id="langToggle" title="Language" data-i18n-title="hdr.langTitle"><button type="button" data-lang="en" class="active" lang="en">EN</button><button type="button" data-lang="fr" lang="fr">FR</button></div>
+  <button class="linkbtn" id="modelsBtn" type="button" data-i18n="hdr.models">Models</button>
   </div>
 </header>
-<div id="mockBanner" class="mockbanner hidden" role="note">SYNTHETIC MODEL OUTPUT · demonstration data, not team submissions · <a id="liveLink" href="../" class="hidden">go to the live dashboard</a></div>
+<div id="mockBanner" class="mockbanner hidden" role="note"><span data-i18n="banner.text">SYNTHETIC MODEL OUTPUT · demonstration data, not team submissions · </span><a id="liveLink" href="../" class="hidden" data-i18n="banner.live">go to the live dashboard</a></div>
 
 <div class="grid">
  <div class="left">
   <!-- TIME SERIES -->
   <section class="panel ts">
     <div class="hd">
-      <h2>Weekly confirmed cases</h2>
-      <span class="tlabel">Models</span>
+      <h2 data-i18n="ts.title">Weekly confirmed cases</h2>
+      <span class="tlabel" data-i18n="common.models">Models</span>
       <div class="dd" id="tsModelDD">
         <button class="ddbtn" id="tsModelBtn" type="button">Models ▾</button>
         <div class="ddpanel" id="tsModelPanel"></div>
       </div>
       <div class="toggle small" id="rangeToggle">
-        <button data-r="recent" class="active">Recent</button>
-        <button data-r="full">Full outbreak</button>
+        <button data-r="recent" class="active" data-i18n="ts.recent">Recent</button>
+        <button data-r="full" data-i18n="ts.full">Full outbreak</button>
       </div>
       <span class="sub" id="tsSub"></span>
       <div class="spacer"></div>
@@ -61,17 +63,17 @@
     <div class="bd">
       <svg id="tsChart" width="100%" height="100%" preserveAspectRatio="none"></svg>
       <div class="note" id="tsEmpty" style="display:none"></div>
-      <div class="wm" aria-hidden="true"><span>Synthetic</span></div>
+      <div class="wm" aria-hidden="true"><span data-i18n="wm.word">Synthetic</span></div>
     </div>
   </section>
 
   <!-- CUMULATIVE -->
   <section class="panel cum">
     <div class="hd">
-      <h2>Cumulative confirmed cases</h2>
+      <h2 data-i18n="cum.title">Cumulative confirmed cases</h2>
       <span class="sub" id="cumSub"></span>
       <div class="spacer"></div>
-      <span class="tlabel">Models</span>
+      <span class="tlabel" data-i18n="common.models">Models</span>
       <div class="dd" id="cumModelDD">
         <button class="ddbtn" id="cumModelBtn" type="button">Models ▾</button>
         <div class="ddpanel" id="cumModelPanel"></div>
@@ -79,7 +81,7 @@
     </div>
     <div class="bd" style="padding-top:6px">
       <svg id="cumChart" width="100%" height="200" preserveAspectRatio="none"></svg>
-      <div class="wm" aria-hidden="true"><span>Synthetic</span></div>
+      <div class="wm" aria-hidden="true"><span data-i18n="wm.word">Synthetic</span></div>
     </div>
   </section>
  </div>
@@ -87,42 +89,42 @@
   <!-- MAP -->
   <section class="panel map">
     <div class="hd">
-      <div class="toggle small" id="layerToggle" title="Map level">
-        <button data-l="prov" class="active">Provinces</button>
-        <button data-l="hz">Health zones</button>
+      <div class="toggle small" id="layerToggle" title="Map level" data-i18n-title="map.levelTitle">
+        <button data-l="prov" class="active" data-i18n="map.provinces">Provinces</button>
+        <button data-l="hz" data-i18n="map.zones">Health zones</button>
       </div>
       <div class="toggle small" id="metricToggle">
-        <button data-m="median" class="active">Median cases</button>
-        <button data-m="presence">P(≥1 case)</button>
+        <button data-m="median" class="active" data-i18n="map.median">Median cases</button>
+        <button data-m="presence" data-i18n="map.presence">P(≥1 case)</button>
       </div>
-      <span class="tlabel">Model</span>
+      <span class="tlabel" data-i18n="common.model">Model</span>
       <select id="mapModelSel" class="msel"></select>
-      <span class="tlabel">Week</span>
-      <span class="stepper" id="mapWeekSelStep"><button type="button" class="step" data-dir="-1" aria-label="Earlier week" title="Earlier week"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 5 8 12 15 19"/></svg></button><select id="mapWeekSel" class="stepsel" title="Week whose cases are mapped (week ending Saturday), with its offset from the projections-from date. Click to pick, or step with the arrows."></select><button type="button" class="step" data-dir="1" aria-label="Later week" title="Later week"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 5 16 12 9 19"/></svg></button></span>
+      <span class="tlabel" data-i18n="map.week">Week</span>
+      <span class="stepper" id="mapWeekSelStep"><button type="button" class="step" data-dir="-1" aria-label="Earlier week" title="Earlier week" data-i18n-aria="map.earlierWeek" data-i18n-title="map.earlierWeek"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 5 8 12 15 19"/></svg></button><select id="mapWeekSel" class="stepsel" title="Week whose cases are mapped (week ending Saturday), with its offset from the projections-from date. Click to pick, or step with the arrows." data-i18n-title="map.weekTitle"></select><button type="button" class="step" data-dir="1" aria-label="Later week" title="Later week" data-i18n-aria="map.laterWeek" data-i18n-title="map.laterWeek"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 5 16 12 9 19"/></svg></button></span>
       <span class="sub" id="mapSub"></span>
       <div class="spacer"></div>
       <div class="legend"><span id="legLo">0</span><span class="bar"></span><span id="legHi">1</span></div>
     </div>
-    <div id="mapWrap" style="position:relative;flex:1;min-height:0;display:flex"><div id="map"></div><div class="wm" aria-hidden="true"><span>Synthetic</span></div></div>
+    <div id="mapWrap" style="position:relative;flex:1;min-height:0;display:flex"><div id="map"></div><div class="wm" aria-hidden="true"><span data-i18n="wm.word">Synthetic</span></div></div>
   </section>
 </div>
 
 <footer>
   <div class="footinfo">
     <span id="footProv"></span>
-    <span>Boundaries: <a href="https://www.geoboundaries.org/" target="_blank" rel="noopener">geoBoundaries</a> (ODbL) · <a href="https://github.com/InsightNet-US/BDBV-Modeling-Hub" target="_blank" rel="noopener">Hub repository</a></span>
+    <span><span data-i18n="foot.boundaries">Boundaries: </span><a href="https://www.geoboundaries.org/" target="_blank" rel="noopener">geoBoundaries</a><span data-i18n="foot.odbl"> (ODbL) · </span><a href="https://github.com/InsightNet-US/BDBV-Modeling-Hub" target="_blank" rel="noopener" data-i18n="foot.hubRepo">Hub repository</a></span>
   </div>
-  <span class="partners" aria-label="Partners">
-    <span class="partner-group" title="Institut National de Santé Publique (DRC) and the Kinshasa School of Public Health">
+  <span class="partners" aria-label="Partners" data-i18n-aria="foot.partners">
+    <span class="partner-group" title="Institut National de Santé Publique (DRC) and the Kinshasa School of Public Health" data-i18n-title="foot.pgInsp">
       <a class="logo logo-insp" href="https://insp.cd/" target="_blank" rel="noopener" title="Institut National de Santé Publique"><img src="assets/brand/insp.png" alt="Institut National de Santé Publique"></a>
-      <a class="logo logo-esp" href="https://espkinshasa.net/" target="_blank" rel="noopener" title="Kinshasa School of Public Health"><img src="assets/brand/ksph.png" alt="KSPH · Kinshasa School of Public Health"></a>
+      <a class="logo logo-esp" href="https://espkinshasa.net/" target="_blank" rel="noopener" title="Kinshasa School of Public Health" data-i18n-title="foot.ksph"><img src="assets/brand/ksph.png" alt="KSPH · Kinshasa School of Public Health"></a>
     </span>
-    <span class="partner-group" title="Insight Net centers ACCIDDA and epiENGAGE">
+    <span class="partner-group" title="Insight Net centers ACCIDDA and epiENGAGE" data-i18n-title="foot.pgInsight">
       <a class="logo logo-insightnet" href="https://insightnet.us/" target="_blank" rel="noopener" title="Insight Net"><img src="assets/brand/insight-net.png" alt="Insight Net"></a>
       <a class="logo logo-accidda" href="https://accidda.org/" target="_blank" rel="noopener" title="ACCIDDA"><img src="assets/brand/accidda.png" alt="ACCIDDA"></a>
       <a class="logo logo-epiengage" href="https://epiengage.org/" target="_blank" rel="noopener" title="epiENGAGE"><img src="assets/brand/epiengage.svg" alt="epiENGAGE"></a>
     </span>
-    <span class="partner-group" title="Built with the hubverse data formats and tools">
+    <span class="partner-group" title="Built with the hubverse data formats and tools" data-i18n-title="foot.pgHubverse">
       <a class="logo logo-hubverse" href="https://hubverse.io/" target="_blank" rel="noopener" title="hubverse"><img src="assets/brand/hubverse.png" alt="hubverse"></a>
     </span>
   </span>
@@ -130,14 +132,15 @@
 
 <div class="tt" id="tt"></div>
 <div class="drawer-bg" id="drawerBg"></div>
-<aside class="drawer" id="drawer" aria-label="Models">
-  <button class="close" id="drawerClose" aria-label="Close">×</button>
-  <h2>Models in this round</h2>
+<aside class="drawer" id="drawer" aria-label="Models" data-i18n-aria="drawer.aria">
+  <button class="close" id="drawerClose" aria-label="Close" data-i18n-aria="drawer.close">×</button>
+  <h2 data-i18n="drawer.title">Models in this round</h2>
   <div class="sub" id="drawerSub" style="font-size:12px;color:var(--muted)"></div>
   <div id="drawerBody"></div>
 </aside>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="assets/i18n.js?v=dev"></script>
 <script src="assets/palette.js?v=dev"></script>
 <script src="assets/timeseries.js?v=dev"></script>
 <script src="assets/cumulative.js?v=dev"></script>
