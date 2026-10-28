@@ -108,7 +108,16 @@ body.resizing-row{cursor:row-resize}
 .panel .hd .spacer{flex:1}
 .panel .bd{padding:10px 14px;flex:1;min-height:0;position:relative}
 .left{display:flex;flex-direction:column;gap:0;min-height:0}
-.ts{flex:1 1 0;min-height:220px}
+.ts{flex:1 1 0;min-height:260px}
+/* weekly panel: chart above a fixed-height brush strip that picks the weeks shown */
+.ts .bd{display:flex;flex-direction:column}
+#tsChart{flex:1 1 0;min-height:0}
+#tsBrush{flex:none;height:38px;width:100%;display:block;touch-action:none;cursor:crosshair;margin-top:2px}
+#tsBrush text{font-size:9px}
+.brush-win{fill:var(--accent);fill-opacity:.12;stroke:var(--accent);stroke-width:1;cursor:grab}
+.brush-h{fill:#fff;stroke:var(--accent);stroke-width:1.2;cursor:ew-resize}
+body.brushing,body.brushing *{user-select:none;cursor:ew-resize!important}
+body.brushing[data-brush=pan],body.brushing[data-brush=pan] *{cursor:grabbing!important}
 .cum{flex:0 1 auto;max-height:48%}
 .cum .bd{overflow:auto}
 @media (min-width:1001px){

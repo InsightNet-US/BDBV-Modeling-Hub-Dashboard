@@ -78,6 +78,7 @@ Try it: the French interface is on the test copy of the dashboard, `/mock/?lang=
 | tooltip row of the dashboard-computed ensemble | Dashboard ensemble | Ensemble du tableau de bord | Ensemble du tableau de bord |
 | after the ensemble label in the tooltip: how many models submitted that week *(one)* | · {n} model | · {n} modèle | · 1 modèle |
 | after the ensemble label in the tooltip: how many models submitted that week *(other)* | · {n} models | · {n} modèles | · 3 modèles |
+| after each model median in the tooltip: the 50% and 95% ranges | (50%: {r50} · 95%: {r95}) | (50 % : {r50} · 95 % : {r95}) | (50 % : 286–433 · 95 % : 150–720) |
 | tooltip last line | shown on map | affichée sur la carte | affichée sur la carte |
 | tooltip last line | click to show this week on the map | cliquer pour afficher cette semaine sur la carte | cliquer pour afficher cette semaine sur la carte |
 
@@ -118,7 +119,7 @@ Try it: the French interface is on the test copy of the dashboard, `/mock/?lang=
 | Where | English | French | Example (French) |
 |---|---|---|---|
 | top of the weekly-chart model menu | Ensemble median always shown | La médiane de l’ensemble multimodèle est toujours affichée | La médiane de l’ensemble multimodèle est toujours affichée |
-| ensemble entry in the weekly-chart model menu | Ensemble 95% interval | Intervalle à 95 % de l’ensemble multimodèle | Intervalle à 95 % de l’ensemble multimodèle |
+| ensemble entry in the weekly-chart model menu | Ensemble 50% and 95% intervals | Intervalles à 50 % et 95 % de l’ensemble multimodèle | Intervalles à 50 % et 95 % de l’ensemble multimodèle |
 | hover text of a greyed-out model | No submission for {loc} | Pas de soumission pour {loc} | Pas de soumission pour Ituri |
 | model menu when the round has no submission | No submissions in this round | Aucune soumission dans ce cycle de projection | Aucune soumission dans ce cycle de projection |
 | model menu button *(one)* | Ensemble + {n} model | Ensemble + {n} modèle | Ensemble + 1 modèle |
@@ -135,17 +136,15 @@ Try it: the French interface is on the test copy of the dashboard, `/mock/?lang=
 | Where | English | French | Example (French) |
 |---|---|---|---|
 |  | Weekly confirmed cases | Cas confirmés hebdomadaires | Cas confirmés hebdomadaires |
-|  | Recent | Récent | Récent |
-|  | Full outbreak | Toute l’épidémie | Toute l’épidémie |
 | weekly-chart subtitle | reference date {d} | date de référence {d} | date de référence 24 oct. |
 | weekly-chart subtitle (ISO date kept as a data-version identifier) | data as of {d} | données au {d} | données au 24 oct. |
 | legend | reported (as of {d}) | déclarés (au {d}) | déclarés (au 24 oct.) |
 | legend | week in progress | semaine en cours | semaine en cours |
 | legend | latest (as of {d}) | dernières données (au {d}) | dernières données (au 24 oct.) |
 | legend | Hub ensemble median | Médiane de l’ensemble multimodèle | Médiane de l’ensemble multimodèle |
-| legend | Hub ensemble median + 95% interval | Médiane de l’ensemble multimodèle + intervalle à 95 % | Médiane de l’ensemble multimodèle + intervalle à 95 % |
+| legend | Hub ensemble median + 50% and 95% intervals | Médiane de l’ensemble multimodèle + intervalles à 50 % et 95 % | Médiane de l’ensemble multimodèle + intervalles à 50 % et 95 % |
 | legend (dashboard-computed ensemble) | Dashboard ensemble median | Médiane de l’ensemble du tableau de bord | Médiane de l’ensemble du tableau de bord |
-| legend (dashboard-computed ensemble) | Dashboard ensemble median + 95% interval | Médiane de l’ensemble du tableau de bord + intervalle à 95 % | Médiane de l’ensemble du tableau de bord + intervalle à 95 % |
+| legend (dashboard-computed ensemble) | Dashboard ensemble median + 50% and 95% intervals | Médiane de l’ensemble du tableau de bord + intervalles à 50 % et 95 % | Médiane de l’ensemble du tableau de bord + intervalles à 50 % et 95 % |
 | legend | week on map | semaine sur la carte | semaine sur la carte |
 | message over the chart when the ticked models lack the location *(one)* | None of the selected models covers {loc} — One model submitted it in this round: {list}. Tick it in the Models menu. | Aucun des modèles sélectionnés ne couvre {loc} — Un modèle l’a soumise dans ce cycle de projection : {list}. Cochez-le dans le menu Modèles. | Aucun des modèles sélectionnés ne couvre Ituri — Un modèle l’a soumise dans ce cycle de projection : OHTJHU-BM, CEPH-Rtrend_BDBV. Cochez-le dans le menu Modèles. |
 | message over the chart when the ticked models lack the location *(other)* | None of the selected models covers {loc} — {n} models submitted it in this round: {list}. Tick them in the Models menu. | Aucun des modèles sélectionnés ne couvre {loc} — {n} modèles l’ont soumise dans ce cycle de projection : {list}. Cochez-les dans le menu Modèles. | Aucun des modèles sélectionnés ne couvre Ituri — 3 modèles l’ont soumise dans ce cycle de projection : OHTJHU-BM, CEPH-Rtrend_BDBV. Cochez-les dans le menu Modèles. |
@@ -153,6 +152,7 @@ Try it: the French interface is on the test copy of the dashboard, `/mock/?lang=
 | message over the chart when no model covers the location | No model output for {loc} — No model submitted this location in this round. | Aucun résultat de modèle pour {loc} — Aucun modèle n’a soumis cette zone géographique dans ce cycle de projection. | Aucun résultat de modèle pour Ituri — Aucun modèle n’a soumis cette zone géographique dans ce cycle de projection. |
 | message over the chart before any submission | No submissions yet — The first accepted reference date is {d}. Reported cases are shown. | Pas encore de soumissions — La première date de référence acceptée est le {d}. Les cas déclarés sont affichés. | Pas encore de soumissions — La première date de référence acceptée est le 24 oct.. Les cas déclarés sont affichés. |
 | caption under the x axis | week ending (Saturday) · cases by symptom onset | semaine se terminant le (samedi) · cas par date de début des symptômes | semaine se terminant le (samedi) · cas par date de début des symptômes |
+| hover text and accessible label of the week-window strip under the weekly chart (the selected dates are appended) | Weeks shown — drag the window or its handles, double-click to reset | Semaines affichées — glisser la fenêtre ou ses poignées, double-clic pour réinitialiser | Semaines affichées — glisser la fenêtre ou ses poignées, double-clic pour réinitialiser |
 
 ## Cumulative panel
 

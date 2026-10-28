@@ -66,7 +66,8 @@ Conventions adoptées, à confirmer :
 | to date | à ce jour | — | |
 | median | médiane | — | |
 | median cases | cas (médiane) | médiane des cas | Étiquette courte de la carte. |
-| 95% interval | intervalle à 95 % | intervalle de crédibilité à 95 % | Intervalle entre les quantiles 2,5 % et 97,5 % des trajectoires. |
+| 95% interval | intervalle à 95 % | intervalle de crédibilité à 95 % | Intervalle entre les quantiles 2,5 % et 97,5 % des trajectoires (trait fin). |
+| 50% interval | intervalle à 50 % | intervalle interquartile | Intervalle entre les quantiles 25 % et 75 % (trait épais sur le graphique hebdomadaire ; boîte dans le panneau cumulé). |
 | P(≥1 case) | P(≥1 cas) | probabilité d'au moins un cas | |
 | hub ensemble | ensemble multimodèle | ensemble du hub | Modèle d'ensemble soumis par le hub, combinant toutes les soumissions. |
 | dashboard ensemble | ensemble du tableau de bord | ensemble multimodèle du tableau de bord ; ensemble calculé | **à vérifier**. Ensemble calculé par le tableau de bord lui-même (regroupement de toutes les trajectoires soumises, à poids égaux par modèle) quand le hub n'en soumet pas. Nom du modèle : « BDBV dashboard ensemble » (non traduit, comme les autres noms de modèles). |
@@ -81,7 +82,10 @@ Conventions adoptées, à confirmer :
 | province | province | — | |
 | health zone | zone de santé | — | Terme officiel RDC. |
 | whole province | province entière | toute la province | Première entrée du sélecteur de zones. |
-| Recent / Full outbreak | Récent / Toute l'épidémie | Période récente / Épidémie entière | Portée de l'axe du temps. |
+| weeks shown (brush strip) | semaines affichées | période affichée ; fenêtre temporelle | **à vérifier**. Bande sous le graphique hebdomadaire qui remplace l'ancien choix « Récent / Toute l'épidémie » (supprimé le 2026-10-28). |
+| window (of the brush) | fenêtre | sélection | Zone surlignée de la bande : les semaines affichées. |
+| handle | poignée | curseur | Les deux bords de la fenêtre que l'on fait glisser. |
+| double-click to reset | double-clic pour réinitialiser | — | Rétablit les 24 semaines par défaut. |
 | without output (dashed) | sans prévision (hachuré) | sans résultat | Relecteurs. « 19 provinces sans prévision (hachurées) ». |
 | model output | résultat du modèle | résultat de modèle ; sortie de modèle | Relecteurs. « résultat de modèle » reste dans les messages génériques où aucun modèle particulier n'est visé (« Aucun résultat de modèle pour Ituri »). |
 | no data yet | pas encore de données | — | |

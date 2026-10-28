@@ -11,8 +11,11 @@ small JSON summaries under `data/`, and a GitHub Action rebuilds and deploys to 
 
 - **Weekly confirmed cases** for the selected location: reported counts in the target-data version used
   for the selected round, the latest release overlaid when it differs (backfill), the ensemble's nowcast
-  and forecast medians (dotted bars, optional 95% interval) and selected team models (points + 95%
-  intervals). The week shown on the map is highlighted; clicking a week column maps that week.
+  and forecast medians (dotted bars, optional 50% and 95% intervals: thick and thin whiskers) and selected
+  team models (points + 50% and 95% intervals). The week shown on the map is highlighted; clicking a week column maps that week.
+  A brush strip under the chart shows the whole outbreak faintly with a band over the weeks that have model
+  output; drag its window or handles to choose the weeks shown (default: the 24 weeks ending three weeks
+  after the reference date), drag on empty strip for a new window, double-click to go back to the default.
 - **Cumulative confirmed cases**: reported to date, each model's nowcast of the eventual total through the
   reference date, and forecast cumulative totals through weeks 0 (the reference week) to +3.
 - **Map** at province or health-zone level, coloured by a model's median cases in a chosen week, or by
@@ -59,7 +62,13 @@ panels, resets the layout and copies a link that reproduces it (`?panels=weekly,
 to show, `none` hides all; `?split=0.55` or `?split=0.55,0.7` sets the column share and the weekly
 chart's share of the column). Sizes and hidden panels are remembered per browser; a layout given in the
 URL only seeds the page and is not stored until the visitor changes something (unlike `?lang=`, which is
-stored). Below 1000 px the panels stack and the gutters disappear, but hiding still works.
+stored); once the visitor does change something, the layout parameters are dropped from the address bar so
+a reload shows the stored layout. The weekly chart's week window travels with the layout:
+`?weeks=2026-07-04,2026-11-21` (ISO Saturdays, or the sentinels `first` / `last` for a side that should
+follow the data as weeks are added; `weeks=first,last` shows the whole outbreak). Reset layout clears it
+too. The live and mock copies share the browser storage, so a window chosen on one applies to the other
+(the mock weeks coincide with the real ones; anything outside the available weeks is clamped). Below
+1000 px the panels stack and the gutters disappear, but hiding and the brush still work.
 
 ## Languages
 

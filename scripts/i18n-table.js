@@ -34,8 +34,8 @@ const WHERE = {
   'ts.sub.ref': 'weekly-chart subtitle', 'ts.sub.asOf': 'weekly-chart subtitle (ISO date kept as a data-version identifier)', 'ts.leg.reported': 'legend', 'ts.leg.inProgress': 'legend', 'ts.leg.latest': 'legend',
   'ts.leg.ensMedian': 'legend', 'ts.leg.ensMedianCI': 'legend', 'ts.leg.ensMedianDash': 'legend (dashboard-computed ensemble)', 'ts.leg.ensMedianCIDash': 'legend (dashboard-computed ensemble)', 'ts.leg.weekOnMap': 'legend', 'ts.emptyOthers': 'message over the chart when the ticked models lack the location',
   'ts.emptyNational': 'message over the chart when no model covers the country', 'ts.emptyLoc': 'message over the chart when no model covers the location', 'ts.emptyNoSub': 'message over the chart before any submission',
-  'ts.axis': 'caption under the x axis', 'tip.weekEnding': 'tooltip heading', 'tip.kindFc0': 'tooltip heading suffix', 'tip.kindFc': 'tooltip heading suffix', 'tip.kindNc': 'tooltip heading suffix',
-  'tip.ensemble': 'tooltip row of the hub-sourced ensemble', 'tip.ensembleDash': 'tooltip row of the dashboard-computed ensemble', 'tip.ensModels': 'after the ensemble label in the tooltip: how many models submitted that week',
+  'ts.axis': 'caption under the x axis', 'ts.brush': 'hover text and accessible label of the week-window strip under the weekly chart (the selected dates are appended)', 'tip.weekEnding': 'tooltip heading', 'tip.kindFc0': 'tooltip heading suffix', 'tip.kindFc': 'tooltip heading suffix', 'tip.kindNc': 'tooltip heading suffix',
+  'tip.ensemble': 'tooltip row of the hub-sourced ensemble', 'tip.ensembleDash': 'tooltip row of the dashboard-computed ensemble', 'tip.ensModels': 'after the ensemble label in the tooltip: how many models submitted that week', 'tip.ranges': 'after each model median in the tooltip: the 50% and 95% ranges',
   'tip.shownOnMap': 'tooltip last line', 'tip.clickMap': 'tooltip last line',
   'drawer.tagDash': 'tag after the dashboard-computed ensemble in the Models drawer', 'drawer.dashEnsMethods': 'method paragraph of the dashboard-computed ensemble', 'drawer.dashEnsMembers': 'line under that paragraph listing the pooled models',
   'cum.sub': 'cumulative panel subtitle', 'cum.toDate': 'section heading (shown in capitals)', 'cum.eventual': 'section heading (shown in capitals)', 'cum.nowcastCat': 'row label', 'cum.fcCat0': 'row label', 'cum.fcCat': 'row label',
@@ -53,8 +53,8 @@ const WHERE = {
 };
 /* sample values for the example column, per language */
 const SAMPLE = {
-  en: { n: 3, d: '24 Oct', loc: 'Ituri', list: 'OHTJHU-BM, CEPH-Rtrend_BDBV', name: 'OHTJHU-BM', rel: '−2 wk', kind: 'forecast +1 wk', wk: 'week ending 7 Nov (forecast +1 wk)', prov: 'Nord Kivu', s: 'Hub target data', repo: 'InsightNet-US/BDBV-Modeling-Hub', branch: 'main', commit: '07b9844', msg: 'data/manifest.json: 404' },
-  fr: { n: 3, d: '24 oct.', loc: 'Ituri', list: 'OHTJHU-BM, CEPH-Rtrend_BDBV', rel: '−2 sem.', kind: 'prévision +1 sem.', wk: 'semaine se terminant le 7 nov. (prévision +1 sem.)', prov: 'Nord Kivu', s: 'Données observées du hub', name: 'Carte', repo: 'InsightNet-US/BDBV-Modeling-Hub', branch: 'main', commit: '07b9844', msg: 'data/manifest.json: 404' },
+  en: { n: 3, d: '24 Oct', loc: 'Ituri', r50: '286–433', r95: '150–720', list: 'OHTJHU-BM, CEPH-Rtrend_BDBV', name: 'OHTJHU-BM', rel: '−2 wk', kind: 'forecast +1 wk', wk: 'week ending 7 Nov (forecast +1 wk)', prov: 'Nord Kivu', s: 'Hub target data', repo: 'InsightNet-US/BDBV-Modeling-Hub', branch: 'main', commit: '07b9844', msg: 'data/manifest.json: 404' },
+  fr: { n: 3, d: '24 oct.', loc: 'Ituri', r50: '286–433', r95: '150–720', list: 'OHTJHU-BM, CEPH-Rtrend_BDBV', rel: '−2 sem.', kind: 'prévision +1 sem.', wk: 'semaine se terminant le 7 nov. (prévision +1 sem.)', prov: 'Nord Kivu', s: 'Données observées du hub', name: 'Carte', repo: 'InsightNet-US/BDBV-Modeling-Hub', branch: 'main', commit: '07b9844', msg: 'data/manifest.json: 404' },
 };
 const fill = (s, vars) => String(s).replace(/\{(\w+)\}/g, (m, k) => (k in vars ? vars[k] : m));
 const strip = s => String(s).replace(/<[^>]+>/g, (m) => (m === '</b>' ? ' — ' : ''));

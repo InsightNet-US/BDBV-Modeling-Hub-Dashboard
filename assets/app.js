@@ -3,11 +3,11 @@
 const S = {
   manifest: null, models: {}, colors: {}, ensembleId: null, ensembleSource: null,
   roundRef: null, round: null, obsRound: null, obsLatest: null, geoProv: null,
-  location: 'CD', range: 'recent', locIndex: {},
+  location: 'CD', locIndex: {},
   mapWeek: null, mapRel: 0,   // week shown on the map and its offset in weeks from the reference date
   tsSelected: new Set(), cumSelected: new Set(),
   mapMetric: 'median', mapModel: null, mapLayer: 'prov', geoHZ: null,
-  layout: { col: 0.42, row: null, hidden: new Set(), fromURL: false },   // panel sizes and visibility
+  layout: { col: 0.42, row: null, hidden: new Set(), weeks: null, fromURL: false },   // panel sizes, visibility, weekly-chart window
   cache: {},
 };
 const NATIONAL = 'CD';
@@ -46,7 +46,7 @@ function addDays(iso, n) {
 // explicit locales so the output does not depend on the browser; French groups thousands with U+202F
 const fmtN = v => v == null ? '–' : LANG === 'fr' ? Math.round(v).toLocaleString('en-US').replace(/,/g, '\u202f') : Math.round(v).toLocaleString('en-US');
 const fmtPct = p => `${Math.round(p * 100)}${LANG === 'fr' ? '\u202f%' : '%'}`;
-const fmtRange = q => q ? `${fmtN(q[QI.lo95])}–${fmtN(q[QI.hi95])}` : '';
+const fmtRange = (q, level) => q ? (level === 50 ? `${fmtN(q[QI.lo50])}–${fmtN(q[QI.hi50])}` : `${fmtN(q[QI.lo95])}–${fmtN(q[QI.hi95])}`) : '';
 const tt = $('tt');
 function showTip(html, x, y) {
   tt.innerHTML = html; tt.style.opacity = 1;
@@ -132,11 +132,20 @@ function setMapWeek(w) {
    and the no-… / custom-row classes; the ResizeObserver in wire() redraws whatever changes size. */
 const LAYOUT_KEY = 'bdbv-layout', PANELS = ['weekly', 'cum', 'map'], COL_DEFAULT = 0.42;
 const PANEL_KEY = { weekly: 'panels.weekly', cum: 'panels.cum', map: 'panels.map' };
-const GUTTER = 14, MAP_MIN = 320, TS_MIN = 220, CUM_MIN = 110;
+const GUTTER = 14, MAP_MIN = 320, TS_MIN = 260, CUM_MIN = 110;
+/** weekly-chart window {start, end}: ISO dates or the sentinels 'first' / 'last'; null when invalid */
+function validWeeks(x) {
+  if (!x || typeof x !== 'object') return null;
+  const iso = /^\d{4}-\d{2}-\d{2}$/, s = x.start, e = x.end;
+  if (!(s === 'first' || iso.test(s)) || !(e === 'last' || iso.test(e)) || s === e) return null;
+  return { start: s, end: e };
+}
 function loadLayout() {
   const L = S.layout, q = new URLSearchParams(location.search);
   try { const st = JSON.parse(localStorage.getItem(LAYOUT_KEY) || 'null');
-    if (st) { if (st.col > 0 && st.col < 1) L.col = st.col; if (st.row > 0 && st.row < 1) L.row = st.row; (st.hidden || []).forEach(p => { if (PANELS.includes(p)) L.hidden.add(p); }); } } catch (e) { /* fine */ }
+    if (st) { if (st.col > 0 && st.col < 1) L.col = st.col; if (st.row > 0 && st.row < 1) L.row = st.row; (st.hidden || []).forEach(p => { if (PANELS.includes(p)) L.hidden.add(p); }); L.weeks = validWeeks(st.weeks); } } catch (e) { /* fine */ }
+  const wk = q.get('weeks');
+  if (wk != null) { const [a, b] = wk.split(','); const v = validWeeks({ start: (a || '').trim(), end: (b || '').trim() }); if (v) { L.weeks = v; L.fromURL = true; } }
   const panels = q.get('panels');
   if (panels != null) {
     const shown = panels === 'none' ? [] : panels.split(',').map(x => x.trim()).filter(p => PANELS.includes(p));
@@ -149,9 +158,17 @@ function loadLayout() {
     if (r > 0 && r < 1) { L.row = r; L.fromURL = true; } else if (split.split(',').length > 1 && isNaN(r)) L.row = null;
   }
 }
+const LAYOUT_PARAMS = ['panels', 'split', 'weeks'];
 function saveLayout() {
   const L = S.layout; L.fromURL = false;
-  try { localStorage.setItem(LAYOUT_KEY, JSON.stringify({ col: L.col, row: L.row, hidden: [...L.hidden] })); } catch (e) { /* fine */ }
+  try { localStorage.setItem(LAYOUT_KEY, JSON.stringify({ col: L.col, row: L.row, hidden: [...L.hidden], weeks: L.weeks })); } catch (e) { /* fine */ }
+  stripLayoutParams();   // the stored layout is now the truth; a reload must not re-seed from a shared link
+}
+function stripLayoutParams() {
+  const u = new URL(location.href);
+  if (!LAYOUT_PARAMS.some(k => u.searchParams.has(k))) return;
+  LAYOUT_PARAMS.forEach(k => u.searchParams.delete(k));
+  history.replaceState(null, '', u.pathname + (u.search || '') + u.hash);
 }
 /** CSS side only (safe before any data is loaded) */
 function applyLayoutCSS() {
@@ -176,16 +193,17 @@ function applyLayout(user) {
 }
 function setHidden(panel, hidden) { if (hidden) S.layout.hidden.add(panel); else S.layout.hidden.delete(panel); applyLayout(true); }
 function resetLayout() {
-  S.layout.col = COL_DEFAULT; S.layout.row = null; S.layout.hidden = new Set();
+  S.layout.col = COL_DEFAULT; S.layout.row = null; S.layout.hidden = new Set(); S.layout.weeks = null;
   applyLayout(true);
   try { localStorage.removeItem(LAYOUT_KEY); } catch (e) { /* fine */ }
-  const u = new URL(location.href); u.searchParams.delete('panels'); u.searchParams.delete('split');
-  history.replaceState(null, '', u.pathname + (u.search || '') + u.hash);
+  stripLayoutParams();
 }
 function layoutURL() {
   const L = S.layout, u = new URL(location.href), shown = PANELS.filter(p => !L.hidden.has(p));
   u.searchParams.set('panels', shown.length ? shown.join(',') : 'none');
   u.searchParams.set('split', L.row == null ? L.col.toFixed(2) : `${L.col.toFixed(2)},${L.row.toFixed(2)}`);
+  u.searchParams.delete('weeks');
+  if (L.weeks) u.searchParams.set('weeks', `${L.weeks.start},${L.weeks.end}`);
   return u.toString();
 }
 /* geometry helpers: fractions are relative to the grid content width (what the CSS percentage resolves
@@ -449,14 +467,13 @@ function wire() {
   $('hzSel').addEventListener('change', e => { S.location = e.target.value || locProvince(S.location) || NATIONAL; onLocationChange(); });
   document.querySelectorAll('#layerToggle button').forEach(b => b.addEventListener('click', () => setLayer(b.dataset.l, b.dataset.l === 'hz' ? locProvince(S.location) : null)));
   $('mapWeekSel').addEventListener('change', e => setMapWeek(e.target.value));
-  document.querySelectorAll('#rangeToggle button').forEach(b => b.addEventListener('click', () => { S.range = b.dataset.r; setToggle('rangeToggle', 'r', S.range); drawTS(); }));
   document.querySelectorAll('#metricToggle button').forEach(b => b.addEventListener('click', () => { S.mapMetric = b.dataset.m; setToggle('metricToggle', 'm', S.mapMetric); drawMap(); }));
   $('mapModelSel').addEventListener('change', e => { S.mapModel = e.target.value; drawMap(); });
   $('modelsBtn').addEventListener('click', () => toggleDrawer(true));
   $('drawerClose').addEventListener('click', () => toggleDrawer(false));
   $('drawerBg').addEventListener('click', () => toggleDrawer(false));
   window.addEventListener('resize', () => { drawTS(); drawCum(); });
-  wireLayout();
+  wireLayout(); wireBrush();
   // panels change height when their headers wrap or a gutter is dragged; redraw charts when their drawing
   // area resizes. While dragging, the map keeps its origin fixed (no pan) and is settled on pointer-up.
   let raf = null;
