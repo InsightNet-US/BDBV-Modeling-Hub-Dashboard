@@ -1,6 +1,6 @@
 /* Team colours. One ColorBrewer "Paired" light/dark pair per team (as in the hub's src/*.R plots);
    models of the same team get shades within the pair. Blue is reserved for observed data and the
-   hub ensemble, so teams start at red. */
+   ensemble (hub or dashboard), so teams start at red. */
 const PAIRED = [
   ['#fb9a99', '#e31a1c'],  // red
   ['#b2df8a', '#33a02c'],  // green
@@ -14,16 +14,17 @@ function mix(a, b, t) {
   const A = hexToRgb(a), B = hexToRgb(b);
   return 'rgb(' + A.map((v, i) => Math.round(v + (B[i] - v) * t)).join(',') + ')';
 }
-/** models: {id: meta}. Returns {id: cssColor}. The ensemble id is coloured var(--median). */
+/** models: {id: meta}. Returns {id: cssColor}. Ensemble ids (one or a list) are coloured var(--median). */
 function assignColors(models, ensembleId) {
+  const ens = new Set([].concat(ensembleId || []).filter(Boolean));
   const teams = {};
   Object.keys(models).sort().forEach(id => {
-    if (id === ensembleId) return;
+    if (ens.has(id)) return;
     const t = models[id].team_abbr || id.split('-')[0];
     (teams[t] = teams[t] || []).push(id);
   });
   const out = {};
-  if (ensembleId) out[ensembleId] = 'var(--median)';
+  ens.forEach(id => { out[id] = 'var(--median)'; });
   Object.keys(teams).sort().forEach((t, i) => {
     const pair = PAIRED[i % PAIRED.length], ids = teams[t];
     ids.forEach((id, k) => { out[id] = ids.length === 1 ? pair[1] : mix(pair[0], pair[1], 0.35 + 0.65 * k / (ids.length - 1)); });

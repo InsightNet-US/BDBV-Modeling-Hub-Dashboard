@@ -21,7 +21,8 @@ temps réel, cycle de projection, semaines écoulées, cas déclarés, données 
 multimodèle, zone géographique, sans prévision, nombre total de cas estimé, résultats de modèles
 simulés, résultat du modèle, « Modèles ayant soumis des prévisions », « mis à jour le »,
 Agrandir / Réduire. Restent à confirmer : « Projections au », « tableau de bord public », la
-terminologie officielle pour « cas déclarés ».
+terminologie officielle pour « cas déclarés », et les termes de l'ensemble calculé par le tableau de bord
+ajoutés le 2026-10-27 (« ensemble du tableau de bord », « modèles regroupés », « regroupement linéaire »).
 
 Conventions adoptées, à confirmer :
 
@@ -67,7 +68,12 @@ Conventions adoptées, à confirmer :
 | median cases | cas (médiane) | médiane des cas | Étiquette courte de la carte. |
 | 95% interval | intervalle à 95 % | intervalle de crédibilité à 95 % | Intervalle entre les quantiles 2,5 % et 97,5 % des trajectoires. |
 | P(≥1 case) | P(≥1 cas) | probabilité d'au moins un cas | |
-| hub ensemble | ensemble multimodèle | ensemble du hub | Modèle d'ensemble produit par le hub à partir de toutes les soumissions. |
+| hub ensemble | ensemble multimodèle | ensemble du hub | Modèle d'ensemble soumis par le hub, combinant toutes les soumissions. |
+| dashboard ensemble | ensemble du tableau de bord | ensemble multimodèle du tableau de bord ; ensemble calculé | **à vérifier**. Ensemble calculé par le tableau de bord lui-même (regroupement de toutes les trajectoires soumises, à poids égaux par modèle) quand le hub n'en soumet pas. Nom du modèle : « BDBV dashboard ensemble » (non traduit, comme les autres noms de modèles). |
+| computed by the dashboard (tag) | calculé par le tableau de bord | — | Étiquette dans le volet Modèles. |
+| pooled models | modèles regroupés | modèles combinés ; modèles agrégés | **à vérifier**. Liste des modèles entrant dans l'ensemble du tableau de bord. |
+| linear pool | regroupement linéaire | mélange linéaire ; combinaison linéaire | **à vérifier**. Méthode de l'ensemble (toutes les trajectoires mises en commun). |
+| · 3 models (tooltip) | · 3 modèles | — | Nombre de modèles ayant soumis la semaine survolée, après le nom de l'ensemble. |
 | model / team / submission | modèle / équipe / soumission | — | |
 | submitted (location) | soumis | — | « 7 lieux soumis ». |
 | location | zone géographique | lieu ; localisation | Relecteurs. Pays, province ou zone de santé. |

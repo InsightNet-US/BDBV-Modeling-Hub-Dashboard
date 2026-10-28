@@ -27,15 +27,17 @@ const WHERE = {
   'gate.p1': 'gate paragraph, first part', 'gate.p2': 'gate paragraph, bold part', 'gate.p3': 'gate paragraph, middle', 'gate.live': 'gate paragraph, link', 'gate.p4': 'gate paragraph, end',
   'gate.https': 'gate error when the page is not served over https', 'gate.wrong': 'gate error after a wrong phrase',
   'loc.national': 'name of the country in subtitles', 'loc.nationalShort': 'country name after a zone name', 'loc.nationalOpt': 'first entry of the location selector', 'loc.wholeProvince': 'first entry of the zone selector',
-  'model.ensemble': 'label of the hub ensemble wherever models are listed', 'week.nowcastKind': 'kind of a nowcast week, e.g. "nowcast −2 wk"',
+  'model.ensemble': 'label of the hub-sourced ensemble wherever models are listed', 'model.ensembleDash': 'label of the ensemble computed by the dashboard wherever models are listed', 'week.nowcastKind': 'kind of a nowcast week, e.g. "nowcast −2 wk"',
   'week.fc0': 'kind of the reference week', 'week.fcPos': 'kind of a forecast week', 'week.h0': 'offset label of the reference week', 'week.hPos': 'offset of a forecast week', 'week.hNeg': 'offset of a nowcast week',
   'dd.hintEns': 'top of the weekly-chart model menu', 'dd.ensCI': 'ensemble entry in the weekly-chart model menu', 'dd.noSub': 'hover text of a greyed-out model', 'dd.none': 'model menu when the round has no submission',
   'dd.plus': 'model menu button', 'dd.ensInterval': 'model menu button', 'dd.ens': 'model menu button', 'dd.noneSel': 'model menu button', 'dd.all': 'model menu button', 'dd.nModels': 'model menu button',
   'ts.sub.ref': 'weekly-chart subtitle', 'ts.sub.asOf': 'weekly-chart subtitle (ISO date kept as a data-version identifier)', 'ts.leg.reported': 'legend', 'ts.leg.inProgress': 'legend', 'ts.leg.latest': 'legend',
-  'ts.leg.ensMedian': 'legend', 'ts.leg.ensMedianCI': 'legend', 'ts.leg.weekOnMap': 'legend', 'ts.emptyOthers': 'message over the chart when the ticked models lack the location',
+  'ts.leg.ensMedian': 'legend', 'ts.leg.ensMedianCI': 'legend', 'ts.leg.ensMedianDash': 'legend (dashboard-computed ensemble)', 'ts.leg.ensMedianCIDash': 'legend (dashboard-computed ensemble)', 'ts.leg.weekOnMap': 'legend', 'ts.emptyOthers': 'message over the chart when the ticked models lack the location',
   'ts.emptyNational': 'message over the chart when no model covers the country', 'ts.emptyLoc': 'message over the chart when no model covers the location', 'ts.emptyNoSub': 'message over the chart before any submission',
   'ts.axis': 'caption under the x axis', 'tip.weekEnding': 'tooltip heading', 'tip.kindFc0': 'tooltip heading suffix', 'tip.kindFc': 'tooltip heading suffix', 'tip.kindNc': 'tooltip heading suffix',
+  'tip.ensemble': 'tooltip row of the hub-sourced ensemble', 'tip.ensembleDash': 'tooltip row of the dashboard-computed ensemble', 'tip.ensModels': 'after the ensemble label in the tooltip: how many models submitted that week',
   'tip.shownOnMap': 'tooltip last line', 'tip.clickMap': 'tooltip last line',
+  'drawer.tagDash': 'tag after the dashboard-computed ensemble in the Models drawer', 'drawer.dashEnsMethods': 'method paragraph of the dashboard-computed ensemble', 'drawer.dashEnsMembers': 'line under that paragraph listing the pooled models',
   'cum.sub': 'cumulative panel subtitle', 'cum.toDate': 'section heading (shown in capitals)', 'cum.eventual': 'section heading (shown in capitals)', 'cum.nowcastCat': 'row label', 'cum.fcCat0': 'row label', 'cum.fcCat': 'row label',
   'cum.noNowcast': 'italic note next to a hollow dot', 'cum.notSubmitted': 'italic note', 'cum.noOutput': 'italic note', 'cum.noSub': 'italic note', 'cum.nowcastTip': 'tooltip of a nowcast box', 'cum.fcTip0': 'tooltip of a forecast box', 'cum.fcTip': 'tooltip of a forecast box',
   'map.levelTitle': 'hover text of the Provinces / Health zones switch', 'map.weekTitle': 'hover text of the week selector', 'map.nowcastWeeks': 'group heading in the week selector', 'map.forecastWeeks': 'group heading in the week selector',
@@ -77,8 +79,11 @@ function problems() {
   for (const m of html.matchAll(/data-i18n(?:-title|-ph|-aria)?="([^"]+)"/g)) if (!(m[1] in EN)) out.push(`index.html uses unknown key ${m[1]}`);
   for (const f of fs.readdirSync(path.join(ROOT, 'assets')).filter(f => f.endsWith('.js') && f !== 'i18n.js')) {
     const src = read('assets/' + f);
-    for (const m of src.matchAll(/\btn?\(\s*'([^']+)'/g)) if (!(m[1] in EN)) out.push(`${f} uses unknown key ${m[1]}`);
-    for (const m of src.matchAll(/\bt\((\w+) === \w+ \? '([^']+)' : '([^']+)'\)/g)) [m[2], m[3]].forEach(k => { if (!(k in EN)) out.push(`${f} uses unknown key ${k}`); });
+    // first argument of every t()/tn() call (a key, or a conditional choosing between keys): every
+    // dotted quoted literal in it must be a key
+    for (const m of src.matchAll(/\btn?\(\s*([^,)]*)/g)) {
+      for (const k of m[1].matchAll(/'([a-z]+\.[\w.]+)'/g)) if (!(k[1] in EN)) out.push(`${f} uses unknown key ${k[1]}`);
+    }
   }
   return out;
 }

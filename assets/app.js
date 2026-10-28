@@ -1,7 +1,7 @@
 /* State, data loading and wiring for the BDBV hub dashboard. Panels live in timeseries.js,
    cumulative.js and map.js and read the shared state object S. */
 const S = {
-  manifest: null, models: {}, colors: {}, ensembleId: null,
+  manifest: null, models: {}, colors: {}, ensembleId: null, ensembleSource: null,
   roundRef: null, round: null, obsRound: null, obsLatest: null, geoProv: null,
   location: 'CD', range: 'recent', locIndex: {},
   mapWeek: null, mapRel: 0,   // week shown on the map and its offset in weeks from the reference date
@@ -50,7 +50,7 @@ const isZone = code => (locInfo(code) || {}).type === 'health zone';
 const provinces = () => S.manifest.locations.filter(l => l.type === 'province');
 const zonesOf = p => S.manifest.locations.filter(l => l.type === 'health zone' && l.parent === p);
 function modelName(id) { const m = S.models[id]; return m ? (m.model_name && m.model_name !== id ? `${m.team_abbr}-${m.model_abbr}` : id) : id; }
-function modelLabel(id) { return id === S.ensembleId ? t('model.ensemble') : modelName(id); }
+function modelLabel(id) { const dash = S.ensembleSource === 'dashboard'; return id === S.ensembleId ? t(dash ? 'model.ensembleDash' : 'model.ensemble') : modelName(id); }
 function modelColor(id) { return S.colors[id] || '#888'; }
 /** observed counts {week: n} for a location in an observed-data version object */
 function obsMap(ov, loc) {
@@ -312,7 +312,9 @@ async function init() {
   S.manifest = manifest; S.models = models; S.geoProv = geoProv;
   manifest.locations.forEach(l => { S.locIndex[l.code] = l; });
   S.ensembleId = manifest.ensemble_model_id && models[manifest.ensemble_model_id] ? manifest.ensemble_model_id : null;
-  S.colors = assignColors(models, S.ensembleId);
+  S.ensembleSource = S.ensembleId ? (manifest.ensemble_source || 'hub') : null;
+  // blue for every id that is an ensemble in some round (hub model and/or dashboard pool)
+  S.colors = assignColors(models, [manifest.ensemble_model_id, ...(manifest.rounds || []).map(r => r.ensemble_model_id)].filter(id => id && models[id]));
   S.obsLatest = await getJSON(`data/observed/${manifest.latest_as_of}.json`);
   $('mockBadge').classList.toggle('hidden', !manifest.mock);
   document.body.classList.toggle('mock', !!manifest.mock);
@@ -342,10 +344,17 @@ async function loadRound(ref) {
   const info = S.manifest.rounds.find(r => r.reference_date === ref);
   const [round, obs] = await Promise.all([getJSON(`data/rounds/${ref}.json`), getJSON(`data/observed/${info.as_of}.json`)]);
   S.round = round; S.obsRound = obs;
+  setEnsemble(info);
   afterRound();
 }
+/** the ensemble a round shows: its own entry (hub model or dashboard pool), else the manifest-wide one */
+function setEnsemble(info) {
+  const id = (info && 'ensemble_model_id' in info) ? info.ensemble_model_id : S.manifest.ensemble_model_id;
+  S.ensembleId = id && S.models[id] && S.round && S.round.models[id] ? id : null;
+  S.ensembleSource = S.ensembleId ? ((info && info.ensemble_source) || S.manifest.ensemble_source || 'hub') : null;
+}
 function afterRound() {
-  // default model selections: the hub ensemble when there is one, otherwise every model; the map
+  // default model selections: the ensemble (hub or dashboard) when there is one, otherwise every model; the map
   // starts on the ensemble or, failing that, the model covering the most locations
   const ms = roundModels(), hasEns = S.ensembleId && ms.includes(S.ensembleId);
   for (const set of [S.tsSelected, S.cumSelected]) {
@@ -471,8 +480,10 @@ function buildDrawer() {
   $('drawerBody').innerHTML = ms.map(id => {
     const m = S.models[id] || {}, nloc = Object.keys((S.round.models[id] || {}).locations || {}).length;
     const links = [m.website_url && `<a href="${m.website_url}" target="_blank" rel="noopener">${t('drawer.website')}</a>`, m.repo_url && `<a href="${m.repo_url}" target="_blank" rel="noopener">${t('drawer.code')}</a>`].filter(Boolean).join(' · ');
-    return `<div class="model"><h3><i style="background:${modelColor(id)}"></i>${m.model_name || id} <span class="tag">${id}</span>${m.ensemble_of_hub_models ? `<span class="tag">${t('drawer.tagEns')}</span>` : ''}${m.mock ? `<span class="tag" style="color:#9a5b00;border-color:#f0c889">${t('drawer.tagSyn')}</span>` : ''}</h3>
+    const dash = m.computed_by === 'dashboard', members = dash ? ((S.round.models[id] || {}).members || []) : [];
+    return `<div class="model"><h3><i style="background:${modelColor(id)}"></i>${m.model_name || id} <span class="tag">${id}</span>${dash ? `<span class="tag">${t('drawer.tagDash')}</span>` : m.ensemble_of_hub_models ? `<span class="tag">${t('drawer.tagEns')}</span>` : ''}${m.mock ? `<span class="tag" style="color:#9a5b00;border-color:#f0c889">${t('drawer.tagSyn')}</span>` : ''}</h3>
       <div class="team">${m.team_name || ''}</div>
+      ${dash ? `<p>${t('drawer.dashEnsMethods', { n: m.min_models || 2 })}</p><p class="sm" style="color:var(--muted)">${t('drawer.dashEnsMembers', { list: members.map(modelName).join(', ') })}</p>` : ''}
       ${m.methods ? `<p>${m.methods}</p>` : ''}
       ${m.data_inputs ? `<p class="sm" style="color:var(--muted)">${t('drawer.data', { s: m.data_inputs })}</p>` : ''}
       <p style="color:var(--muted)">${tn('drawer.nloc', nloc)}${m.license ? ` · ${m.license}` : ''}${links ? ' · ' + links : ''}</p></div>`;

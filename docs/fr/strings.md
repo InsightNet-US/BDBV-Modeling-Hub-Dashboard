@@ -74,7 +74,10 @@ Try it: the French interface is on the test copy of the dashboard, `/mock/?lang=
 |  | Reported | Déclarés | Déclarés |
 |  | no data yet | pas encore de données | pas encore de données |
 |  | Latest (as of {d}) | Dernières données (au {d}) | Dernières données (au 24 oct.) |
-|  | Hub ensemble | Ensemble multimodèle | Ensemble multimodèle |
+| tooltip row of the hub-sourced ensemble | Hub ensemble | Ensemble multimodèle | Ensemble multimodèle |
+| tooltip row of the dashboard-computed ensemble | Dashboard ensemble | Ensemble du tableau de bord | Ensemble du tableau de bord |
+| after the ensemble label in the tooltip: how many models submitted that week *(one)* | · {n} model | · {n} modèle | · 1 modèle |
+| after the ensemble label in the tooltip: how many models submitted that week *(other)* | · {n} models | · {n} modèles | · 3 modèles |
 | tooltip last line | shown on map | affichée sur la carte | affichée sur la carte |
 | tooltip last line | click to show this week on the map | cliquer pour afficher cette semaine sur la carte | cliquer pour afficher cette semaine sur la carte |
 
@@ -107,7 +110,8 @@ Try it: the French interface is on the test copy of the dashboard, `/mock/?lang=
 
 | Where | English | French | Example (French) |
 |---|---|---|---|
-| label of the hub ensemble wherever models are listed | Hub ensemble | Ensemble multimodèle | Ensemble multimodèle |
+| label of the hub-sourced ensemble wherever models are listed | Hub ensemble | Ensemble multimodèle | Ensemble multimodèle |
+| label of the ensemble computed by the dashboard wherever models are listed | Dashboard ensemble | Ensemble du tableau de bord | Ensemble du tableau de bord |
 
 ## Model menus
 
@@ -140,6 +144,8 @@ Try it: the French interface is on the test copy of the dashboard, `/mock/?lang=
 | legend | latest (as of {d}) | dernières données (au {d}) | dernières données (au 24 oct.) |
 | legend | Hub ensemble median | Médiane de l’ensemble multimodèle | Médiane de l’ensemble multimodèle |
 | legend | Hub ensemble median + 95% interval | Médiane de l’ensemble multimodèle + intervalle à 95 % | Médiane de l’ensemble multimodèle + intervalle à 95 % |
+| legend (dashboard-computed ensemble) | Dashboard ensemble median | Médiane de l’ensemble du tableau de bord | Médiane de l’ensemble du tableau de bord |
+| legend (dashboard-computed ensemble) | Dashboard ensemble median + 95% interval | Médiane de l’ensemble du tableau de bord + intervalle à 95 % | Médiane de l’ensemble du tableau de bord + intervalle à 95 % |
 | legend | week on map | semaine sur la carte | semaine sur la carte |
 | message over the chart when the ticked models lack the location *(one)* | None of the selected models covers {loc} — One model submitted it in this round: {list}. Tick it in the Models menu. | Aucun des modèles sélectionnés ne couvre {loc} — Un modèle l’a soumise dans ce cycle de projection : {list}. Cochez-le dans le menu Modèles. | Aucun des modèles sélectionnés ne couvre Ituri — Un modèle l’a soumise dans ce cycle de projection : OHTJHU-BM, CEPH-Rtrend_BDBV. Cochez-le dans le menu Modèles. |
 | message over the chart when the ticked models lack the location *(other)* | None of the selected models covers {loc} — {n} models submitted it in this round: {list}. Tick them in the Models menu. | Aucun des modèles sélectionnés ne couvre {loc} — {n} modèles l’ont soumise dans ce cycle de projection : {list}. Cochez-les dans le menu Modèles. | Aucun des modèles sélectionnés ne couvre Ituri — 3 modèles l’ont soumise dans ce cycle de projection : OHTJHU-BM, CEPH-Rtrend_BDBV. Cochez-les dans le menu Modèles. |
@@ -228,6 +234,9 @@ Try it: the French interface is on the test copy of the dashboard, `/mock/?lang=
 |  | website | site web | site web |
 |  | code | code | code |
 | small tag after a model name | ensemble | ensemble | ensemble |
+| tag after the dashboard-computed ensemble in the Models drawer | computed by the dashboard | calculé par le tableau de bord | calculé par le tableau de bord |
+| method paragraph of the dashboard-computed ensemble | Equal-weight linear pool of every trajectory submitted by the models in this round (100 per model), computed by the dashboard rather than submitted to the hub. Weekly values use the models that submitted that week; cumulative totals and forecast windows are computed trajectory by trajectory and then summarised. Locations submitted by fewer than {n} models are not covered. | Regroupement linéaire à poids égaux de toutes les trajectoires soumises par les modèles de ce cycle de projection (100 par modèle), calculé par le tableau de bord et non soumis au hub. Les valeurs hebdomadaires utilisent les modèles ayant soumis la semaine ; les cumuls et les fenêtres de prévision sont calculés trajectoire par trajectoire puis résumés. Les zones géographiques soumises par moins de {n} modèles ne sont pas couvertes. | Regroupement linéaire à poids égaux de toutes les trajectoires soumises par les modèles de ce cycle de projection (100 par modèle), calculé par le tableau de bord et non soumis au hub. Les valeurs hebdomadaires utilisent les modèles ayant soumis la semaine ; les cumuls et les fenêtres de prévision sont calculés trajectoire par trajectoire puis résumés. Les zones géographiques soumises par moins de 3 modèles ne sont pas couvertes. |
+| line under that paragraph listing the pooled models | Pooled models: {list} | Modèles regroupés : {list} | Modèles regroupés : OHTJHU-BM, CEPH-Rtrend_BDBV |
 | small tag after a model name | synthetic | simulé | simulé |
 | data inputs line of a model | Data: {s} | Données : {s} | Données : Données observées du hub |
 | last line of a model *(one)* | {n} location submitted | {n} zone géographique soumise | 1 zone géographique soumise |

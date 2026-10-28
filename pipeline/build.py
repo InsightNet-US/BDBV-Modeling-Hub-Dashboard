@@ -11,13 +11,14 @@ import unicodedata
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
+import numpy as np
 import pandas as pd
 
 import config
 import hub_io
 import mock
-from summarize import d, iso, last_complete_week, samples_matrix, select_as_of, summarize_location, \
-    validate_submission
+from summarize import d, iso, last_complete_week, pool_members, samples_matrix, select_as_of, \
+    summarize_location, validate_submission
 
 
 NATIONAL = "CD"   # the hub's national location code
@@ -25,7 +26,7 @@ NATIONAL = "CD"   # the hub's national location code
 
 def write_json(path: Path, obj) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(obj, separators=(",", ":"), ensure_ascii=False))
+    path.write_text(json.dumps(obj, separators=(",", ":"), ensure_ascii=False, allow_nan=False))
 
 
 def saturdays(first: str, last: str) -> list[str]:
@@ -152,6 +153,53 @@ def stamp_geo_codes(locs: pd.DataFrame, out_dir: Path) -> None:
             print(f"  polygons without a hub zone (add rows to data/geo/hz-aliases.csv): {unmatched[:12]}")
 
 
+# ---------------------------------------------------------------- ensemble
+def resolve_ensemble(source: str, hub_ensemble_id: str | None, submitted_ids,
+                     warn=print) -> tuple[str | None, str | None]:
+    """Which ensemble a round shows: ('hub', id), ('dashboard', DASHBOARD_ENSEMBLE_ID) or (None, None)."""
+    hub_has = bool(hub_ensemble_id) and hub_ensemble_id in set(submitted_ids)
+    if hub_ensemble_id and not hub_has and source != "dashboard":
+        warn(f"WARN hub ensemble {hub_ensemble_id} has no submission for this round")
+    if source == "hub":
+        return ("hub", hub_ensemble_id) if hub_has else (None, None)
+    if source == "dashboard" or not hub_has:
+        return "dashboard", config.DASHBOARD_ENSEMBLE_ID
+    return "hub", hub_ensemble_id
+
+
+def pool_round(mats: dict[str, dict[str, tuple]], reference_date: str, observed_by_loc: dict,
+               exclude=(), min_models: int = config.ENSEMBLE_MIN_MODELS, warn=print) -> dict:
+    """Dashboard ensemble for one round.
+
+    mats: model_id -> location -> (matrix, weeks) for every submission in the round; models in `exclude`
+    (hub ensembles, ENSEMBLE_EXCLUDE) are never pooled. Returns {"locations": {loc: summary},
+    "members": [ids]} with an entry for every location at least `min_models` members submitted.
+    """
+    members_all = sorted(m for m in mats if m not in set(exclude))
+    by_loc: dict[str, dict[str, tuple]] = {}
+    for mid in members_all:
+        for loc, mw in mats[mid].items():
+            by_loc.setdefault(loc, {})[mid] = mw
+    locs_out = {}
+    for loc in sorted(by_loc):
+        members = by_loc[loc]
+        if len(members) < min_models:
+            continue
+        counts = {m: int(np.sum(~np.isnan(mw[0]).any(axis=1))) for m, mw in members.items()}
+        if len(set(counts.values())) > 1:
+            warn(f"WARN {loc}: unequal sample counts {counts}; pool weights are proportional to samples")
+        locs_out[loc] = pool_members(members, reference_date, observed_by_loc.get(loc, {}))
+    return {"locations": locs_out, "members": members_all}
+
+
+def dashboard_ensemble_metadata(mock: bool) -> dict:
+    return {"model_id": config.DASHBOARD_ENSEMBLE_ID, "team_name": "BDBV Modeling Hub", "team_abbr": "BDBV",
+            "model_name": "BDBV dashboard ensemble", "model_abbr": "dashboard-ensemble",
+            "methods": "", "data_inputs": "", "website_url": "", "repo_url": "", "license": "",
+            "ensemble_of_hub_models": True, "computed_by": "dashboard", "ensemble_method": "linear_pool",
+            "min_models": config.ENSEMBLE_MIN_MODELS, "mock": mock}
+
+
 # ---------------------------------------------------------------- main
 def main() -> int:
     hub = config.hub_dir()
@@ -204,11 +252,13 @@ def main() -> int:
     else:
         print(f"real round-2 submissions: {n_real}")
 
-    # ---- ensemble id
+    # ---- hub ensemble id (used directly with ENSEMBLE_SOURCE=hub, or by auto when it submitted)
     flagged = [m for m, meta in metadata.items() if meta.get("ensemble_of_hub_models")]
-    ensemble_id = config.ENSEMBLE_MODEL_ID or (flagged[0] if len(flagged) == 1 else None)
+    hub_ensemble_id = config.ENSEMBLE_MODEL_ID or (flagged[0] if len(flagged) == 1 else None)
     if len(flagged) > 1 and not config.ENSEMBLE_MODEL_ID:
         print(f"WARN several models flagged as ensembles {flagged}; set ENSEMBLE_MODEL_ID")
+    never_pool = set(flagged) | set(config.ENSEMBLE_EXCLUDE) | ({hub_ensemble_id} if hub_ensemble_id else set())
+    print(f"ENSEMBLE_SOURCE={config.ENSEMBLE_SOURCE}; hub ensemble: {hub_ensemble_id or 'none'}")
 
     # ---- per round summaries
     rounds_out = []
@@ -226,12 +276,14 @@ def main() -> int:
         week_union: set[str] = set(obs_weeks)
         n_loc_type = {"country": 0, "province": 0, "health zone": 0}
         type_of = {l["code"]: l["type"] for l in loc_table}
+        observed_by_loc = {loc: dict(zip(obs_weeks, vals)) for loc, vals in ov["by_location"].items()}
+        mats: dict[str, dict[str, tuple]] = {}
         for mid, df in sorted(by_round[ref].items()):
             locs_out = {}
             for loc, g in df.groupby("location"):
                 mat, weeks = samples_matrix(g)
-                observed = dict(zip(obs_weeks, ov["by_location"].get(loc, [0] * len(obs_weeks))))
-                locs_out[loc] = summarize_location(mat, weeks, ref, observed)
+                mats.setdefault(mid, {})[loc] = (mat, weeks)
+                locs_out[loc] = summarize_location(mat, weeks, ref, observed_by_loc.get(loc, {}))
                 week_union.update(weeks)
                 n_loc_type[type_of.get(loc, "province")] += 1
             models_out[mid] = {"locations": locs_out}
@@ -240,6 +292,16 @@ def main() -> int:
                                  "model_name": mid, "model_abbr": mid, "methods": "", "data_inputs": "",
                                  "website_url": "", "repo_url": "", "license": "",
                                  "ensemble_of_hub_models": False, "mock": False}
+        ens_source, ens_id = resolve_ensemble(config.ENSEMBLE_SOURCE, hub_ensemble_id, models_out)
+        if ens_source == "dashboard":
+            pooled = pool_round(mats, ref, observed_by_loc, exclude=never_pool)
+            if pooled["locations"]:
+                models_out[ens_id] = pooled
+                metadata[ens_id] = dashboard_ensemble_metadata(config.MOCK_MODE == "on")
+                n_loc_type["ensemble"] = len(pooled["locations"])
+            else:
+                print(f"WARN round {ref}: no location with >= {config.ENSEMBLE_MIN_MODELS} models; no ensemble")
+                ens_source, ens_id = None, None
         weeks_all = saturdays(min(week_union), max(week_union))
         write_json(out_dir / "rounds" / f"{ref}.json", {
             "reference_date": ref, "as_of": as_of, "as_of_fallback": fallback,
@@ -247,11 +309,12 @@ def main() -> int:
             "models": models_out})
         rounds_out.append({"reference_date": ref, "as_of": as_of, "as_of_fallback": fallback,
                            "models": sorted(models_out), "n_models": len(models_out),
+                           "ensemble_model_id": ens_id, "ensemble_source": ens_source,
                            "n_zone_models": sum(1 for m in models_out.values()
                                                 if any(type_of.get(l) == "health zone" for l in m["locations"]))})
         size_kb = (out_dir / "rounds" / f"{ref}.json").stat().st_size // 1024
         print(f"round {ref}: {len(models_out)} models, data as of {as_of}{' (fallback)' if fallback else ''}; "
-              f"model x location summaries: {n_loc_type}; {size_kb} KB")
+              f"ensemble: {ens_source or 'none'}; model x location summaries: {n_loc_type}; {size_kb} KB")
 
     used = {m for r in rounds_out for m in r["models"]}
     write_json(out_dir / "models.json", {m: metadata[m] for m in sorted(used)})
@@ -264,6 +327,8 @@ def main() -> int:
     order = {"country": 0, "province": 1, "health zone": 2}
     loc_table.sort(key=lambda l: (order.get(l["type"], 3), -l["total"], l["name"]))
 
+    rounds_sorted = sorted(rounds_out, key=lambda r: r["reference_date"], reverse=True)
+    latest_round = rounds_sorted[0] if rounds_sorted else None
     write_json(out_dir / "manifest.json", {
         "generated_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
         "hub": {"repo": config.HUB_REPO, "branch": info.branch, "commit": info.commit},
@@ -273,8 +338,10 @@ def main() -> int:
         "target": config.TARGET, "horizons": config.HORIZONS, "quantile_levels": config.QUANTILE_LEVELS,
         "locations": loc_table, "national_code": NATIONAL,
         "as_of_versions": versions, "latest_as_of": latest,
-        "ensemble_model_id": ensemble_id,
-        "rounds": sorted(rounds_out, key=lambda r: r["reference_date"], reverse=True),
+        # latest round's choice, kept for compatibility; each rounds[] entry carries its own
+        "ensemble_model_id": latest_round["ensemble_model_id"] if latest_round else None,
+        "ensemble_source": latest_round["ensemble_source"] if latest_round else None,
+        "rounds": rounds_sorted,
         "accepted_reference_dates": rc.reference_dates,
     })
     print(f"wrote {out_dir} — {len(rounds_out)} rounds, {len(used)} models, {len(versions)} data versions, "

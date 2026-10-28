@@ -56,6 +56,83 @@ def samples_matrix(sub: pd.DataFrame) -> tuple[np.ndarray, list[str]]:
     return mat, weeks
 
 
+def _complete_rows(mat: np.ndarray) -> np.ndarray:
+    """Trajectories must cover the same weeks; drop incomplete samples rather than fail."""
+    if np.isnan(mat).any():
+        mat = mat[~np.isnan(mat).any(axis=1)]
+    return mat
+
+
+def _summaries(mat: np.ndarray, weeks: list[str], reference_date: str, present: np.ndarray,
+               obs_fixed_rows: np.ndarray, horizons, observed_fixed: float | None = None) -> dict:
+    """Shared core for one model and for a pool of models.
+
+    mat: rows x weeks (aligned to `weeks`, ISO Saturdays); present: boolean rows x weeks, True where the
+    row's model submitted that week (all True for a single model); obs_fixed_rows: per-row reported total
+    for the closed weeks the row's model did not submit. Every derived quantity (per-week values, nowcast
+    cumulative, forecast windows, presence) is computed trajectory by trajectory and summarised afterwards.
+    """
+    R = d(reference_date)
+    widx = {w: i for i, w in enumerate(weeks)}
+    n = mat.shape[0]
+    # Nowcast weeks have closed (Saturday before the reference date) but are incompletely reported.
+    # The reference week itself (horizon 0) has not finished when submissions are made, so it is a
+    # forecast horizon like +1..+3 and is never filled from reported data.
+    nowcast_weeks = [w for w in weeks if d(w) < R]
+    fc_week = {h: iso(R + timedelta(days=7 * h)) for h in horizons}
+
+    def col(i: int) -> np.ndarray:   # a week's values, 0 for rows whose model did not submit it
+        return np.where(present[:, i], mat[:, i], 0.0)
+
+    out: dict = {
+        "weeks": weeks,
+        "q": [qvals(mat[present[:, i], i]) for i in range(len(weeks))],
+        # per-week probability of at least one case (drives the map's P(>=1 case) metric)
+        "presence_wk": [round(float(np.mean(mat[present[:, i], i] >= 1)), 3) for i in range(len(weeks))],
+        "n_samples": int(n),
+        "n_nowcast_weeks": len(nowcast_weeks),
+        "horizon_sum": {}, "presence": {}, "cum_through_h": {},
+    }
+
+    # nowcast cumulative through the last closed week (R - 7): reported counts for unsubmitted
+    # closed weeks, trajectory values for submitted ones
+    cum_now = np.asarray(obs_fixed_rows, dtype=float).copy()
+    for w in nowcast_weeks:
+        cum_now += col(widx[w])
+    out["cum_nowcast"] = qvals(cum_now)
+    out["nowcast_through"] = iso(R - timedelta(days=7))
+    if observed_fixed is not None:
+        out["observed_fixed"] = observed_fixed
+
+    # Forecast windows run from the reference week (h=0) through R+h; every week in the window must
+    # be submitted, and a gap makes that horizon and all longer ones unavailable. In a pool, a row
+    # whose model misses a week of the window drops out of that horizon and the longer ones.
+    run = np.zeros(n)
+    cum_h = cum_now.copy()
+    mask = np.ones(n, dtype=bool)
+    have_all = True
+    for h in sorted(horizons):
+        w = fc_week[h]
+        if w not in widx:
+            have_all = False
+        if have_all:
+            i = widx[w]
+            mask = mask & present[:, i]
+            have_all = bool(mask.any())
+        if have_all:
+            c = col(i)
+            run = run + c
+            cum_h = cum_h + c
+            out["horizon_sum"][str(h)] = qvals(run[mask])
+            out["presence"][str(h)] = round(float(np.mean(run[mask] >= 1)), 3)
+            out["cum_through_h"][str(h)] = qvals(cum_h[mask])
+        else:
+            out["horizon_sum"][str(h)] = None
+            out["presence"][str(h)] = None
+            out["cum_through_h"][str(h)] = None
+    return out
+
+
 def summarize_location(mat: np.ndarray, weeks: list[str], reference_date: str,
                        observed: dict[str, float], horizons=config.HORIZONS) -> dict:
     """Summaries for one model/location.
@@ -63,58 +140,46 @@ def summarize_location(mat: np.ndarray, weeks: list[str], reference_date: str,
     mat: samples x weeks (aligned to `weeks`, ISO Saturdays). observed: week -> reported count in the
     round's data version (used to fill weeks <= reference_date the model did not submit).
     """
-    if np.isnan(mat).any():
-        # trajectories must cover the same weeks; drop incomplete samples rather than fail
-        keep = ~np.isnan(mat).any(axis=1)
-        mat = mat[keep]
+    mat = _complete_rows(mat)
     R = d(reference_date)
+    obs_fixed = sum(v for w, v in observed.items() if d(w) < R and w not in set(weeks))
+    present = np.ones(mat.shape, dtype=bool)
+    return _summaries(mat, weeks, reference_date, present, np.full(mat.shape[0], float(obs_fixed)),
+                      horizons, observed_fixed=round(float(obs_fixed), 1))
+
+
+def pool_members(members: dict[str, tuple[np.ndarray, list[str]]], reference_date: str,
+                 observed: dict[str, float], horizons=config.HORIZONS) -> dict:
+    """Linear-pool ensemble of several models for one location (hubEnsemble::linear_pool on samples).
+
+    members: model_id -> (samples x weeks matrix, weeks). Every trajectory of every member is kept
+    (equal weight per model when sample counts are equal). Rows are stacked on the union of weeks with a
+    per-row presence mask, so per-week values use the models that submitted the week, while cumulative
+    and forecast-window quantities are computed per trajectory (reported counts filling the closed weeks
+    a row's own model did not submit) and summarised over the pool.
+    """
+    R = d(reference_date)
+    weeks = sorted({w for _, wk in members.values() for w in wk})
     widx = {w: i for i, w in enumerate(weeks)}
-    # Nowcast weeks have closed (Saturday before the reference date) but are incompletely reported.
-    # The reference week itself (horizon 0) has not finished when submissions are made, so it is a
-    # forecast horizon like +1..+3 and is never filled from reported data.
-    nowcast_weeks = [w for w in weeks if d(w) < R]
-    fc_week = {h: iso(R + timedelta(days=7 * h)) for h in horizons}
-
-    out: dict = {
-        "weeks": weeks,
-        "q": [qvals(mat[:, i]) for i in range(mat.shape[1])],
-        # per-week probability of at least one case (drives the map's P(>=1 case) metric)
-        "presence_wk": [round(float(np.mean(mat[:, i] >= 1)), 3) for i in range(mat.shape[1])],
-        "n_samples": int(mat.shape[0]),
-        "n_nowcast_weeks": len(nowcast_weeks),
-        "horizon_sum": {}, "presence": {}, "cum_through_h": {},
-    }
-
-    # nowcast cumulative through the last closed week (R - 7): reported counts for unsubmitted
-    # closed weeks, trajectory values for submitted ones
-    obs_fixed = sum(v for w, v in observed.items() if d(w) < R and w not in widx)
-    cum_now = np.full(mat.shape[0], float(obs_fixed))
-    for w in nowcast_weeks:
-        cum_now += mat[:, widx[w]]
-    out["cum_nowcast"] = qvals(cum_now)
-    out["nowcast_through"] = iso(R - timedelta(days=7))
-    out["observed_fixed"] = round(float(obs_fixed), 1)
-
-    # Forecast windows run from the reference week (h=0) through R+h; every week in the window must
-    # be submitted, and a gap makes that horizon and all longer ones unavailable.
-    run = np.zeros(mat.shape[0])
-    cum_h = cum_now.copy()
-    have_all = True
-    for h in sorted(horizons):
-        w = fc_week[h]
-        if w not in widx:
-            have_all = False
-        if have_all:
-            col = mat[:, widx[w]]
-            run = run + col
-            cum_h = cum_h + col
-            out["horizon_sum"][str(h)] = qvals(run)
-            out["presence"][str(h)] = round(float(np.mean(run >= 1)), 3)
-            out["cum_through_h"][str(h)] = qvals(cum_h)
-        else:
-            out["horizon_sum"][str(h)] = None
-            out["presence"][str(h)] = None
-            out["cum_through_h"][str(h)] = None
+    blocks, pres, fixed, n_models_wk = [], [], [], np.zeros(len(weeks), dtype=int)
+    for mid in sorted(members):
+        mat, wk = members[mid]
+        mat = _complete_rows(np.asarray(mat, dtype=float))
+        full = np.zeros((mat.shape[0], len(weeks)))
+        p = np.zeros((mat.shape[0], len(weeks)), dtype=bool)
+        for j, w in enumerate(wk):
+            full[:, widx[w]] = mat[:, j]
+            p[:, widx[w]] = True
+            n_models_wk[widx[w]] += 1
+        obs_fixed = sum(v for w, v in observed.items() if d(w) < R and w not in set(wk))
+        blocks.append(full)
+        pres.append(p)
+        fixed.append(np.full(mat.shape[0], float(obs_fixed)))
+    out = _summaries(np.vstack(blocks), weeks, reference_date, np.vstack(pres), np.concatenate(fixed),
+                     horizons)
+    out["n_models"] = len(members)
+    out["members"] = sorted(members)
+    out["n_models_wk"] = [int(x) for x in n_models_wk]
     return out
 
 

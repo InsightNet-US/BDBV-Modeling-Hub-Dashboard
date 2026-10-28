@@ -1,5 +1,5 @@
 /* Weekly confirmed cases by week of symptom onset: reported (round data version), latest data
-   overlay, nowcast/forecast from the hub ensemble (dotted outline + optional interval) and
+   overlay, nowcast/forecast from the ensemble (hub or dashboard; dotted outline + optional interval) and
    selected team models (points + 95% intervals). */
 function drawTS() {
   const svg = document.getElementById('tsChart'), empty = document.getElementById('tsEmpty');
@@ -28,7 +28,7 @@ function drawTS() {
 
   // models
   const ens = S.ensembleId ? modelLoc(S.ensembleId, loc) : null;
-  const showEnsCI = !!(ens && S.tsSelected.has(S.ensembleId));
+  const showEnsCI = !!(ens && S.tsSelected.has(S.ensembleId)), dash = S.ensembleSource === 'dashboard';
   const teams = roundModels().filter(id => id !== S.ensembleId && S.tsSelected.has(id)).map(id => ({ id, name: modelLabel(id), color: modelColor(id), m: modelLoc(id, loc) })).filter(tm => tm.m);
   const anyModel = ens || teams.length;
   const qAt = (m, w) => { const i = m.weeks.indexOf(w); return i < 0 ? null : m.q[i]; };
@@ -37,7 +37,7 @@ function drawTS() {
   legend.innerHTML = `<span class="chip"><i style="background:var(--past)"></i>${t('ts.leg.reported', { d: fmtDate(asOf) })}</span>`
     + `<span class="chip"><i style="background:repeating-linear-gradient(135deg,var(--past) 0 2px,#fff 2px 4px)"></i>${t('ts.leg.inProgress')}</span>`
     + (haveLatest ? `<span class="chip"><i style="border:1.5px solid var(--latest);background:transparent"></i>${t('ts.leg.latest', { d: fmtDate(S.obsLatest.as_of) })}</span>` : '')
-    + (ens ? `<span class="chip"><i style="border:1.5px dashed var(--median);background:transparent"></i>${t(showEnsCI ? 'ts.leg.ensMedianCI' : 'ts.leg.ensMedian')}</span>` : '')
+    + (ens ? `<span class="chip"><i style="border:1.5px dashed var(--median);background:transparent"></i>${dash ? t(showEnsCI ? 'ts.leg.ensMedianCIDash' : 'ts.leg.ensMedianDash') : t(showEnsCI ? 'ts.leg.ensMedianCI' : 'ts.leg.ensMedian')}</span>` : '')
     + teams.map(tm => `<span class="chip"><i style="background:${tm.color}"></i>${tm.name}</span>`).join('')
     + (mapIdx >= 0 ? `<span class="chip"><i style="background:var(--accent);opacity:.35"></i>${t('ts.leg.weekOnMap')}</span>` : '');
 
@@ -141,7 +141,10 @@ function drawTS() {
       if (obs[w] != null) rows += `<div class="row"><span>${t('tip.reported', { d: fmtDate(asOf) })}${w > lastComplete ? ` <span class="sm">${t('tip.inProgress')}</span>` : ''}</span><b>${fmtN(obs[w])}</b></div>`;
       else if (rel != null && rel <= 0) rows += `<div class="row"><span>${t('tip.reportedLbl')}</span><b>${t('tip.noData')}</b></div>`;
       if (haveLatest && latest[w] != null) rows += `<div class="row"><span>${t('tip.latest', { d: fmtDate(S.obsLatest.as_of) })}</span><b>${fmtN(latest[w])}</b></div>`;
-      if (ens) { const q = qAt(ens, w); if (q) rows += `<div class="row"><span style="color:var(--median)">${t('tip.ensemble')}</span><b>${fmtN(q[QI.med])} <span class="sm">(${fmtRange(q)})</span></b></div>`; }
+      if (ens) {
+        const q = qAt(ens, w), nm = ens.n_models_wk ? ens.n_models_wk[ens.weeks.indexOf(w)] : null;
+        if (q) rows += `<div class="row"><span style="color:var(--median)">${t(dash ? 'tip.ensembleDash' : 'tip.ensemble')}${nm ? ` <span class="sm">${tn('tip.ensModels', nm)}</span>` : ''}</span><b>${fmtN(q[QI.med])} <span class="sm">(${fmtRange(q)})</span></b></div>`;
+      }
       teams.forEach(tm => { const q = qAt(tm.m, w); if (q) rows += `<div class="row"><span style="color:${tm.color}">${tm.name}</span><b>${fmtN(q[QI.med])} <span class="sm">(${fmtRange(q)})</span></b></div>`; });
       const hasModel = (ens && qAt(ens, w)) || teams.some(tm => qAt(tm.m, w));
       const mapHint = mappable.has(w) ? `<div class="sm" style="margin-top:4px">${t(w === S.mapWeek ? 'tip.shownOnMap' : 'tip.clickMap')}</div>` : '';

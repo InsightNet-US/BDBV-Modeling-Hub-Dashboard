@@ -100,3 +100,28 @@ def test_validator():
     assert any("Saturday" in p for p in problems)
     assert any("99 samples" in p for p in problems)
     assert validate_submission(make_df(WEEKS_NOW, locs=("CD",)), R, "x-y", {"IT"})
+
+
+# ---------------------------------------------------------------- regression fixture
+def fixture_inputs():
+    """The matrices behind tests/fixtures/summarize_location.json (generated from the pre-pool code)."""
+    rng = np.random.default_rng(7)
+    weeks = ["2026-10-10", "2026-10-17", "2026-10-24", "2026-10-31", "2026-11-07", "2026-11-14", "2026-11-21"]
+    obs = {"2026-09-26": 12, "2026-10-03": 15.0, "2026-10-10": 9, "2026-10-17": 11, "2026-10-24": 4}
+    mat = rng.gamma(2.0, 6.0, size=(100, len(weeks)))
+    mat[:, 1] = np.round(mat[:, 1])
+    weeks2 = ["2026-10-31", "2026-11-07", "2026-11-21"]
+    mat2 = rng.poisson(1.2, size=(100, 3)).astype(float)
+    mat3 = mat.copy()
+    mat3[5, 2] = np.nan
+    mat3[40, 0] = np.nan
+    return {"full": (mat, weeks, obs), "gap": (mat2, weeks2, obs), "nan": (mat3, weeks, obs)}
+
+
+def test_summarize_location_matches_fixture():
+    import json
+    fx = json.loads((Path(__file__).with_name("fixtures") / "summarize_location.json").read_text())
+    for name, (mat, weeks, obs) in fixture_inputs().items():
+        got = json.loads(json.dumps(summarize_location(mat, weeks, fx["reference_date"], obs)))
+        assert got == fx["cases"][name]["out"], name
+        assert list(got) == list(fx["cases"][name]["out"]), f"{name}: key order"

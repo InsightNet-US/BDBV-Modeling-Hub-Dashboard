@@ -34,6 +34,8 @@ jobs:
       HUB_BRANCH: ${{ github.event.inputs.hub_branch || 'main' }}
       HUB_DIR: ${{ github.workspace }}/hub
       ENSEMBLE_MODEL_ID: ${{ vars.ENSEMBLE_MODEL_ID }}
+      # hub | auto | dashboard (empty = auto); applies to the live and the mock build alike (README, Ensemble)
+      ENSEMBLE_SOURCE: ${{ vars.ENSEMBLE_SOURCE }}
     steps:
       - uses: actions/checkout@v4
 

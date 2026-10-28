@@ -37,8 +37,21 @@ if MOCK_MODE not in ("on", "off"):
 # Only a nudge against stumbling onto synthetic output: everything on a static site is public.
 MOCK_PASSPHRASE = os.environ.get("MOCK_PASSPHRASE", "testme").strip()
 
-# Explicit ensemble model id; if empty, the single model flagged ensemble_of_hub_models wins.
+# Explicit hub ensemble model id; if empty, the single model flagged ensemble_of_hub_models wins.
 ENSEMBLE_MODEL_ID = os.environ.get("ENSEMBLE_MODEL_ID", "").strip() or None
+
+# Where the ensemble shown on the dashboard comes from, decided per round:
+#   hub       - the hub's ensemble model when it submitted the round, otherwise none;
+#   dashboard - a linear pool of the round's submissions computed by this pipeline;
+#   auto      - the hub's ensemble when it submitted the round, else the dashboard pool.
+ENSEMBLE_SOURCE = os.environ.get("ENSEMBLE_SOURCE", "auto").strip().lower() or "auto"
+if ENSEMBLE_SOURCE not in ("hub", "auto", "dashboard"):
+    raise ValueError("ENSEMBLE_SOURCE must be 'hub', 'auto' or 'dashboard'")
+DASHBOARD_ENSEMBLE_ID = "BDBV-dashboard-ensemble"
+# A location gets a dashboard ensemble only when at least this many models submitted it.
+ENSEMBLE_MIN_MODELS = int(os.environ.get("ENSEMBLE_MIN_MODELS", "2"))
+# Model ids never pooled into the dashboard ensemble (comma-separated), on top of any hub ensemble.
+ENSEMBLE_EXCLUDE = [m.strip() for m in os.environ.get("ENSEMBLE_EXCLUDE", "").split(",") if m.strip()]
 
 ROUND_NAME = "BDBV 2026 nowcasting and forecasting"
 TARGET = "wk inc confirmed cases"
