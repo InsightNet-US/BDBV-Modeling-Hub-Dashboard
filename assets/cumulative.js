@@ -5,6 +5,7 @@ function drawCum() {
   const svg = document.getElementById('cumChart');
   const W = svg.clientWidth || 360, R = S.roundRef, loc = S.location, mapRel = weekRel(S.mapWeek);
   const sub = document.getElementById('cumSub');
+  if (S.layout.hidden.has('cum')) return;   // panel hidden: drawn again when shown
   if (!S.obsRound) { svg.innerHTML = ''; return; }
   const obs = obsMap(S.obsRound, loc), asOf = S.obsRound.as_of;
   const upTo = R || S.obsRound.last_complete_week;

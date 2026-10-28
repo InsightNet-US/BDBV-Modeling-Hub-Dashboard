@@ -162,12 +162,12 @@ Try it: the French interface is on the test copy of the dashboard, `/mock/?lang=
 | italic note | no submissions | aucune soumission | aucune soumission |
 | row label | Nowcast · closed wks thru {d} | Estimation en temps réel sem. écoulées jusqu’au {d} | Estimation en temps réel sem. écoulées jusqu’au 24 oct. |
 | italic note next to a hollow dot | no nowcast weeks submitted (reported only) | aucune semaine d’estimation en temps réel soumise (déclarés seulement) | aucune semaine d’estimation en temps réel soumise (déclarés seulement) |
-| tooltip of a nowcast box *(one)* | {name}: eventual confirmed cases in weeks closed by {d} ({n} nowcast wk) | {name} : nombre total de cas confirmés estimé pour les semaines écoulées au {d} ({n} sem. d’estimation en temps réel) | OHTJHU-BM : nombre total de cas confirmés estimé pour les semaines écoulées au 24 oct. (1 sem. d’estimation en temps réel) |
-| tooltip of a nowcast box *(other)* | {name}: eventual confirmed cases in weeks closed by {d} ({n} nowcast wk) | {name} : nombre total de cas confirmés estimé pour les semaines écoulées au {d} ({n} sem. d’estimation en temps réel) | OHTJHU-BM : nombre total de cas confirmés estimé pour les semaines écoulées au 24 oct. (3 sem. d’estimation en temps réel) |
+| tooltip of a nowcast box *(one)* | {name}: eventual confirmed cases in weeks closed by {d} ({n} nowcast wk) | {name} : nombre total de cas confirmés estimé pour les semaines écoulées au {d} ({n} sem. d’estimation en temps réel) | Carte : nombre total de cas confirmés estimé pour les semaines écoulées au 24 oct. (1 sem. d’estimation en temps réel) |
+| tooltip of a nowcast box *(other)* | {name}: eventual confirmed cases in weeks closed by {d} ({n} nowcast wk) | {name} : nombre total de cas confirmés estimé pour les semaines écoulées au {d} ({n} sem. d’estimation en temps réel) | Carte : nombre total de cas confirmés estimé pour les semaines écoulées au 24 oct. (3 sem. d’estimation en temps réel) |
 | row label | Forecast wk 0 · thru {d} | Prévision sem. 0 · jusqu’au {d} | Prévision sem. 0 · jusqu’au 24 oct. |
 | row label | Forecast +{n} wk · thru {d} | Prévision +{n} sem. · jusqu’au {d} | Prévision +3 sem. · jusqu’au 24 oct. |
-| tooltip of a forecast box | {name}: cumulative confirmed through week 0 ({d}) | {name} : cas confirmés cumulés jusqu’à la semaine 0 ({d}) | OHTJHU-BM : cas confirmés cumulés jusqu’à la semaine 0 (24 oct.) |
-| tooltip of a forecast box | {name}: cumulative confirmed through week +{n} ({d}) | {name} : cas confirmés cumulés jusqu’à la semaine +{n} ({d}) | OHTJHU-BM : cas confirmés cumulés jusqu’à la semaine +3 (24 oct.) |
+| tooltip of a forecast box | {name}: cumulative confirmed through week 0 ({d}) | {name} : cas confirmés cumulés jusqu’à la semaine 0 ({d}) | Carte : cas confirmés cumulés jusqu’à la semaine 0 (24 oct.) |
+| tooltip of a forecast box | {name}: cumulative confirmed through week +{n} ({d}) | {name} : cas confirmés cumulés jusqu’à la semaine +{n} ({d}) | Carte : cas confirmés cumulés jusqu’à la semaine +3 (24 oct.) |
 | italic note | not submitted | non soumis | non soumis |
 
 ## Map
@@ -250,6 +250,23 @@ Try it: the French interface is on the test copy of the dashboard, `/mock/?lang=
 | hover text of the KSPH logo | Kinshasa School of Public Health | École de Santé Publique de Kinshasa | École de Santé Publique de Kinshasa |
 | hover text of the Insight Net logos | Insight Net centers ACCIDDA and epiENGAGE | Centres Insight Net ACCIDDA et epiENGAGE | Centres Insight Net ACCIDDA et epiENGAGE |
 | hover text of the hubverse logo | Built with the hubverse data formats and tools | Construit avec les formats de données et les outils hubverse | Construit avec les formats de données et les outils hubverse |
+
+## Panel layout
+
+| Where | English | French | Example (French) |
+|---|---|---|---|
+| toolbar button opening the panel menu | Panels | Panneaux | Panneaux |
+| panel name in the menu and button labels | Weekly chart | Graphique hebdomadaire | Graphique hebdomadaire |
+| panel name in the menu and button labels | Cumulative cases | Cas cumulés | Cas cumulés |
+| panel name in the menu and button labels | Map | Carte | Carte |
+| entry of the panel menu | Reset layout | Réinitialiser la disposition | Réinitialiser la disposition |
+| entry of the panel menu | Copy link to this layout | Copier le lien vers cette disposition | Copier le lien vers cette disposition |
+| confirmation after copying | Link copied | Lien copié | Lien copié |
+| hover text of the × button in a panel header | Hide: {name} | Masquer : {name} | Masquer : Carte |
+| note shown when every panel is hidden | All panels are hidden. | Tous les panneaux sont masqués. | Tous les panneaux sont masqués. |
+| button under that note | Show panels | Afficher les panneaux | Afficher les panneaux |
+| hover text of the gutter between the charts and the map | Drag to resize the columns (double-click to reset) | Glisser pour redimensionner les colonnes (double-clic pour réinitialiser) | Glisser pour redimensionner les colonnes (double-clic pour réinitialiser) |
+| hover text of the gutter between the two charts | Drag to resize the charts (double-click to reset) | Glisser pour redimensionner les graphiques (double-clic pour réinitialiser) | Glisser pour redimensionner les graphiques (double-clic pour réinitialiser) |
 
 ## Errors
 

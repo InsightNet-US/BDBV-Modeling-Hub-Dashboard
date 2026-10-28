@@ -5,6 +5,7 @@ function drawTS() {
   const svg = document.getElementById('tsChart'), empty = document.getElementById('tsEmpty');
   const R = S.roundRef, loc = S.location, maxH = Math.max(0, ...(S.manifest.horizons || [3]));
   const legend = document.getElementById('tsLegend');
+  if (S.layout.hidden.has('weekly')) return;   // panel hidden: drawn again when shown
   svg.innerHTML = ''; empty.style.display = 'none';
   if (!S.obsRound) return;
 

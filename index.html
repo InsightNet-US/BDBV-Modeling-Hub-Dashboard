@@ -37,15 +37,17 @@
   </div>
   <div class="toggle small hidden" id="langToggle" title="Language" data-i18n-title="hdr.langTitle"><button type="button" data-lang="en" class="active" lang="en">EN</button><button type="button" data-lang="fr" lang="fr">FR</button></div>
   <button class="linkbtn" id="modelsBtn" type="button" data-i18n="hdr.models">Models</button>
+  <div class="dd" id="panelsDD"><button class="linkbtn ddarrow" id="panelsBtn" type="button" aria-haspopup="true" aria-expanded="false"><span data-i18n="panels.btn">Panels</span> ▾</button><div class="ddpanel right" id="panelsPanel"></div></div>
   </div>
 </header>
 <div id="mockBanner" class="mockbanner hidden" role="note"><span data-i18n="banner.text">SYNTHETIC MODEL OUTPUT · demonstration data, not team submissions · </span><a id="liveLink" href="../" class="hidden" data-i18n="banner.live">go to the live dashboard</a></div>
 
-<div class="grid">
- <div class="left">
+<div class="grid" id="grid">
+ <div class="left" id="left">
   <!-- TIME SERIES -->
   <section class="panel ts">
     <div class="hd">
+      <span class="pbtns"><button type="button" class="pbtn hide" data-panel="weekly">×</button></span>
       <h2 data-i18n="ts.title">Weekly confirmed cases</h2>
       <span class="tlabel" data-i18n="common.models">Models</span>
       <div class="dd" id="tsModelDD">
@@ -66,10 +68,12 @@
       <div class="wm" aria-hidden="true"><span data-i18n="wm.word">Synthetic</span></div>
     </div>
   </section>
+  <div class="split" id="hsplit" role="separator" aria-orientation="horizontal" tabindex="0" aria-valuemin="0" aria-valuemax="100" data-i18n-title="panels.hsplit" data-i18n-aria="panels.hsplit"></div>
 
   <!-- CUMULATIVE -->
   <section class="panel cum">
     <div class="hd">
+      <span class="pbtns"><button type="button" class="pbtn hide" data-panel="cum">×</button></span>
       <h2 data-i18n="cum.title">Cumulative confirmed cases</h2>
       <span class="sub" id="cumSub"></span>
       <div class="spacer"></div>
@@ -85,10 +89,12 @@
     </div>
   </section>
  </div>
+  <div class="split" id="vsplit" role="separator" aria-orientation="vertical" tabindex="0" aria-valuemin="0" aria-valuemax="100" data-i18n-title="panels.vsplit" data-i18n-aria="panels.vsplit"></div>
 
   <!-- MAP -->
   <section class="panel map">
     <div class="hd">
+      <span class="pbtns"><button type="button" class="pbtn hide" data-panel="map">×</button></span>
       <div class="toggle small" id="layerToggle" title="Map level" data-i18n-title="map.levelTitle">
         <button data-l="prov" class="active" data-i18n="map.provinces">Provinces</button>
         <button data-l="hz" data-i18n="map.zones">Health zones</button>
@@ -107,6 +113,7 @@
     </div>
     <div id="mapWrap" style="position:relative;flex:1;min-height:0;display:flex"><div id="map"></div><div class="wm" aria-hidden="true"><span data-i18n="wm.word">Synthetic</span></div></div>
   </section>
+  <div id="allHidden"><span data-i18n="panels.allHidden">All panels are hidden.</span><button type="button" class="linkbtn" id="showPanels" data-i18n="panels.show">Show panels</button></div>
 </div>
 
 <footer>

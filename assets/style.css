@@ -67,21 +67,56 @@ select{background:var(--panel-2);color:var(--ink);border:1px solid var(--line);b
 .linkbtn{background:none;border:1px solid var(--line);border-radius:6px;padding:5px 10px;font-size:12px;color:var(--ink);cursor:pointer}
 .linkbtn:hover{background:var(--panel-2)}
 
+/* three panels in a grid: left column (weekly chart over cumulative panel), a 14px gutter, map. The gutters
+   are the gaps and double as drag handles; --col is the left column's share of the grid width, --row the
+   weekly chart's share of the column (unset = cumulative panel sized to its content). Hidden panels leave
+   the flow (display:none) and the grid collapses to one column. */
 .grid{
-  display:grid;gap:14px;padding:14px;flex:1;min-height:0;
-  grid-template-columns:minmax(380px,42%) 1fr;grid-template-rows:minmax(0,1fr);
+  display:grid;gap:0;padding:14px;flex:1;min-height:0;--col:0.42;--left-min:420px;
+  grid-template-columns:minmax(var(--left-min),min(calc(var(--col) * 100%),calc(100% - 334px))) 14px 1fr;grid-template-rows:minmax(0,1fr);
 }
+html[lang="fr"] .grid{--left-min:450px}
+.grid.no-map,.grid.no-left{grid-template-columns:1fr}
+.grid.no-map .map,.grid.no-map #vsplit,.grid.no-left .left,.grid.no-left #vsplit{display:none}
+.grid.no-weekly .ts,.grid.no-weekly #hsplit,.grid.no-cum .cum,.grid.no-cum #hsplit{display:none}
+.grid.no-weekly .cum{flex:1 1 0;max-height:none}
+#allHidden{display:none;grid-column:1 / -1;align-items:center;justify-content:center;flex-direction:column;gap:12px;color:var(--muted);font-size:13px;min-height:200px}
+.grid.all-hidden #allHidden{display:flex}
+.split{position:relative;touch-action:none;flex:none;background:transparent}
+#vsplit{cursor:col-resize}
+#hsplit{cursor:row-resize;height:14px}
+.split::after{content:"";position:absolute;background:var(--line);border-radius:2px;opacity:0;transition:opacity .15s}
+#vsplit::after{left:6px;top:0;bottom:0;width:2px}
+#hsplit::after{top:6px;left:0;right:0;height:2px}
+.split:hover::after,.split.active::after,.split:focus-visible::after{opacity:1;background:var(--accent)}
+.split:focus-visible{outline:none}
+body.resizing{user-select:none;-webkit-user-select:none}
+body.resizing-col{cursor:col-resize}
+body.resizing-row{cursor:row-resize}
+.pbtns{display:inline-flex;gap:1px;margin-right:-4px}
+.linkbtn.ddarrow{background:var(--panel-2)}
+.linkbtn.ddarrow[aria-expanded="true"]{background:var(--line)}
+.pbtn{background:none;border:0;color:var(--muted);cursor:pointer;font-size:13px;line-height:1;padding:2px 5px;border-radius:4px}
+.pbtn:hover{background:var(--panel-2);color:var(--ink)}
+.ddpanel.right{left:auto;right:0}
+.ddpanel .item{display:block;width:100%;text-align:left;background:none;border:0;border-top:1px solid var(--line);margin-top:4px;padding:6px;font-size:12px;color:var(--accent);cursor:pointer}
+.ddpanel .item:hover{text-decoration:underline}
 .panel{background:var(--panel);border:1px solid var(--line);border-radius:12px;overflow:hidden;display:flex;flex-direction:column;min-height:0}
 .panel .hd{display:flex;align-items:center;gap:8px 10px;flex-wrap:wrap;padding:9px 14px;border-bottom:1px solid var(--line)}
 .panel .hd h2{font-size:13px;margin:0;font-weight:600}
 .panel .hd .sub{font-size:11px;color:var(--muted)}
 .panel .hd .spacer{flex:1}
 .panel .bd{padding:10px 14px;flex:1;min-height:0;position:relative}
-.left{grid-column:1;grid-row:1;display:flex;flex-direction:column;gap:14px;min-height:0}
+.left{display:flex;flex-direction:column;gap:0;min-height:0}
 .ts{flex:1 1 0;min-height:220px}
 .cum{flex:0 1 auto;max-height:48%}
 .cum .bd{overflow:auto}
-.map{grid-column:2;grid-row:1}
+@media (min-width:1001px){
+  .left.custom-row .ts{flex:var(--row) 1 0;max-height:none}
+  .left.custom-row .cum{flex:calc(1 - var(--row)) 1 0;max-height:none;min-height:110px}
+  /* alone in the column, a chart takes all of it whatever the stored split */
+  .grid.no-cum .left .ts,.grid.no-weekly .left .cum{flex:1 1 0;max-height:none}
+}
 #map{width:100%;height:100%;flex:1;background:#e3e8ee}
 
 .tlabel{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-right:-4px}
@@ -108,7 +143,7 @@ select{background:var(--panel-2);color:var(--ink);border:1px solid var(--line);b
 .horizonval{color:var(--ink);font-weight:600}
 .empty{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;color:var(--muted);font-size:12px;padding:20px;pointer-events:none}
 .empty b{font-size:14px;color:#3b4654;margin-bottom:4px}
-.note{position:absolute;top:10px;right:16px;max-width:46%;background:rgba(255,255,255,.92);border:1px solid var(--line);border-radius:8px;padding:7px 10px;font-size:11px;color:var(--muted);line-height:1.35;pointer-events:none;z-index:5}
+.note{position:absolute;top:10px;right:16px;max-width:max(46%,200px);background:rgba(255,255,255,.92);border:1px solid var(--line);border-radius:8px;padding:7px 10px;font-size:11px;color:var(--muted);line-height:1.35;pointer-events:none;z-index:5}
 .note b{display:block;color:#3b4654;font-size:12px;margin-bottom:2px}
 .leaflet-control-attribution{font-size:9px;background:rgba(255,255,255,.7)}
 
@@ -160,7 +195,10 @@ footer .spacer{flex:1}
 
 @media (max-width:1000px){
   body{height:auto}
-  .grid{grid-template-columns:1fr;grid-template-rows:auto 520px;flex:none}
-  .left{grid-row:1}.ts{flex:none;height:400px}.cum{max-height:none}.map{grid-column:1;grid-row:2}
+  .grid{grid-template-columns:1fr;grid-template-rows:auto 520px;flex:none;gap:14px}
+  .left{gap:14px}.ts{flex:none;height:400px}.cum{max-height:none}
+  .split{display:none}
+  .grid.no-map,.grid.all-hidden{grid-template-rows:auto}
+  .grid.no-left{grid-template-rows:520px}
   header{padding:10px 16px}
 }

@@ -4,7 +4,7 @@
    marked by a heavier border only; nothing else is dimmed. */
 const SEL_W = { prov: 3.5, hz: 3 }, OUTLINE_W = 1.6;
 let map, provLayer, hzLayer, provOutline, mapFitted = false;
-let base = null, baseKind = null, zoomCtl = null;
+let base = null, baseKind = null, zoomCtl = null, pendingFit;   // fit requested while the map panel was hidden
 /* Basemaps: Esri light grey (English labels) by default. A French-labelled basemap can be set in FR_TILES
    (e.g. CARTO Positron, which needs a free API key tied to the site's domain:
    'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png?api_key=…' with attribution
@@ -68,6 +68,7 @@ function layerBounds(layer, pred) {
 }
 /** zoom to a province, or (null) to the provinces with reported cases */
 function fitProvince(prov) {
+  if (S.layout.hidden.has('map')) { pendingFit = { prov }; return; }   // a 0-size map cannot be fitted
   const b = prov ? layerBounds(provLayer, f => f.properties.location === prov)
                  : layerBounds(provLayer, f => (locInfo(f.properties.location) || {}).total > 0);
   if (b) map.fitBounds(b, { padding: [10, 10] });
@@ -84,6 +85,7 @@ function onFeat(f, layer, level) {
   });
 }
 
+function applyPendingFit() { if (pendingFit) { const p = pendingFit.prov; pendingFit = undefined; fitProvince(p); } }
 /* label for the mapped week: "week ending 7 Nov (forecast +1 wk)" */
 const wkLabel = () => S.mapWeek ? t('map.wkLabel', { d: fmtDate(S.mapWeek), kind: weekKind(S.mapWeek) }) : t('map.noWeek');
 
@@ -132,7 +134,7 @@ function featTip(f, level) {
 }
 
 function drawMap() {
-  if (!map || !S.obsRound) return;
+  if (!map || !S.obsRound || S.layout.hidden.has('map')) return;
   const level = S.mapLayer, layer = level === 'hz' ? hzLayer : provLayer;
   if (!layer) return;
   // colour scale over every hub location on the active layer

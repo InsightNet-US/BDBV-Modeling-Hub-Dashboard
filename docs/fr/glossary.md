@@ -96,4 +96,9 @@ Conventions adoptées, à confirmer :
 | website / code | site web / code | — | Liens du volet Modèles. |
 | Data: (inputs) | Données : | — | |
 | zone not in the hub's location list | zone absente de la liste des lieux du hub | — | Polygone sans code hub. |
+| panel / Panels (menu) | panneau / Panneaux | volet | Menu de la barre d'outils qui affiche ou masque les panneaux. |
+| hide (panel button) | masquer | fermer | Bouton × dans l'en-tête de chaque panneau. |
+| reset layout | réinitialiser la disposition | rétablir la disposition | |
+| copy link to this layout | copier le lien vers cette disposition | — | |
+| drag to resize | glisser pour redimensionner | — | Info-bulle des séparateurs entre panneaux. |
 | Zoom in / Zoom out | Agrandir / Réduire | Zoom avant / Zoom arrière ; grossir / diminuer | Relecteurs (seconde proposition retenue). |

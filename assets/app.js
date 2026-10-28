@@ -7,6 +7,7 @@ const S = {
   mapWeek: null, mapRel: 0,   // week shown on the map and its offset in weeks from the reference date
   tsSelected: new Set(), cumSelected: new Set(),
   mapMetric: 'median', mapModel: null, mapLayer: 'prov', geoHZ: null,
+  layout: { col: 0.42, row: null, hidden: new Set(), fromURL: false },   // panel sizes and visibility
   cache: {},
 };
 const NATIONAL = 'CD';
@@ -105,6 +106,141 @@ function setMapWeek(w) {
   sync();
 }
 
+/* ---------- panel layout: resizable gutters, hideable panels, URL and per-browser persistence ----------
+   State in S.layout: col = left column share of the grid width, row = weekly chart share of the column
+   (null = cumulative panel sized to its content), hidden = subset of PANELS. The CSS reads --col/--row
+   and the no-… / custom-row classes; the ResizeObserver in wire() redraws whatever changes size. */
+const LAYOUT_KEY = 'bdbv-layout', PANELS = ['weekly', 'cum', 'map'], COL_DEFAULT = 0.42;
+const PANEL_KEY = { weekly: 'panels.weekly', cum: 'panels.cum', map: 'panels.map' };
+const GUTTER = 14, MAP_MIN = 320, TS_MIN = 220, CUM_MIN = 110;
+function loadLayout() {
+  const L = S.layout, q = new URLSearchParams(location.search);
+  try { const st = JSON.parse(localStorage.getItem(LAYOUT_KEY) || 'null');
+    if (st) { if (st.col > 0 && st.col < 1) L.col = st.col; if (st.row > 0 && st.row < 1) L.row = st.row; (st.hidden || []).forEach(p => { if (PANELS.includes(p)) L.hidden.add(p); }); } } catch (e) { /* fine */ }
+  const panels = q.get('panels');
+  if (panels != null) {
+    const shown = panels === 'none' ? [] : panels.split(',').map(x => x.trim()).filter(p => PANELS.includes(p));
+    if (panels === 'none' || shown.length) { L.hidden = new Set(PANELS.filter(p => !shown.includes(p))); L.fromURL = true; }
+  }
+  const split = q.get('split');
+  if (split != null) {
+    const [c, r] = split.split(',').map(parseFloat);
+    if (c > 0 && c < 1) { L.col = c; L.fromURL = true; }
+    if (r > 0 && r < 1) { L.row = r; L.fromURL = true; } else if (split.split(',').length > 1 && isNaN(r)) L.row = null;
+  }
+}
+function saveLayout() {
+  const L = S.layout; L.fromURL = false;
+  try { localStorage.setItem(LAYOUT_KEY, JSON.stringify({ col: L.col, row: L.row, hidden: [...L.hidden] })); } catch (e) { /* fine */ }
+}
+/** CSS side only (safe before any data is loaded) */
+function applyLayoutCSS() {
+  const L = S.layout, h = L.hidden, grid = $('grid'), left = $('left');
+  grid.style.setProperty('--col', L.col);
+  left.classList.toggle('custom-row', L.row != null);
+  if (L.row != null) left.style.setProperty('--row', L.row); else left.style.removeProperty('--row');
+  grid.classList.toggle('no-weekly', h.has('weekly')); grid.classList.toggle('no-cum', h.has('cum')); grid.classList.toggle('no-map', h.has('map'));
+  grid.classList.toggle('no-left', h.has('weekly') && h.has('cum'));
+  grid.classList.toggle('all-hidden', h.size === PANELS.length);
+  $('vsplit').setAttribute('aria-valuenow', Math.round(L.col * 100));
+  $('hsplit').setAttribute('aria-valuenow', Math.round((L.row == null ? rowFraction() : L.row) * 100));
+}
+/** full application after a user action or on startup: CSS, controls, map recovery, redraw, save */
+function applyLayout(user) {
+  const wasMapHidden = $('grid').classList.contains('no-map');
+  applyLayoutCSS();
+  buildPanelsMenu(); refreshPanelButtons();
+  if (user) saveLayout();
+  if (map && wasMapHidden && !S.layout.hidden.has('map')) { map.invalidateSize({ animate: false }); applyPendingFit(); }
+  if (S.obsRound) sync();
+}
+function setHidden(panel, hidden) { if (hidden) S.layout.hidden.add(panel); else S.layout.hidden.delete(panel); applyLayout(true); }
+function resetLayout() {
+  S.layout.col = COL_DEFAULT; S.layout.row = null; S.layout.hidden = new Set();
+  applyLayout(true);
+  try { localStorage.removeItem(LAYOUT_KEY); } catch (e) { /* fine */ }
+  const u = new URL(location.href); u.searchParams.delete('panels'); u.searchParams.delete('split');
+  history.replaceState(null, '', u.pathname + (u.search || '') + u.hash);
+}
+function layoutURL() {
+  const L = S.layout, u = new URL(location.href), shown = PANELS.filter(p => !L.hidden.has(p));
+  u.searchParams.set('panels', shown.length ? shown.join(',') : 'none');
+  u.searchParams.set('split', L.row == null ? L.col.toFixed(2) : `${L.col.toFixed(2)},${L.row.toFixed(2)}`);
+  return u.toString();
+}
+/* geometry helpers: fractions are relative to the grid content width (what the CSS percentage resolves
+   against) and to the free height of the left column (its height minus the gutter) */
+function gridWidth() { const g = $('grid'), cs = getComputedStyle(g); return g.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight); }
+function leftFree() { return $('left').clientHeight - GUTTER; }
+function rowFraction() { const f = leftFree(); return f > 0 ? document.querySelector('.ts').offsetHeight / f : 0.6; }
+function clampCol(v) {
+  const w = gridWidth(), leftMin = parseFloat(getComputedStyle($('grid')).getPropertyValue('--left-min')) || 420;
+  if (!(w > leftMin + GUTTER + MAP_MIN)) return Math.min(Math.max(v, 0.2), 0.8);
+  return Math.min(Math.max(v, leftMin / w), (w - GUTTER - MAP_MIN) / w);
+}
+function clampRow(v) {
+  const f = leftFree(); if (!(f > TS_MIN + CUM_MIN)) return Math.min(Math.max(v, 0.2), 0.85);
+  return Math.min(Math.max(v, TS_MIN / f), (f - CUM_MIN) / f);
+}
+/** drag / keyboard handling for a gutter; set() receives the new fraction, done() runs when a gesture ends */
+function splitter(el, axis, { get, set, done, reset }) {
+  let start = null;
+  const pos = e => axis === 'col' ? e.clientX : e.clientY;
+  const extent = () => axis === 'col' ? gridWidth() : leftFree();
+  el.addEventListener('pointerdown', e => {
+    if (e.button !== 0) return;
+    e.preventDefault(); el.setPointerCapture(e.pointerId);
+    start = { p: pos(e), v: get() }; el.classList.add('active'); document.body.classList.add('resizing', 'resizing-' + axis);
+  });
+  el.addEventListener('pointermove', e => { if (start) set(start.v + (pos(e) - start.p) / extent()); });
+  const end = () => { if (!start) return; start = null; el.classList.remove('active'); document.body.classList.remove('resizing', 'resizing-' + axis); done(); };
+  el.addEventListener('pointerup', end); el.addEventListener('pointercancel', end);
+  el.addEventListener('dblclick', reset);
+  el.addEventListener('keydown', e => {
+    const step = { ArrowLeft: -0.02, ArrowUp: -0.02, ArrowRight: 0.02, ArrowDown: 0.02 }[e.key];
+    if (step != null) { set(get() + step); done(); e.preventDefault(); }
+    else if (e.key === 'Home' || e.key === 'End') { reset(); e.preventDefault(); }
+  });
+}
+function wireLayout() {
+  splitter($('vsplit'), 'col', {
+    get: () => S.layout.col,
+    set: v => { S.layout.col = clampCol(v); $('grid').style.setProperty('--col', S.layout.col); $('vsplit').setAttribute('aria-valuenow', Math.round(S.layout.col * 100)); },
+    done: () => { saveLayout(); if (map) map.invalidateSize(); },
+    reset: () => { S.layout.col = COL_DEFAULT; applyLayout(true); },
+  });
+  splitter($('hsplit'), 'row', {
+    get: () => S.layout.row == null ? rowFraction() : S.layout.row,
+    set: v => { S.layout.row = clampRow(v); $('left').classList.add('custom-row'); $('left').style.setProperty('--row', S.layout.row); $('hsplit').setAttribute('aria-valuenow', Math.round(S.layout.row * 100)); },
+    done: saveLayout,
+    reset: () => { S.layout.row = null; applyLayout(true); },
+  });
+  document.querySelectorAll('.pbtn.hide').forEach(b => b.addEventListener('click', () => { setHidden(b.dataset.panel, true); $('panelsBtn').focus(); }));
+  $('showPanels').addEventListener('click', resetLayout);
+  const btn = $('panelsBtn'), panel = $('panelsPanel');
+  btn.addEventListener('click', e => { e.stopPropagation(); document.querySelectorAll('.ddpanel.open').forEach(p => { if (p !== panel) p.classList.remove('open'); }); panel.classList.toggle('open'); btn.setAttribute('aria-expanded', panel.classList.contains('open')); });
+  document.addEventListener('click', e => { if (!panel.contains(e.target) && e.target !== btn) { panel.classList.remove('open'); btn.setAttribute('aria-expanded', 'false'); } });
+}
+function buildPanelsMenu() {
+  const panel = $('panelsPanel'), L = S.layout;
+  panel.innerHTML = PANELS.map(p => `<label><input type="checkbox" value="${p}" ${L.hidden.has(p) ? '' : 'checked'}>${t(PANEL_KEY[p])}</label>`).join('')
+    + `<button type="button" class="item" id="layoutReset">${t('panels.reset')}</button><button type="button" class="item" id="layoutCopy">${t('panels.copy')}</button>`;
+  panel.querySelectorAll('input').forEach(cb => cb.addEventListener('change', () => setHidden(cb.value, !cb.checked)));
+  $('layoutReset').addEventListener('click', resetLayout);
+  $('layoutCopy').addEventListener('click', async e => {
+    const url = layoutURL(), b = e.currentTarget;
+    try { await navigator.clipboard.writeText(url); b.textContent = t('panels.copied'); setTimeout(() => { b.textContent = t('panels.copy'); }, 1500); }
+    catch (err) { window.prompt(t('panels.copy'), url); }
+  });
+}
+function refreshPanelButtons() {
+  document.querySelectorAll('.pbtn.hide').forEach(b => {
+    const label = t('panels.hide', { name: t(PANEL_KEY[b.dataset.panel]) });
+    b.title = label; b.setAttribute('aria-label', label);
+  });
+}
+loadLayout(); applyLayoutCSS();   // before the first paint; scripts run after the DOM is parsed
+
 /* ---------- loading ---------- */
 async function getJSON(path) {
   if (S.cache[path]) return S.cache[path];
@@ -168,6 +304,7 @@ function buildHeader() {
   $('footProv').innerHTML = [t('foot.hub', { repo: manifest.hub.repo, branch: manifest.hub.branch, commit: manifest.hub.commit }),
     t('foot.latest', { d: `<b>${manifest.latest_as_of}</b>` }), t('foot.built', { d: manifest.generated_at.replace('T', ' ').replace('Z', ' UTC') }),
     manifest.mock ? `<b style="color:#9a5b00">${t('foot.synthetic')}</b>` : ''].filter(Boolean).map(x => `<span>${x}</span>`).join('');
+  buildPanelsMenu(); refreshPanelButtons();
 }
 async function init() {
   const [manifest, models, geoProv] = await Promise.all([
@@ -290,9 +427,12 @@ function wire() {
   $('drawerClose').addEventListener('click', () => toggleDrawer(false));
   $('drawerBg').addEventListener('click', () => toggleDrawer(false));
   window.addEventListener('resize', () => { drawTS(); drawCum(); });
-  // panels change height when their headers wrap; redraw charts when their drawing area resizes
+  wireLayout();
+  // panels change height when their headers wrap or a gutter is dragged; redraw charts when their drawing
+  // area resizes. While dragging, the map keeps its origin fixed (no pan) and is settled on pointer-up.
   let raf = null;
-  const ro = new ResizeObserver(() => { if (raf) return; raf = requestAnimationFrame(() => { raf = null; drawTS(); drawCum(); if (map) map.invalidateSize(); }); });
+  const ro = new ResizeObserver(() => { if (raf) return; raf = requestAnimationFrame(() => { raf = null; drawTS(); drawCum();
+    if (map && !S.layout.hidden.has('map')) map.invalidateSize(document.body.classList.contains('resizing') ? { pan: false, animate: false } : undefined); }); });
   ro.observe(document.querySelector('.ts .bd')); ro.observe(document.querySelector('.cum .bd')); ro.observe(document.getElementById('map'));
 }
 /** zone dropdown: hidden for the country, otherwise "whole province" plus its zones by cumulative cases */

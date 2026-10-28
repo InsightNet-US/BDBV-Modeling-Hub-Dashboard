@@ -18,7 +18,7 @@ const I18N = ctx.I18N, EN = I18N.en, FR = I18N.fr;
 /* where each key appears, for the reviewer; prefixes give the panel, specific keys refine it */
 const PANEL = { page: 'Page', hdr: 'Header', common: 'Header / panel labels', badge: 'Synthetic marks (mock copy)', banner: 'Synthetic marks (mock copy)',
   wm: 'Synthetic marks (mock copy)', gate: 'Test-phrase gate (mock copy)', loc: 'Locations', model: 'Models', week: 'Week labels', dd: 'Model menus',
-  ts: 'Weekly chart', tip: 'Weekly chart tooltip', cum: 'Cumulative panel', map: 'Map', drawer: 'Models drawer', foot: 'Footer', err: 'Errors' };
+  ts: 'Weekly chart', tip: 'Weekly chart tooltip', cum: 'Cumulative panel', map: 'Map', drawer: 'Models drawer', foot: 'Footer', panels: 'Panel layout', err: 'Errors' };
 const WHERE = {
   months: 'month abbreviations used in every date', 'page.title': 'browser tab title', 'page.desc': 'search-engine description',
   'hdr.subtitle': 'after the title "BDBV Modeling Hub"', 'hdr.roundTitle': 'hover text of the round selector', 'hdr.roundInfo': 'next to the round selector',
@@ -44,12 +44,15 @@ const WHERE = {
   'map.actBack': 'tooltip last line', 'map.actClear': 'tooltip last line', 'map.actSelect': 'tooltip last line', 'map.zoomIn': 'hover text of the + button', 'map.zoomOut': 'hover text of the − button',
   'drawer.sub': 'under the drawer title', 'drawer.englishNote': 'under the drawer title (French only)', 'drawer.data': 'data inputs line of a model', 'drawer.nloc': 'last line of a model', 'drawer.tagEns': 'small tag after a model name', 'drawer.tagSyn': 'small tag after a model name',
   'foot.hub': 'footer provenance', 'foot.latest': 'footer provenance (ISO date kept)', 'foot.built': 'footer provenance', 'foot.synthetic': 'footer provenance (mock copy)', 'foot.pgInsp': 'hover text of the INSP + KSPH logos', 'foot.ksph': 'hover text of the KSPH logo',
+  'panels.btn': 'toolbar button opening the panel menu', 'panels.weekly': 'panel name in the menu and button labels', 'panels.cum': 'panel name in the menu and button labels', 'panels.map': 'panel name in the menu and button labels',
+  'panels.reset': 'entry of the panel menu', 'panels.copy': 'entry of the panel menu', 'panels.copied': 'confirmation after copying', 'panels.hide': 'hover text of the × button in a panel header',
+  'panels.allHidden': 'note shown when every panel is hidden', 'panels.show': 'button under that note', 'panels.vsplit': 'hover text of the gutter between the charts and the map', 'panels.hsplit': 'hover text of the gutter between the two charts',
   'foot.pgInsight': 'hover text of the Insight Net logos', 'foot.pgHubverse': 'hover text of the hubverse logo', 'err.load': 'red banner if the data files cannot be loaded',
 };
 /* sample values for the example column, per language */
 const SAMPLE = {
   en: { n: 3, d: '24 Oct', loc: 'Ituri', list: 'OHTJHU-BM, CEPH-Rtrend_BDBV', name: 'OHTJHU-BM', rel: '−2 wk', kind: 'forecast +1 wk', wk: 'week ending 7 Nov (forecast +1 wk)', prov: 'Nord Kivu', s: 'Hub target data', repo: 'InsightNet-US/BDBV-Modeling-Hub', branch: 'main', commit: '07b9844', msg: 'data/manifest.json: 404' },
-  fr: { n: 3, d: '24 oct.', loc: 'Ituri', list: 'OHTJHU-BM, CEPH-Rtrend_BDBV', name: 'OHTJHU-BM', rel: '−2 sem.', kind: 'prévision +1 sem.', wk: 'semaine se terminant le 7 nov. (prévision +1 sem.)', prov: 'Nord Kivu', s: 'Données observées du hub', repo: 'InsightNet-US/BDBV-Modeling-Hub', branch: 'main', commit: '07b9844', msg: 'data/manifest.json: 404' },
+  fr: { n: 3, d: '24 oct.', loc: 'Ituri', list: 'OHTJHU-BM, CEPH-Rtrend_BDBV', rel: '−2 sem.', kind: 'prévision +1 sem.', wk: 'semaine se terminant le 7 nov. (prévision +1 sem.)', prov: 'Nord Kivu', s: 'Données observées du hub', name: 'Carte', repo: 'InsightNet-US/BDBV-Modeling-Hub', branch: 'main', commit: '07b9844', msg: 'data/manifest.json: 404' },
 };
 const fill = (s, vars) => String(s).replace(/\{(\w+)\}/g, (m, k) => (k in vars ? vars[k] : m));
 const strip = s => String(s).replace(/<[^>]+>/g, (m) => (m === '</b>' ? ' — ' : ''));

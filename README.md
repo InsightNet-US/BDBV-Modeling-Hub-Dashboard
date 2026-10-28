@@ -48,6 +48,17 @@ The synthetic teams submit the country and all provinces; two of the three also 
 every province with at least 10 reported cases, and the synthetic ensemble pools whatever was submitted
 for each location. `manifest.json` records `mock: true/false`.
 
+## Panel layout
+
+Drag the gutter between the charts and the map, or between the two charts, to resize the panels
+(double-click a gutter, or press Home/End on it, to reset that axis; arrow keys nudge it). Each panel
+header has a × that hides it; the **Panels** menu in the toolbar lists the three
+panels, resets the layout and copies a link that reproduces it (`?panels=weekly,cum,map` lists the panels
+to show, `none` hides all; `?split=0.55` or `?split=0.55,0.7` sets the column share and the weekly
+chart's share of the column). Sizes and hidden panels are remembered per browser; a layout given in the
+URL only seeds the page and is not stored until the visitor changes something (unlike `?lang=`, which is
+stored). Below 1000 px the panels stack and the gutters disappear, but hiding still works.
+
 ## Languages
 
 The interface is in English and French (EN | FR switch in the toolbar, or a `?lang=fr` link); the choice
