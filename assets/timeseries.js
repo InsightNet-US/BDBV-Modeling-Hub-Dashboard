@@ -62,11 +62,8 @@ function drawTS() {
     if (ens) { const q = qAt(ens, w); if (q) vals.push(q[QI.med], showEnsCI ? q[QI.hi95] : 0); }
     teams.forEach(tm => { const q = qAt(tm.m, w); if (q) vals.push(q[QI.hi95]); });
   });
-  // nice integer ticks: step from {1,2,5}x10^k, axis top = first tick at or above the data max
-  const rawMax = Math.max(...vals) * 1.08, ticks = 4;
-  const mag = Math.pow(10, Math.floor(Math.log10(Math.max(1, rawMax / ticks))));
-  const step = [1, 2, 5, 10].map(m => m * mag).find(st => st * ticks >= rawMax) || 10 * mag;
-  const ymax = step * ticks;
+  // round ticks (niceAxis in app.js): 4 to 8 of them, axis top at most 25% above the data max
+  const ax = niceAxis(Math.max(...vals) * 1.08), step = ax.step, ticks = ax.n, ymax = ax.top;
   const slotW = iw / total, barW = Math.min(slotW * 0.66, 26);
   const bx = i => mL + (i + 0.5) * slotW, edge = i => mL + i * slotW;
   const y = v => mT + ih - (v / ymax) * ih, y0 = y(0);

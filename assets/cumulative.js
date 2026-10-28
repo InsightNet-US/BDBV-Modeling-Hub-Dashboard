@@ -22,13 +22,15 @@ function drawCum() {
   svg.setAttribute('height', H);
   const y0 = H - mB;
   const maxOf = arr => arr.length ? Math.max(...arr) : 0;
-  const xmax = Math.max(reported, latestObs || 0,
+  // round ticks (niceAxis in app.js): 4 to 8 of them, axis end at most 25% above the data max
+  const ax = niceAxis(Math.max(reported, latestObs || 0,
     maxOf(sel.map(tm => tm.m.cum_nowcast[QI.hi95])),
-    maxOf(sel.flatMap(tm => H_LIST.map(h => (tm.m.cum_through_h[h] || [0])[QI.hi95] || 0)))) * 1.06 || 1;
+    maxOf(sel.flatMap(tm => H_LIST.map(h => (tm.m.cum_through_h[h] || [0])[QI.hi95] || 0)))) * 1.06);
+  const xmax = ax.top;
   const px = v => mLc + (v / xmax) * (W - mLc - mRc);
 
   let s = '';
-  for (let g = 0; g <= 4; g++) { const val = xmax * g / 4, xx = px(val);
+  for (let g = 0; g <= ax.n; g++) { const val = ax.step * g, xx = px(val);
     s += `<line x1="${xx}" y1="${mT}" x2="${xx}" y2="${y0}" stroke="var(--line)"/>`;
     s += `<text x="${xx}" y="${H - 5}" text-anchor="middle" style="font-size:9px">${fmtN(val)}</text>`; }
   const esc = x => String(x).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');

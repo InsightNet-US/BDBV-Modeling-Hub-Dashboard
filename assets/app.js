@@ -13,6 +13,26 @@ const S = {
 const NATIONAL = 'CD';
 const $ = id => document.getElementById(id);
 const QI = { lo95: 0, lo80: 1, lo50: 2, med: 3, hi50: 4, hi80: 5, hi95: 6 };
+/** Round axis for a count scale: the smallest top >= rawMax reachable with 4 to 8 ticks and a step of
+ *  1, 2, 2.5 or 5 times a power of ten (2.5 only from 25 up, so labels stay whole numbers: 25, 250, 2500).
+ *  Reachable tops are 4,5,6,7,8,10,12,14,15,16,20,25,... x 10^k, so the axis never exceeds the data by more
+ *  than 25%. Returns {top, step, n}. */
+function niceAxis(rawMax) {
+  rawMax = Math.max(1, rawMax);
+  let best = null;
+  for (let k = 0; k <= 8; k++) {
+    const mag = Math.pow(10, k);
+    for (const m of [1, 2, 2.5, 5]) {
+      if (m === 2.5 && mag < 10) continue;
+      const step = m * mag;
+      for (let n = 4; n <= 8; n++) {
+        const top = step * n;
+        if (top >= rawMax && (!best || top < best.top)) best = { top, step, n };
+      }
+    }
+  }
+  return best;
+}
 
 /* ---------- helpers shared by panels ---------- */
 function fmtDate(iso, withYear) {
