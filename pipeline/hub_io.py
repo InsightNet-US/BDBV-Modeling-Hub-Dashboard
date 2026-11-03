@@ -140,8 +140,13 @@ def list_model_output_files(hub: Path) -> list[tuple[str, str, Path]]:
     return out
 
 
-def read_sample_submission(path: Path) -> pd.DataFrame | None:
-    """Read a model-output file and keep only round-2 sample rows. Returns None if none."""
+def read_sample_submission(path: Path, warn=None) -> pd.DataFrame | None:
+    """Read a model-output file and keep only round-2 sample rows. Returns None if none.
+
+    Since 2026-10-30 files carry a ``forecast_date`` column (the date the model was run) and a team
+    resubmits by appending a complete new forecast with a later date, keeping the old rows. Only the
+    latest forecast per location is kept here; superseded rows are dropped and reported via ``warn``.
+    """
     if path.suffix == ".parquet":
         df = pd.read_parquet(path)
     else:
@@ -158,4 +163,14 @@ def read_sample_submission(path: Path) -> pd.DataFrame | None:
     df["target_end_date"] = df["target_end_date"].astype(str)
     df["location"] = df["location"].astype(str)
     df["output_type_id"] = df["output_type_id"].astype(str)
+    if "forecast_date" in df.columns:
+        df["forecast_date"] = df["forecast_date"].astype(str).str.strip()
+        latest = df.groupby("location")["forecast_date"].transform("max")
+        stale = df["forecast_date"] != latest
+        if stale.any():
+            dropped = sorted(df.loc[stale, "forecast_date"].unique())
+            df = df[~stale].copy()
+            if warn:
+                warn(f"{path.name}: kept the latest forecast_date per location; dropped "
+                     f"{int(stale.sum())} rows from earlier forecast(s) {dropped}")
     return df

@@ -125,3 +125,46 @@ def test_summarize_location_matches_fixture():
         got = json.loads(json.dumps(summarize_location(mat, weeks, fx["reference_date"], obs)))
         assert got == fx["cases"][name]["out"], name
         assert list(got) == list(fx["cases"][name]["out"]), f"{name}: key order"
+
+
+# ---------------------------------------------------------------- forecast_date (resubmissions)
+
+def test_validator_forecast_date():
+    df = make_df(WEEKS_NOW + WEEKS_FC)
+    df["forecast_date"] = "2026-10-27"
+    assert validate_submission(df, R, "x-y", {"IT"}) == []
+    late = df.copy(); late["forecast_date"] = "2026-11-01"
+    assert any("after the reference_date" in p for p in validate_submission(late, R, "x-y", {"IT"}))
+    two = pd.concat([df, df.assign(forecast_date="2026-10-29")])
+    problems = validate_submission(two, R, "x-y", {"IT"})
+    assert any("more than one forecast_date" in p for p in problems)
+    assert any("duplicate (sample, target_end_date)" in p for p in problems)
+
+
+def test_loader_keeps_latest_forecast_per_location(tmp_path):
+    import hub_io
+    old = make_df(WEEKS_NOW + WEEKS_FC, locs=("IT", "NK"))
+    old["forecast_date"] = "2026-10-27"
+    # resubmission covers IT only, with doubled values and reused sample ids
+    new = make_df(WEEKS_NOW + WEEKS_FC, locs=("IT",), value=lambda s, w: 2 * (s + 1))
+    new["forecast_date"] = "2026-10-29"
+    p = tmp_path / "2026-10-31-x-y.csv"
+    pd.concat([old, new]).to_csv(p, index=False)
+    notes = []
+    df = hub_io.read_sample_submission(p, warn=notes.append)
+    assert validate_submission(df, R, "x-y", {"IT", "NK"}) == []
+    it, nk = df[df.location == "IT"], df[df.location == "NK"]
+    assert set(it.forecast_date) == {"2026-10-29"} and set(nk.forecast_date) == {"2026-10-27"}
+    assert len(it) == len(nk) == 100 * 7
+    assert it[it.output_type_id == "1"].value.iloc[0] == 4.0 and nk[nk.output_type_id == "1"].value.iloc[0] == 2.0
+    assert len(notes) == 1 and "700 rows" in notes[0] and "2026-10-27" in notes[0]
+    # unique sample ids in the resubmission behave the same way
+    new2 = new.copy(); new2["output_type_id"] = (new2["output_type_id"].astype(int) + 100).astype(str)
+    pd.concat([old, new2]).to_csv(p, index=False)
+    df2 = hub_io.read_sample_submission(p)
+    assert df2[df2.location == "IT"].output_type_id.nunique() == 100
+    assert validate_submission(df2, R, "x-y", {"IT", "NK"}) == []
+    # a file without the column is untouched
+    old.drop(columns="forecast_date").to_csv(p, index=False)
+    df3 = hub_io.read_sample_submission(p, warn=notes.append)
+    assert "forecast_date" not in df3.columns and len(df3) == 1400 and len(notes) == 1

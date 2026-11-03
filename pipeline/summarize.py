@@ -196,6 +196,16 @@ def validate_submission(df: pd.DataFrame, reference_date: str, model_id: str,
     if (df["value"] < 0).any() or df["value"].isna().any():
         problems.append("values must be non-negative numbers")
     R = d(reference_date)
+    if "forecast_date" in df.columns:
+        for fd in df["forecast_date"].unique():
+            try:
+                if d(fd) > R:
+                    problems.append(f"forecast_date {fd} is after the reference_date")
+            except ValueError:
+                problems.append(f"forecast_date {fd!r} is not a YYYY-MM-DD date")
+        multi = df.groupby("location")["forecast_date"].nunique()
+        for loc in multi[multi > 1].index:
+            problems.append(f"{loc}: more than one forecast_date")
     for w in df["target_end_date"].unique():
         wd = d(w)
         if wd.weekday() != 5:

@@ -132,6 +132,9 @@ ensemble model; optional, otherwise the single model with `ensemble_of_hub_model
 - Only round-2 files are used: target `wk inc confirmed cases`, `output_type == sample`. Files failing the
   model-output README rules (100 samples per location, Saturdays, shared week sets) are reported but still
   summarised.
+- Resubmissions: the hub's `forecast_date` column (the date a model was run; a team resubmits by appending
+  a complete new forecast with a later date to the same file) is honoured by keeping only the latest
+  forecast date per location. Dropped earlier forecasts are reported as `NOTE` lines in the build log.
 - Summaries per model x location: quantiles 0.025/0.1/0.25/0.5/0.75/0.9/0.975 per week; quantiles of the
   per-trajectory sum over forecast windows from week 0 (the reference week, not yet finished at submission) through +h, h = 0..3; share of trajectories with at least one case in each window;
   nowcast cumulative through the last closed week (filling closed weeks the model did not submit with the

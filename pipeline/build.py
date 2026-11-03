@@ -229,7 +229,7 @@ def main() -> int:
     real_files = hub_io.list_model_output_files(hub)
     n_real = 0
     for model_id, ref, path in real_files:
-        df = hub_io.read_sample_submission(path)
+        df = hub_io.read_sample_submission(path, warn=lambda m: print(f"NOTE {m}"))
         if df is None:
             continue
         n_real += 1
