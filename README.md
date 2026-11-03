@@ -9,14 +9,16 @@ small JSON summaries under `data/`, and a GitHub Action rebuilds and deploys to 
 
 ## What it shows
 
-- **Weekly confirmed cases** for the selected location: reported counts in the target-data version used
-  for the selected round, the latest release overlaid when it differs (backfill), the ensemble's nowcast
+- **Weekly confirmed cases** for the selected location: reported counts from the latest target-data release
+  (when an older round is shown, the part known at round time is blue and cases reported since the round are
+  stacked on top in a lighter blue; "week in progress" hatching follows the latest release), the ensemble's nowcast
   and forecast medians (dotted bars, optional 50% and 95% intervals: thick and thin whiskers) and selected
   team models (points + 50% and 95% intervals). The week shown on the map is highlighted; clicking a week column maps that week.
-  A brush strip under the chart shows the whole outbreak faintly with a band over the weeks that have model
+  A brush strip under the chart shows the whole outbreak faintly (current counts) with a band over the weeks that have model
   output; drag its window or handles to choose the weeks shown (default: the 24 weeks ending three weeks
   after the reference date), drag on empty strip for a new window, double-click to go back to the default.
-- **Cumulative confirmed cases**: reported to date, each model's nowcast of the eventual total through the
+- **Cumulative confirmed cases**: reported to date (latest release; for an older round a blue dot marks the
+  total known at round time and a lighter bar the cases reported since), each model's nowcast of the eventual total through the
   reference date, and forecast cumulative totals through weeks 0 (the reference week) to +3.
 - **Map** at province or health-zone level, coloured by a model's median cases in a chosen week, or by
   P(at least one case) in that week. The week control (arrows, or click the date to pick) steps through
@@ -32,7 +34,9 @@ small JSON summaries under `data/`, and a GitHub Action rebuilds and deploys to 
   the map starts on the model covering the most locations.
 - **"Projections from" control** (arrows, or click the date) to move between rounds, by the week the
   projections were made (reference date). Each round is paired with the latest target-data release on or before the Tuesday
-  closing its submission window (`reference_date - 4 days`); the data version used is always labelled.
+  closing its submission window (`reference_date - 4 days`). Models are summarised against that version
+  (nowcast cumulative fill, header "data as of"), while reported counts in the charts always come from the
+  latest release; the weekly-chart subtitle names both dates when they differ.
 
 ## Live and mock dashboards
 

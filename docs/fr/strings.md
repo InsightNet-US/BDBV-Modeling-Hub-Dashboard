@@ -73,7 +73,8 @@ Try it: the French interface is on the test copy of the dashboard, `/mock/?lang=
 |  | week in progress | semaine en cours | semaine en cours |
 |  | Reported | Déclarés | Déclarés |
 |  | no data yet | pas encore de données | pas encore de données |
-|  | Latest (as of {d}) | Dernières données (au {d}) | Dernières données (au 24 oct.) |
+| tooltip row when the round shown is older than the latest release | Known at round time (as of {d}) | Connus au moment du cycle (au {d}) | Connus au moment du cycle (au 24 oct.) |
+| suffix after the reported count in the tooltip: change since the round | {n} since | {n} depuis | 3 depuis |
 | tooltip row of the hub-sourced ensemble | Hub ensemble | Ensemble multimodèle | Ensemble multimodèle |
 | tooltip row of the dashboard-computed ensemble | Dashboard ensemble | Ensemble du tableau de bord | Ensemble du tableau de bord |
 | after the ensemble label in the tooltip: how many models submitted that week *(one)* | · {n} model | · {n} modèle | · 1 modèle |
@@ -138,9 +139,10 @@ Try it: the French interface is on the test copy of the dashboard, `/mock/?lang=
 |  | Weekly confirmed cases | Cas confirmés hebdomadaires | Cas confirmés hebdomadaires |
 | weekly-chart subtitle | reference date {d} | date de référence {d} | date de référence 24 oct. |
 | weekly-chart subtitle (ISO date kept as a data-version identifier) | data as of {d} | données au {d} | données au 24 oct. |
+| weekly-chart subtitle when the round shown is older than the latest release (ISO date kept) | round data version {d} | version des données du cycle de projection {d} | version des données du cycle de projection 24 oct. |
 | legend | reported (as of {d}) | déclarés (au {d}) | déclarés (au 24 oct.) |
 | legend | week in progress | semaine en cours | semaine en cours |
-| legend | latest (as of {d}) | dernières données (au {d}) | dernières données (au 24 oct.) |
+| legend when the round shown is older than the latest release | reported since (as of {d}) | déclarés depuis (au {d}) | déclarés depuis (au 24 oct.) |
 | legend | Hub ensemble median | Médiane de l’ensemble multimodèle | Médiane de l’ensemble multimodèle |
 | legend | Hub ensemble median + 50% and 95% intervals | Médiane de l’ensemble multimodèle + intervalles à 50 % et 95 % | Médiane de l’ensemble multimodèle + intervalles à 50 % et 95 % |
 | legend (dashboard-computed ensemble) | Dashboard ensemble median | Médiane de l’ensemble du tableau de bord | Médiane de l’ensemble du tableau de bord |
@@ -162,7 +164,7 @@ Try it: the French interface is on the test copy of the dashboard, `/mock/?lang=
 | cumulative panel subtitle | {loc} · through week ending {d} | {loc} · jusqu’à la semaine se terminant le {d} | Ituri · jusqu’à la semaine se terminant le 24 oct. |
 | section heading (shown in capitals) | To date | À ce jour | À ce jour |
 |  | Reported (as of {d}) | Déclarés (au {d}) | Déclarés (au 24 oct.) |
-|  | Latest (as of {d}) | Dernières données (au {d}) | Dernières données (au 24 oct.) |
+| second line of the reported-to-date label when the round shown is older than the latest release | at round time (as of {d}) | au moment du cycle (au {d}) | au moment du cycle (au 24 oct.) |
 | section heading (shown in capitals) | Eventual cumulative | Nombre total de cas estimé | Nombre total de cas estimé |
 | italic note | no model output for this location | aucun résultat du modèle pour cette zone géographique | aucun résultat du modèle pour cette zone géographique |
 | italic note | no submissions | aucune soumission | aucune soumission |

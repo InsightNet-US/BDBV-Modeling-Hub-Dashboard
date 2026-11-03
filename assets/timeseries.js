@@ -1,6 +1,7 @@
-/* Weekly confirmed cases by week of symptom onset: reported (round data version), latest data
-   overlay, nowcast/forecast from the ensemble (hub or dashboard; dotted outline + optional interval) and
-   selected team models (points + 95% intervals). */
+/* Weekly confirmed cases by week of symptom onset: reported counts from the latest release (the part
+   known at round time in blue, cases reported since the round stacked on top in a lighter blue),
+   nowcast/forecast from the ensemble (hub or dashboard; dotted outline + optional interval) and
+   selected team models (points + 50% and 95% intervals). */
 function drawTS() {
   const svg = document.getElementById('tsChart'), empty = document.getElementById('tsEmpty');
   const R = S.roundRef, loc = S.location, maxH = Math.max(0, ...(S.manifest.horizons || [3]));
@@ -10,12 +11,16 @@ function drawTS() {
   if (!S.obsRound) { document.getElementById('tsBrush').innerHTML = ''; return; }
 
   const obs = obsMap(S.obsRound, loc), latest = obsMap(S.obsLatest, loc);
-  const haveLatest = S.obsLatest && S.obsLatest.as_of !== S.obsRound.as_of;
-  const asOf = S.obsRound.as_of, lastComplete = S.obsRound.last_complete_week;
+  const asOf = S.obsRound.as_of, latestAsOf = S.obsLatest.as_of, older = latestAsOf !== asOf;   // older: a round before the latest release
+  const lastComplete = S.obsLatest.last_complete_week;   // "week in progress" follows the latest release
+  // observed versions share one zero-padded week list, so "known at round time" is a date test: the week had
+  // started by that release (last_complete_week is the Saturday strictly before as_of)
+  const knownAtRound = w => older && w <= addDays(S.obsRound.last_complete_week, 7);
 
   // weeks: union of observed weeks and round weeks, contiguous Saturdays
   let allWeeks = S.round ? S.round.weeks.slice() : S.obsRound.weeks.slice();
   if (S.round) { const ow = S.obsRound.weeks; if (ow[0] < allWeeks[0]) { let w = ow[0]; const pre = []; while (w < allWeeks[0]) { pre.push(w); w = addDays(w, 7); } allWeeks = pre.concat(allWeeks); } }
+  if (S.round) { const lw = S.obsLatest.weeks, lastL = lw[lw.length - 1]; let w = allWeeks[allWeeks.length - 1]; while (w < lastL) { w = addDays(w, 7); allWeeks.push(w); } }   // observed weeks past the horizon of an old round
   const nowIdxAll = R ? allWeeks.indexOf(R) : allWeeks.indexOf(lastComplete);
   const [i0, i1] = weekWindow(allWeeks, nowIdxAll);   // the brush strip's window (default: recent weeks)
   const weeks = allWeeks.slice(i0, i1 + 1);
@@ -30,10 +35,10 @@ function drawTS() {
   const anyModel = ens || teams.length;
   const qAt = (m, w) => { const i = m.weeks.indexOf(w); return i < 0 ? null : m.q[i]; };
 
-  document.getElementById('tsSub').textContent = [locName(loc), R ? t('ts.sub.ref', { d: fmtDate(R, true) }) : '', t('ts.sub.asOf', { d: asOf })].filter(Boolean).join(' · ');
+  document.getElementById('tsSub').textContent = [locName(loc), R ? t('ts.sub.ref', { d: fmtDate(R, true) }) : '', t('ts.sub.asOf', { d: latestAsOf }), older ? t('ts.sub.roundAsOf', { d: asOf }) : ''].filter(Boolean).join(' · ');
   legend.innerHTML = `<span class="chip"><i style="background:var(--past)"></i>${t('ts.leg.reported', { d: fmtDate(asOf) })}</span>`
+    + (older ? `<span class="chip"><i style="background:var(--since)"></i>${t('ts.leg.since', { d: fmtDate(latestAsOf) })}</span>` : '')
     + `<span class="chip"><i style="background:repeating-linear-gradient(135deg,var(--past) 0 2px,#fff 2px 4px)"></i>${t('ts.leg.inProgress')}</span>`
-    + (haveLatest ? `<span class="chip"><i style="border:1.5px solid var(--latest);background:transparent"></i>${t('ts.leg.latest', { d: fmtDate(S.obsLatest.as_of) })}</span>` : '')
     + (ens ? `<span class="chip"><i style="border:1.5px dashed var(--median);background:transparent"></i>${dash ? t(showEnsCI ? 'ts.leg.ensMedianCIDash' : 'ts.leg.ensMedianDash') : t(showEnsCI ? 'ts.leg.ensMedianCI' : 'ts.leg.ensMedian')}</span>` : '')
     + teams.map(tm => `<span class="chip"><i style="background:${tm.color}"></i>${tm.name}</span>`).join('')
     + (mapIdx >= 0 ? `<span class="chip"><i style="background:var(--accent);opacity:.35"></i>${t('ts.leg.weekOnMap')}</span>` : '');
@@ -55,7 +60,7 @@ function drawTS() {
   let vals = [1];
   weeks.forEach(w => {
     if (obs[w] != null) vals.push(obs[w]);
-    if (haveLatest && latest[w] != null) vals.push(latest[w]);
+    if (latest[w] != null) vals.push(latest[w]);
     if (ens) { const q = qAt(ens, w); if (q) vals.push(q[QI.med], showEnsCI ? q[QI.hi95] : 0); }
     teams.forEach(tm => { const q = qAt(tm.m, w); if (q) vals.push(q[QI.hi95]); });
   });
@@ -65,7 +70,8 @@ function drawTS() {
   const bx = i => mL + (i + 0.5) * slotW, edge = i => mL + i * slotW;
   const y = v => mT + ih - (v / ymax) * ih, y0 = y(0);
 
-  let s = `<defs><pattern id="hatch" width="4" height="4" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="4" height="4" fill="#fff"/><rect width="2" height="4" fill="var(--past)"/></pattern></defs>`;
+  let s = `<defs><pattern id="hatch" width="4" height="4" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="4" height="4" fill="#fff"/><rect width="2" height="4" fill="var(--past)"/></pattern>`
+    + `<pattern id="hatchSince" width="4" height="4" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="4" height="4" fill="#fff"/><rect width="2" height="4" fill="var(--since)"/></pattern></defs>`;
   for (let g = 0; g <= ticks; g++) { const val = step * g, yy = y(val);
     s += `<line x1="${mL}" y1="${yy}" x2="${W - mR}" y2="${yy}" stroke="var(--line)"/>`;
     s += `<text x="${mL - 6}" y="${yy + 3}" text-anchor="end">${fmtN(val)}</text>`; }
@@ -95,15 +101,21 @@ function drawTS() {
   // bars
   weeks.forEach((w, i) => {
     const cx = bx(i), x0 = cx - barW / 2;
-    const rep = obs[w], partial = w > lastComplete;
+    const cur = latest[w], known = knownAtRound(w), atRound = older ? (obs[w] || 0) : cur, partial = w > lastComplete;
     const eq = ens ? qAt(ens, w) : null;
     if (eq) { const top = y(eq[QI.med]);
       s += `<rect x="${x0}" y="${top}" width="${barW}" height="${Math.max(0, y0 - top)}" fill="none" stroke="var(--median)" stroke-width="1.5" stroke-dasharray="3 3" rx="2"/>`; }
-    if (rep > 0) { const top = y(rep);
-      s += `<rect x="${x0}" y="${top}" width="${barW}" height="${y0 - top}" fill="${partial ? 'url(#hatch)' : 'var(--past)'}" rx="2"/>`;
-      if (partial) s += `<rect x="${x0}" y="${top}" width="${barW}" height="${y0 - top}" fill="none" stroke="var(--past)" stroke-width="1" rx="2"/>`; }
-    if (haveLatest && latest[w] != null && latest[w] !== rep) { const top = y(latest[w]);
-      s += `<rect x="${x0 - 1.5}" y="${top}" width="${barW + 3}" height="${Math.max(0, y0 - top)}" fill="none" stroke="var(--latest)" stroke-width="1.2" opacity="0.7" rx="2"/>`; }
+    // bar = current count; the part known at round time in --past, cases reported since the round in --since
+    if (cur > 0) { const top = y(cur), base = Math.min(atRound, cur);
+      if (cur > base) {
+        s += `<rect x="${x0}" y="${top}" width="${barW}" height="${y0 - top}" fill="${partial ? 'url(#hatchSince)' : 'var(--since)'}" rx="2"/>`;
+        if (partial) s += `<rect x="${x0}" y="${top}" width="${barW}" height="${y0 - top}" fill="none" stroke="var(--since)" stroke-width="1" rx="2"/>`; }
+      if (base > 0) { const bt = y(base), rx = cur > base ? '' : ' rx="2"';   // square junction when stacked
+        s += `<rect x="${x0}" y="${bt}" width="${barW}" height="${y0 - bt}" fill="${partial ? 'url(#hatch)' : 'var(--past)'}"${rx}/>`;
+        if (partial) s += `<rect x="${x0}" y="${bt}" width="${barW}" height="${y0 - bt}" fill="none" stroke="var(--past)" stroke-width="1"${rx}/>`; } }
+    // downward revision: hollow outline up to the count known at round time
+    if (known && atRound > (cur || 0) && y(cur || 0) - y(atRound) >= 2)
+      s += `<rect x="${x0}" y="${y(atRound)}" width="${barW}" height="${y(cur || 0) - y(atRound)}" fill="none" stroke="var(--past)" stroke-width="1"/>`;
     // ensemble intervals: thin 95% whisker with caps, thicker 50% segment over it
     if (showEnsCI && eq && eq[QI.hi95] > eq[QI.lo95]) { const yl = y(eq[QI.lo95]), yh = y(eq[QI.hi95]), cap = Math.min(barW * 0.32, 7);
       s += `<line x1="${cx}" y1="${yh}" x2="${cx}" y2="${yl}" stroke="var(--muted)" stroke-width="1.5"/>`;
@@ -128,7 +140,7 @@ function drawTS() {
     s += `<line x1="${nx}" y1="${mT}" x2="${nx}" y2="${mT + ih}" stroke="var(--now)" stroke-width="1" opacity="0.35" stroke-dasharray="2 3"/>`;
   }
   svg.innerHTML = s;
-  drawBrush(allWeeks, i0, i1, obs, mL, mR);
+  drawBrush(allWeeks, i0, i1, latest, mL, mR);
 
   svg.querySelectorAll('.hit').forEach(r => {
     r.addEventListener('mousemove', e => {
@@ -136,9 +148,11 @@ function drawTS() {
       const hasModelHere = (ens && qAt(ens, w)) || teams.some(tm => qAt(tm.m, w));
       const kind = rel == null ? '' : rel === 0 ? t('tip.kindFc0') : rel > 0 ? t('tip.kindFc', { n: rel }) : hasModelHere ? t('tip.kindNc') : '';
       let rows = '';
-      if (obs[w] != null) rows += `<div class="row"><span>${t('tip.reported', { d: fmtDate(asOf) })}${w > lastComplete ? ` <span class="sm">${t('tip.inProgress')}</span>` : ''}</span><b>${fmtN(obs[w])}</b></div>`;
-      else if (rel != null && rel <= 0) rows += `<div class="row"><span>${t('tip.reportedLbl')}</span><b>${t('tip.noData')}</b></div>`;
-      if (haveLatest && latest[w] != null) rows += `<div class="row"><span>${t('tip.latest', { d: fmtDate(S.obsLatest.as_of) })}</span><b>${fmtN(latest[w])}</b></div>`;
+      if (latest[w] != null) {
+        const known = knownAtRound(w), diff = known ? latest[w] - obs[w] : 0;
+        rows += `<div class="row"><span>${t('tip.reported', { d: fmtDate(latestAsOf) })}${w > lastComplete ? ` <span class="sm">${t('tip.inProgress')}</span>` : ''}</span><b>${fmtN(latest[w])}${diff ? ` <span class="sm">${t('tip.since', { n: (diff > 0 ? '+' : '\u2212') + fmtN(Math.abs(diff)) })}</span>` : ''}</b></div>`;
+        if (known) rows += `<div class="row"><span>${t('tip.atRound', { d: fmtDate(asOf) })}</span><b>${fmtN(obs[w])}</b></div>`;
+      } else if (rel != null && rel <= 0) rows += `<div class="row"><span>${t('tip.reportedLbl')}</span><b>${t('tip.noData')}</b></div>`;
       if (ens) {
         const q = qAt(ens, w), nm = ens.n_models_wk ? ens.n_models_wk[ens.weeks.indexOf(w)] : null;
         if (q) rows += `<div class="row"><span style="color:var(--median)">${t(dash ? 'tip.ensembleDash' : 'tip.ensemble')}${nm ? ` <span class="sm">${tn('tip.ensModels', nm)}</span>` : ''}</span><b>${fmtN(q[QI.med])} <span class="sm">${t('tip.ranges', { r50: fmtRange(q, 50), r95: fmtRange(q) })}</span></b></div>`;

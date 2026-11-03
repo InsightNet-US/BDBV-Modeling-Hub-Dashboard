@@ -57,7 +57,9 @@ Conventions adoptées, à confirmer :
 | reported (cases) | déclarés | rapportés ; notifiés | Relecteurs : « cas déclarés ». **à vérifier** s'il existe une terminologie officielle RDC/INSP (« cas notifiés »). |
 | as of (date) | au (24 oct.) | à la date du ; en date du | « données au 24 oct. ». |
 | data as of 2026-10-24 (version) | données au 2026-10-24 | — | La date ISO identifie la version des données du hub. |
-| latest data | dernières données | données les plus récentes | Version la plus récente, superposée à celle du cycle. |
+| reported since (as of …) | déclarés depuis (au …) | déclarés après le cycle | Légende : cas déclarés depuis la version des données du cycle, empilés en bleu clair. **à vérifier** |
+| known at round time (as of …) | connus au moment du cycle (au …) | connus à la date du cycle | Infobulle et panneau cumulé : compte connu dans la version des données du cycle. **à vérifier** (« cycle » seul, voir ci-dessus) |
+| round data version | version des données du cycle de projection | — | Sous-titre du graphique hebdomadaire quand un cycle antérieur est affiché. |
 | target data | données observées | données cibles | Relecteurs. Données du hub contre lesquelles les projections sont évaluées. |
 | week in progress | semaine en cours | semaine incomplète ; semaine partielle | Semaine dont la déclaration n'était pas close à la date des données. **à vérifier** si « semaine incomplète » est plus clair. |
 | closed weeks | semaines écoulées | semaines closes ; semaines terminées | Relecteurs. Semaines dont le samedi est passé à la date des données. |

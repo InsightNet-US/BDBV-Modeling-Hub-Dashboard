@@ -1,4 +1,5 @@
-/* Cumulative confirmed cases for the selected location: reported to date (round data version),
+/* Cumulative confirmed cases for the selected location: reported to date (latest release, with the
+   total known at round time when an older round is shown),
    each selected model's nowcast of the eventual total through the reference date, and projected
    cumulative totals at +1..+3 weeks. Boxes = 50% interval, whiskers = 95%, bar = median. */
 function drawCum() {
@@ -7,23 +8,23 @@ function drawCum() {
   const sub = document.getElementById('cumSub');
   if (S.layout.hidden.has('cum')) return;   // panel hidden: drawn again when shown
   if (!S.obsRound) { svg.innerHTML = ''; return; }
-  const obs = obsMap(S.obsRound, loc), asOf = S.obsRound.as_of;
+  const obs = obsMap(S.obsRound, loc), asOf = S.obsRound.as_of, latestAsOf = S.obsLatest.as_of, older = latestAsOf !== asOf;
   const upTo = R || S.obsRound.last_complete_week;
-  const reported = Object.keys(obs).filter(w => w <= upTo).reduce((a, w) => a + obs[w], 0);
-  const latestObs = S.obsLatest.as_of !== asOf
-    ? Object.entries(obsMap(S.obsLatest, loc)).filter(([w]) => w <= upTo).reduce((a, [, v]) => a + v, 0) : null;
+  const sumTo = m => Object.keys(m).filter(w => w <= upTo).reduce((a, w) => a + m[w], 0);
+  const reportedCur = sumTo(obsMap(S.obsLatest, loc));                       // latest release
+  const reportedRound = older && Object.keys(obs).length ? sumTo(obs) : null;   // known at round time (null: same release)
   sub.textContent = t('cum.sub', { loc: locName(loc), d: fmtDate(upTo, true) });
 
   const sel = roundModels().filter(id => S.cumSelected.has(id)).map(id => ({ id, name: modelLabel(id), color: modelColor(id), m: modelLoc(id, loc) })).filter(tm => tm.m);
   const H_LIST = S.manifest.horizons;
   const n = Math.max(1, sel.length);
   const mLc = LANG === 'fr' ? 190 : 162, mRc = 56, mT = 8, mB = 18, gp = 13, ggap = 6;   // wider label gutter for French
-  const H = mT + 8 + 15 + 23 + (latestObs != null ? 16 : 0) + 4 + 15 + (H_LIST.length + 1) * (n * gp + ggap) + 6 + mB;
+  const H = mT + 8 + 15 + 23 + 4 + 15 + (H_LIST.length + 1) * (n * gp + ggap) + 6 + mB;
   svg.setAttribute('height', H);
   const y0 = H - mB;
   const maxOf = arr => arr.length ? Math.max(...arr) : 0;
   // round ticks (niceAxis in app.js): 4 to 8 of them, axis end at most 25% above the data max
-  const ax = niceAxis(Math.max(reported, latestObs || 0,
+  const ax = niceAxis(Math.max(reportedCur, reportedRound || 0,
     maxOf(sel.map(tm => tm.m.cum_nowcast[QI.hi95])),
     maxOf(sel.flatMap(tm => H_LIST.map(h => (tm.m.cum_through_h[h] || [0])[QI.hi95] || 0)))) * 1.06);
   const xmax = ax.top;
@@ -36,10 +37,10 @@ function drawCum() {
   const esc = x => String(x).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
   const section = (txt, yy) => `<text x="8" y="${yy}" style="fill:#5f6b7a;font-size:9px;font-weight:700;letter-spacing:.4px">${txt.toUpperCase()}</text>`;
   // a label may carry two lines separated by \n (long French labels); the pair is centred on cy
-  const cat = (txt, cy, col) => { const lines = txt.split('\n'), st = `fill:${col || 'var(--muted)'};font-size:9px`;
+  const cat = (txt, cy, col, col2) => { const lines = txt.split('\n'), st = `fill:${col || 'var(--muted)'};font-size:9px`;
     return lines.length === 1 ? `<text x="${mLc - 6}" y="${cy + 3}" text-anchor="end" style="${st}">${txt}</text>`
-      : `<text x="${mLc - 6}" y="${cy - 2}" text-anchor="end" style="${st}">${lines[0]}<tspan x="${mLc - 6}" dy="9.5">${lines[1]}</tspan></text>`; };
-  const valTxt = (v, x, cy) => `<text x="${x + 5}" y="${cy + 3}" style="fill:var(--muted);font-size:8.5px">${fmtN(v)}</text>`;
+      : `<text x="${mLc - 6}" y="${cy - 2}" text-anchor="end" style="${st}">${lines[0]}<tspan x="${mLc - 6}" dy="9.5"${col2 ? ` style="fill:${col2}"` : ''}>${lines[1]}</tspan></text>`; };
+  const valTxt = (v, x, cy, extra) => `<text x="${x + 5}" y="${cy + 3}" style="fill:var(--muted);font-size:8.5px">${fmtN(v)}${extra ? `<tspan style="font-size:8px"> (${extra})</tspan>` : ''}</text>`;
   const box = (q, color, cy, bh, tip) => { bh = bh || 9;
     return `<g class="cbox" data-tip="${esc(tip)}"><line x1="${px(q[QI.lo95])}" y1="${cy}" x2="${px(q[QI.hi95])}" y2="${cy}" stroke="${color}" stroke-width="1.5" opacity="0.7"/>`
       + `<line x1="${px(q[QI.lo95])}" y1="${cy - 4}" x2="${px(q[QI.lo95])}" y2="${cy + 4}" stroke="${color}" stroke-width="1.5" opacity="0.7"/>`
@@ -52,8 +53,15 @@ function drawCum() {
 
   let yy = mT + 8;
   s += section(t('cum.toDate'), yy); yy += 15;
-  { const cy = yy + 7; s += cat(t('cum.reported', { d: fmtDate(asOf) }), cy, 'var(--past)') + dot(reported, 'var(--past)', cy); yy += 23; }
-  if (latestObs != null) { const cy = yy; s += cat(t('cum.latest', { d: fmtDate(S.obsLatest.as_of) }), cy, 'var(--latest)') + dot(latestObs, 'var(--latest)', cy, true); yy += 16; }
+  // one two-tone row: blue dot = total known at round time, lighter bar and dot = reported since (latest release)
+  { const cy = yy + 7, diff = reportedRound != null ? reportedCur - reportedRound : 0;
+    const lo = Math.min(reportedCur, reportedRound ?? reportedCur), hi = Math.max(reportedCur, reportedRound ?? reportedCur);
+    s += cat(t('cum.reported', { d: fmtDate(latestAsOf) }) + (reportedRound != null ? '\n' + t('cum.atRound', { d: fmtDate(asOf) }) : ''), cy, 'var(--past)', 'var(--muted)');
+    if (diff) s += `<rect x="${px(lo)}" y="${cy - 2}" width="${Math.max(1, px(hi) - px(lo))}" height="4" fill="var(--since)"/>`
+      + `<circle cx="${px(reportedCur)}" cy="${cy}" r="4.5" fill="var(--since)" stroke="#fff" stroke-width="1"/>`;
+    s += `<circle cx="${px(reportedRound ?? reportedCur)}" cy="${cy}" r="4.5" fill="var(--past)" stroke="#fff" stroke-width="1"/>`;
+    s += valTxt(reportedCur, px(hi), cy, diff && px(hi) + 75 <= W ? (diff > 0 ? '+' : '\u2212') + fmtN(Math.abs(diff)) : '');
+    yy += 23; }
   yy += 4;
   s += section(t('cum.eventual'), yy); yy += 15;
   if (!sel.length) s += note(t(S.round && roundModels().length ? 'cum.noOutput' : 'cum.noSub'), yy + gp / 2);

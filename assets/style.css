@@ -1,7 +1,7 @@
 :root{
   --bg:#eef1f5; --panel:#ffffff; --panel-2:#f2f5f9; --line:#d8dee6;
   --ink:#1b2430; --muted:#5f6b7a; --accent:#2b7fd4; --now:#d9800a;
-  --past:#2b8fd6; --median:#1f5fa8; --latest:#1b2430;
+  --past:#2b8fd6; --since:#7ab9e6; --median:#1f5fa8;
   --good:#1a9e52; --warn:#d9800a; --bad:#e5484d;
   --font:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
   --header-h:74px; --footer-h:40px; --partner-h:20px;
