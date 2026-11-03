@@ -103,8 +103,6 @@ function drawTS() {
     const cx = bx(i), x0 = cx - barW / 2;
     const cur = latest[w], known = knownAtRound(w), atRound = older ? (obs[w] || 0) : cur, partial = w > lastComplete;
     const eq = ens ? qAt(ens, w) : null;
-    if (eq) { const top = y(eq[QI.med]);
-      s += `<rect x="${x0}" y="${top}" width="${barW}" height="${Math.max(0, y0 - top)}" fill="none" stroke="var(--median)" stroke-width="1.5" stroke-dasharray="3 3" rx="2"/>`; }
     // bar = current count; the part known at round time in --past, cases reported since the round in --since
     if (cur > 0) { const top = y(cur), base = Math.min(atRound, cur);
       if (cur > base) {
@@ -116,6 +114,11 @@ function drawTS() {
     // downward revision: hollow outline up to the count known at round time
     if (known && atRound > (cur || 0) && y(cur || 0) - y(atRound) >= 2)
       s += `<rect x="${x0}" y="${y(atRound)}" width="${barW}" height="${y(cur || 0) - y(atRound)}" fill="none" stroke="var(--past)" stroke-width="1"/>`;
+    // ensemble median: dotted outline drawn over the bars (a reported count can exceed the median), with a
+    // white halo so the dashes read over either blue
+    if (eq) { const top = y(eq[QI.med]), h = Math.max(0, y0 - top);
+      if (cur > 0 && y(cur) < y0) s += `<rect x="${x0}" y="${top}" width="${barW}" height="${h}" fill="none" stroke="#fff" stroke-width="3" stroke-dasharray="3 3" opacity="0.8" rx="2"/>`;
+      s += `<rect x="${x0}" y="${top}" width="${barW}" height="${h}" fill="none" stroke="var(--median)" stroke-width="1.5" stroke-dasharray="3 3" rx="2"/>`; }
     // ensemble intervals: thin 95% whisker with caps, thicker 50% segment over it
     if (showEnsCI && eq && eq[QI.hi95] > eq[QI.lo95]) { const yl = y(eq[QI.lo95]), yh = y(eq[QI.hi95]), cap = Math.min(barW * 0.32, 7);
       s += `<line x1="${cx}" y1="${yh}" x2="${cx}" y2="${yl}" stroke="var(--muted)" stroke-width="1.5"/>`;
