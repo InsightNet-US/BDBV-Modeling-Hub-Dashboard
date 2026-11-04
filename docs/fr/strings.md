@@ -170,6 +170,8 @@ Try it: the French interface is on the test copy of the dashboard, `/mock/?lang=
 | italic note | no submissions | aucune soumission | aucune soumission |
 | row label | Nowcast · closed wks thru {d} | Estimation en temps réel sem. écoulées jusqu’au {d} | Estimation en temps réel sem. écoulées jusqu’au 24 oct. |
 | italic note next to a hollow dot | no nowcast weeks submitted (reported only) | aucune semaine d’estimation en temps réel soumise (déclarés seulement) | aucune semaine d’estimation en temps réel soumise (déclarés seulement) |
+| short form of the same note when the panel is narrow | reported only | déclarés seulement | déclarés seulement |
+| small header above the number column of the cumulative panel | median (95% interval) | médiane (intervalle à 95 %) | médiane (intervalle à 95 %) |
 | tooltip of a nowcast box *(one)* | {name}: eventual confirmed cases in weeks closed by {d} ({n} nowcast wk) | {name} : nombre total de cas confirmés estimé pour les semaines écoulées au {d} ({n} sem. d’estimation en temps réel) | Carte : nombre total de cas confirmés estimé pour les semaines écoulées au 24 oct. (1 sem. d’estimation en temps réel) |
 | tooltip of a nowcast box *(other)* | {name}: eventual confirmed cases in weeks closed by {d} ({n} nowcast wk) | {name} : nombre total de cas confirmés estimé pour les semaines écoulées au {d} ({n} sem. d’estimation en temps réel) | Carte : nombre total de cas confirmés estimé pour les semaines écoulées au 24 oct. (3 sem. d’estimation en temps réel) |
 | row label | Forecast wk 0 · thru {d} | Prévision sem. 0 · jusqu’au {d} | Prévision sem. 0 · jusqu’au 24 oct. |

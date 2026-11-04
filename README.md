@@ -19,7 +19,9 @@ small JSON summaries under `data/`, and a GitHub Action rebuilds and deploys to 
   after the reference date), drag on empty strip for a new window, double-click to go back to the default.
 - **Cumulative confirmed cases**: reported to date (latest release; for an older round a blue dot marks the
   total known at round time and a lighter bar the cases reported since), each model's nowcast of the eventual total through the
-  reference date, and forecast cumulative totals through weeks 0 (the reference week) to +3.
+  reference date, and forecast cumulative totals through weeks 0 (the reference week) to +3. The figures
+  form a right-aligned column: median, then the 95% interval in parentheses (dropped when the panel is
+  very narrow).
 - **Map** at province or health-zone level, coloured by a model's median cases in a chosen week, or by
   P(at least one case) in that week. The week control (arrows, or click the date to pick) steps through
   every week with model output in the round, labelled with the date and its offset from the
