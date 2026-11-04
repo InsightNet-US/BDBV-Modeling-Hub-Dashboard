@@ -419,7 +419,9 @@ function afterRound() {
   $('mapWeekSel').value = S.mapWeek || '';
   wireStepper('mapWeekSel'); refreshStepper('mapWeekSel');
   const ri = S.manifest.rounds.find(r => r.reference_date === S.roundRef);
-  $('roundInfo').textContent = ri ? tn('hdr.roundInfo', ri.n_models, { d: fmtDate(ri.as_of) }) : '';
+  // header count = team models only; the round's ensemble (hub model or dashboard pool) is not counted
+  const nTeam = ri ? (ri.models || []).filter(id => id !== ri.ensemble_model_id).length : 0;
+  $('roundInfo').textContent = ri ? tn('hdr.roundInfo', nTeam, { d: fmtDate(ri.as_of) }) : '';
   $('roundSel').value = S.roundRef || ''; refreshStepper('roundSel');
   buildDrawer();
   sync();

@@ -171,8 +171,8 @@ and the forecast windows are computed trajectory by trajectory, as for a single 
 filling the closed weeks its own model did not submit with the round's reported counts, and a trajectory
 dropping out of a forecast window its model does not cover entirely. Only then are quantiles taken over
 the pool. Locations with fewer than `ENSEMBLE_MIN_MODELS` (2) members get no ensemble entry. The computed
-model counts as a model in the round (`n_models`, the header "n models") and is described in the Models
-drawer with its member list; its metadata entry carries `computed_by: "dashboard"`. Setting the repository
+model is listed among the round's models (`n_models` in the manifest includes it; the header "n models"
+counts team models only, never the ensemble) and is described in the Models drawer with its member list; its metadata entry carries `computed_by: "dashboard"`. Setting the repository
 variable `ENSEMBLE_SOURCE` to `hub` turns it off without a code change.
 
 ## Boundaries (one-off)
