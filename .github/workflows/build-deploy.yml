@@ -11,13 +11,10 @@ on:
   push:
     branches: [main]
     paths-ignore:
-      - "data/observed/**"
-      - "data/rounds/**"
-      - "data/manifest.json"
-      - "data/models.json"
+      - "data/**"      # pipeline-owned; the Action's own data commits (pushed with the deploy key) must not re-trigger it
 
 permissions:
-  contents: write
+  contents: read
   pages: write
   id-token: write
   issues: write
@@ -27,7 +24,9 @@ concurrency:
   cancel-in-progress: false
 
 # Always runs from main (the Pages environment only deploys the default branch; a push to the preview
-# branch dispatches this workflow through preview-push.yml). Two sources, one hub snapshot:
+# branch dispatches this workflow through preview-push.yml). Pushes are made with the DEPLOY_KEY secret
+# (a write deploy key listed as a bypass actor of the main ruleset, so the data commit passes the
+# pull-request-only rule). Two sources, one hub snapshot:
 #   - the live dashboard at the site root: main's code, data/ built here and committed back;
 #   - /preview/: the preview branch's code and its own pipeline output, gated by a test phrase.
 # The preview build is fail-soft: if the branch is missing or fails to build, /preview/ is staged from
@@ -36,6 +35,8 @@ concurrency:
 # fails the run.
 jobs:
   build:
+    # second loop guard behind paths-ignore: never run for the Action's own data commits
+    if: "github.event_name != 'push' || !startsWith(github.event.head_commit.message, 'data: refresh from hub')"
     runs-on: ubuntu-latest
     env:
       HUB_BRANCH: ${{ github.event.inputs.hub_branch || 'main' }}
@@ -45,6 +46,8 @@ jobs:
       ENSEMBLE_SOURCE: ${{ vars.ENSEMBLE_SOURCE }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          ssh-key: ${{ secrets.DEPLOY_KEY }}   # pushes go over SSH with the deploy key
 
       - name: Clone the hub (requested branch, falling back to main)
         run: |
@@ -71,6 +74,7 @@ jobs:
         run: python pipeline/build.py
 
       - name: Commit refreshed data
+        if: env.HUB_BRANCH == 'main'   # never commit another hub branch's data to main
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"

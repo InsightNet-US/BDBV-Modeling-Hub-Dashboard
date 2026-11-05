@@ -1,0 +1,26 @@
+name: Release check
+
+# Required status check on main (ruleset): a pull request into main may only come from the preview
+# branch, and the commit it brings must already be the one shown at /preview/ (so it was built and
+# deployed, and testers could see it). Re-run the check if the preview deploy was still in flight.
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  release-source:   # the job id is the status context the ruleset requires; keep it unnamed
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: scripts
+      - name: The PR comes from preview and its commit is live at /preview/
+        env:
+          HEAD_REF: ${{ github.head_ref }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          STATUS_URL: https://insightnet-us.github.io/BDBV-Modeling-Hub-Dashboard/preview/status.json
+        run: scripts/release-check.sh

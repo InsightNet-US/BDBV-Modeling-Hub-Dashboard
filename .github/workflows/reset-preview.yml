@@ -1,0 +1,26 @@
+name: Reset preview after a release
+
+# After a pull request from preview is squash-merged into main, the two histories diverge; the clean
+# fix is to point preview at main again. The push uses the deploy key, so preview-push.yml fires and
+# /preview/ is rebuilt as a copy of the new main.
+on:
+  pull_request:
+    types: [closed]
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  reset:
+    if: github.event.pull_request.merged == true && github.event.pull_request.head.ref == 'preview' && github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          ssh-key: ${{ secrets.DEPLOY_KEY }}
+      - name: Point preview at main
+        run: |
+          git push --force origin main:preview
+          echo "preview reset to $(git rev-parse --short HEAD)"
