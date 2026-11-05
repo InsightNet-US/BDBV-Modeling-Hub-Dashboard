@@ -137,8 +137,6 @@ Try it: the French interface is on the live dashboard, add `?lang=fr` to the add
 | message over the chart when no model covers the location | No model output for {loc} — No model submitted this location in this round. | Aucun résultat de modèle pour {loc} — Aucun modèle n’a soumis cette zone géographique dans ce cycle de projection. | Aucun résultat de modèle pour Ituri — Aucun modèle n’a soumis cette zone géographique dans ce cycle de projection. |
 | message over the chart before any submission | No submissions yet — The first accepted reference date is {d}. Reported cases are shown. | Pas encore de soumissions — La première date de référence acceptée est le {d}. Les cas déclarés sont affichés. | Pas encore de soumissions — La première date de référence acceptée est le 24 oct.. Les cas déclarés sont affichés. |
 | caption under the x axis | week ending (Saturday) · cases by symptom onset | semaine se terminant le (samedi) · cas par date de début des symptômes | semaine se terminant le (samedi) · cas par date de début des symptômes |
-| caption of the per-week model-count row under the weekly chart | models | modèles | modèles |
-| hover text of that caption | models pooled in the ensemble that week | modèles regroupés dans l’ensemble cette semaine-là | modèles regroupés dans l’ensemble cette semaine-là |
 | hover text and accessible label of the week-window strip under the weekly chart (the selected dates are appended) | Weeks shown — drag the window or its handles, double-click to reset | Semaines affichées — glisser la fenêtre ou ses poignées, double-clic pour réinitialiser | Semaines affichées — glisser la fenêtre ou ses poignées, double-clic pour réinitialiser |
 
 ## Weekly chart tooltip
