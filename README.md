@@ -198,7 +198,9 @@ ensemble (hub or dashboard).
 ## Partners
 
 The hub is a joint effort of the DRC's [Institut National de Santé Publique](https://insp.cd/) (INSP), the
-[Kinshasa School of Public Health](https://espkinshasa.net/) and [Insight Net](https://insightnet.us/) centers
+[Kinshasa School of Public Health](https://espkinshasa.net/), the
+[Agence Nationale d'Ingénierie Clinique et du Numérique de la Santé](https://anicns.gouv.cd/) (ANICNS) and
+[Insight Net](https://insightnet.us/) centers
 ([ACCIDDA](https://accidda.org/) and [epiENGAGE](https://epiengage.org/)), built on the
-[hubverse](https://hubverse.io/). The KSPH mark combines the school's shield (`esp-shield.png`: the greyscale rendering on the Bailey Lab site, coloured from the smaller colour copy on the PREACTS partner page) with the lettering cut from the school's own logo (kept as `esp-kinshasa.png`, lettering alone as `ksph-letters.png`); the UNIKIN crest and white ACCIDDA wordmark also stay in `assets/brand/`, unused. Their marks in `assets/brand/` are shown in the footer; they remain the
+[hubverse](https://hubverse.io/). The KSPH mark combines the school's shield (`esp-shield.png`: the greyscale rendering on the Bailey Lab site, coloured from the smaller colour copy on the PREACTS partner page) with the lettering cut from the school's own logo (kept as `esp-kinshasa.png`, lettering alone as `ksph-letters.png`); the ANICNS mark is the agency's own site logo (`anicns.png`, only a 150 x 80 raster is published, trimmed of its transparent margins); the UNIKIN crest and white ACCIDDA wordmark also stay in `assets/brand/`, unused. Their marks in `assets/brand/` are shown in the footer; they remain the
 property of their owners and are used here to identify the hub's partners.

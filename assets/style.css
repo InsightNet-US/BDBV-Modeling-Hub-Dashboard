@@ -184,6 +184,7 @@ footer .spacer{flex:1}
 .logo-epiengage{height:calc(var(--partner-h) * 1.1)}
 .logo-insp{height:calc(var(--partner-h) * 1.15)}
 .logo-esp{height:calc(var(--partner-h) * 1.15)}  /* ESP shield + KSPH letters */
+.logo-anicns{height:calc(var(--partner-h) * 1.15)}
 .logo-hubverse{height:calc(var(--partner-h) * 0.95)}
 @media (max-width:1250px){ :root{--partner-h:16px} .partners{gap:14px} .partner-group{gap:10px} }
 

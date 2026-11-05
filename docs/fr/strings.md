@@ -259,7 +259,7 @@ Try it: the French interface is on the test copy of the dashboard, `/mock/?lang=
 |  |  (ODbL) ·  |  (ODbL) ·  |  (ODbL) ·  |
 |  | Hub repository | Dépôt du hub | Dépôt du hub |
 |  | Partners | Partenaires | Partenaires |
-| hover text of the INSP + KSPH logos | Institut National de Santé Publique (DRC) and the Kinshasa School of Public Health | Institut National de Santé Publique (RDC) et École de Santé Publique de Kinshasa | Institut National de Santé Publique (RDC) et École de Santé Publique de Kinshasa |
+| hover text of the INSP + KSPH logos | Institut National de Santé Publique (DRC), the Kinshasa School of Public Health and ANICNS | Institut National de Santé Publique (RDC), École de Santé Publique de Kinshasa et ANICNS | Institut National de Santé Publique (RDC), École de Santé Publique de Kinshasa et ANICNS |
 | hover text of the KSPH logo | Kinshasa School of Public Health | École de Santé Publique de Kinshasa | École de Santé Publique de Kinshasa |
 | hover text of the Insight Net logos | Insight Net centers ACCIDDA and epiENGAGE | Centres Insight Net ACCIDDA et epiENGAGE | Centres Insight Net ACCIDDA et epiENGAGE |
 | hover text of the hubverse logo | Built with the hubverse data formats and tools | Construit avec les formats de données et les outils hubverse | Construit avec les formats de données et les outils hubverse |
