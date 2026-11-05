@@ -19,7 +19,8 @@ small JSON summaries under `data/`, and a GitHub Action rebuilds and deploys to 
   after the reference date), drag on empty strip for a new window, double-click to go back to the default.
 - **Cumulative confirmed cases**: reported to date (latest release; for an older round a blue dot marks the
   total known at round time and a lighter bar the cases reported since), each model's nowcast of the eventual total through the
-  reference date, and forecast cumulative totals through weeks 0 (the reference week) to +3. The figures
+  reference date, and forecast cumulative totals through weeks 0 (the reference week) to +3; the ensemble's
+  name carries how many models it pools for the location shown. The figures
   form a right-aligned column: median, then the 95% interval in parentheses (dropped when the panel is
   very narrow).
 - **Map** at province or health-zone level, coloured by a model's median cases in a chosen week, or by
@@ -75,7 +76,9 @@ the site twice with `scripts/assemble-site.sh`:
   `?preview=1` on the live root switches that flag on for one page load (not stored, dropped from copied
   layout links). It reveals only such pieces present on `main`, not the branch.
 
-Currently on the preview branch: see that branch's README. Synthetic ("mock") model output was removed
+Currently on the preview branch: the size of the dashboard ensemble per week and place (issue #1): a
+row of counts under the weekly chart, an "Ensemble size" map metric with a tooltip row, and the count
+after the ensemble's name in the cumulative menu and tooltips. Synthetic ("mock") model output was removed
 on 2026-11-05 once real submissions had been flowing for weeks; the generator (`pipeline/mock.py`) is in
 the git history up to commit `24d9cd5`.
 

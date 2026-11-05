@@ -54,7 +54,10 @@ function drawTS() {
   }
   // measure after the header (sub + legend) has been updated, since it can wrap and change the height
   const W = svg.clientWidth || 600, H = svg.clientHeight || 300;
-  const mL = 42, mR = 12, mT = 18, mB = 36, iw = W - mL - mR, ih = H - mT - mB;
+  // a row of per-week ensemble member counts under the x axis; the room is reserved whenever the round
+  // has a dashboard ensemble so the plot does not jump between locations
+  const nRow = S.ensembleSource === 'dashboard';
+  const mL = 42, mR = 12, mT = 18, mB = nRow ? 46 : 36, iw = W - mL - mR, ih = H - mT - mB;
 
   // y scale
   let vals = [1];
@@ -86,6 +89,11 @@ function drawTS() {
     lastMonth = m;
   });
   s += `<text x="${mL}" y="${H - 4}" style="fill:#5b6675;font-size:9px">${t('ts.axis')}</text>`;
+  if (nRow && ens && ens.n_models_wk) {
+    s += `<text x="${mL - 6}" y="${y0 + 28}" text-anchor="end" style="font-size:8px;fill:#8a94a3"><title>${t('ts.nRowTitle')}</title>${t('ts.nRow')}</text>`;
+    weeks.forEach((w, i) => { const k = ens.weeks.indexOf(w);
+      if (k >= 0 && ens.n_models_wk[k] != null) s += `<text x="${bx(i)}" y="${y0 + 28}" text-anchor="middle" style="font-size:8.5px;fill:#6b7684">${ens.n_models_wk[k]}</text>`; });
+  }
 
   // forecast window shading: week 0 (the reference week) through the longest horizon
   if (nowIdx >= 0) {
