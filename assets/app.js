@@ -6,7 +6,7 @@ const S = {
   location: 'CD', locIndex: {},
   mapWeek: null, mapRel: 0,   // week shown on the map and its offset in weeks from the reference date
   tsSelected: new Set(), cumSelected: new Set(),
-  mapMetric: 'median', mapModel: null, mapLayer: 'prov', geoHZ: null, ensMax: 0,   // ensMax: largest member count of the round's dashboard ensemble
+  mapMetric: 'median', mapModel: null, mapLayer: 'prov', geoHZ: null,
   layout: { col: 0.42, row: null, hidden: new Set(), weeks: null, fromURL: false },   // panel sizes, visibility, weekly-chart window
   cache: {},
   preview: false, previewCopy: false, previewHash: null,   // see the preview block below
@@ -421,8 +421,6 @@ function setEnsemble(info) {
   const id = (info && 'ensemble_model_id' in info) ? info.ensemble_model_id : S.manifest.ensemble_model_id;
   S.ensembleId = id && S.models[id] && S.round && S.round.models[id] ? id : null;
   S.ensembleSource = S.ensembleId ? ((info && info.ensemble_source) || S.manifest.ensemble_source || 'hub') : null;
-  const locs = S.ensembleId && S.ensembleSource === 'dashboard' ? Object.values(S.round.models[S.ensembleId].locations || {}) : [];
-  S.ensMax = locs.reduce((a, l) => Math.max(a, l.n_models || 0), 0);
 }
 function afterRound() {
   // default model selections: the ensemble (hub or dashboard) when there is one, otherwise every model; the map
@@ -441,11 +439,6 @@ function afterRound() {
   const sel = $('mapModelSel');
   sel.innerHTML = ms.map(id => `<option value="${id}">${modelLabel(id)}</option>`).join('') || `<option value="">${t('map.noModels')}</option>`;
   sel.value = S.mapModel || '';
-  // the "Ensemble size" metric exists only for a round with a dashboard ensemble
-  const hasCounts = S.ensembleSource === 'dashboard';
-  document.querySelector('#metricToggle [data-m="models"]').classList.toggle('hidden', !hasCounts);
-  if (!hasCounts && S.mapMetric === 'models') { S.mapMetric = 'median'; setToggle('metricToggle', 'm', 'median'); }
-  sel.disabled = S.mapMetric === 'models';
   // mapped week: keep the same offset from the reference date across rounds, default week 0
   const ws = roundWeeks(), R = S.roundRef, want = R ? addDays(R, 7 * S.mapRel) : null;
   S.mapWeek = ws.includes(want) ? want : ws.includes(R) ? R : ws[ws.length - 1] || null;
@@ -508,7 +501,7 @@ function wire() {
   $('hzSel').addEventListener('change', e => { S.location = e.target.value || locProvince(S.location) || NATIONAL; onLocationChange(); });
   document.querySelectorAll('#layerToggle button').forEach(b => b.addEventListener('click', () => setLayer(b.dataset.l, b.dataset.l === 'hz' ? locProvince(S.location) : null)));
   $('mapWeekSel').addEventListener('change', e => setMapWeek(e.target.value));
-  document.querySelectorAll('#metricToggle button').forEach(b => b.addEventListener('click', () => { S.mapMetric = b.dataset.m; setToggle('metricToggle', 'm', S.mapMetric); $('mapModelSel').disabled = S.mapMetric === 'models'; drawMap(); }));
+  document.querySelectorAll('#metricToggle button').forEach(b => b.addEventListener('click', () => { S.mapMetric = b.dataset.m; setToggle('metricToggle', 'm', S.mapMetric); drawMap(); }));
   $('mapModelSel').addEventListener('change', e => { S.mapModel = e.target.value; drawMap(); });
   $('modelsBtn').addEventListener('click', () => toggleDrawer(true));
   $('drawerClose').addEventListener('click', () => toggleDrawer(false));

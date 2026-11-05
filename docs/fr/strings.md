@@ -194,7 +194,6 @@ Try it: the French interface is on the live dashboard, add `?lang=fr` to the add
 |  | Health zones | Zones de santé | Zones de santé |
 |  | Median cases | Cas (médiane) | Cas (médiane) |
 |  | P(≥1 case) | P(≥1 cas) | P(≥1 cas) |
-| third button of the map metric switch | Ensemble size | Taille de l’ensemble | Taille de l’ensemble |
 |  | Week | Semaine | Semaine |
 |  | Earlier week | Semaine précédente | Semaine précédente |
 |  | Later week | Semaine suivante | Semaine suivante |
@@ -209,7 +208,6 @@ Try it: the French interface is on the live dashboard, add `?lang=fr` to the add
 |  | no week | aucune semaine | aucune semaine |
 | map subtitle | Median cases | Cas (médiane) | Cas (médiane) |
 | map subtitle | P(≥1 case) | P(≥1 cas) | P(≥1 cas) |
-| map subtitle for that metric | Ensemble size (models pooled) | Taille de l’ensemble (modèles regroupés) | Taille de l’ensemble (modèles regroupés) |
 |  | no model | aucun modèle | aucun modèle |
 | map subtitle *(one)* | {n} province without output (dashed) | {n} province sans prévision (hachurée) | 1 province sans prévision (hachurée) |
 | map subtitle *(other)* | {n} provinces without output (dashed) | {n} provinces sans prévision (hachurées) | 3 provinces sans prévision (hachurées) |
