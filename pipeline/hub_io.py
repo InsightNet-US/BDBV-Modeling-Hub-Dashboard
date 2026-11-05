@@ -120,7 +120,6 @@ def read_model_metadata(hub: Path) -> dict[str, dict]:
             "license": meta.get("license", ""),
             "ensemble_of_hub_models": bool(meta.get("ensemble_of_hub_models", False)),
             "designated_model": bool(meta.get("designated_model", True)),   # hub default: eligible
-            "mock": False,
         }
     return out
 

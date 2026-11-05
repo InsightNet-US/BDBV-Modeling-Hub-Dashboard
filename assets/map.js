@@ -130,7 +130,7 @@ function featTip(f, level) {
   rows += `<div class="row"><span>${t('map.tipLast4')}</span><b>${fmtN(recent)}</b></div><div class="row"><span>${t('map.tipToDate')}</span><b>${fmtN(total)}</b></div>`;
   const ctx = level === 'hz' ? ` <span class="sm">${t('map.ctxZone', { prov: locName(f.properties.parent) })}</span>` : ` <span class="sm">· ${code}</span>`;
   const act = t(code === S.location ? (level === 'hz' ? 'map.actBack' : 'map.actClear') : 'map.actSelect');
-  return `<b>${f.properties.name}</b>${ctx}${rows}<div class="sm" style="margin-top:4px">${act}</div>${m && i >= 0 ? synNote() : ''}`;
+  return `<b>${f.properties.name}</b>${ctx}${rows}<div class="sm" style="margin-top:4px">${act}</div>`;
 }
 
 function drawMap() {
@@ -150,7 +150,6 @@ function drawMap() {
   const missing = feats.length - vals.length;
   const mt = `${t(S.mapMetric === 'presence' ? 'map.subPresence' : 'map.subMedian')}, <span class="horizonval">${wkLabel()}</span>`;
   document.getElementById('mapSub').innerHTML = `${mt} · ${S.mapModel ? modelLabel(S.mapModel) : t('map.noModel')}`
-    + (S.manifest.mock && S.mapModel ? ` <b style="color:#9a5b00">${t('map.synthetic')}</b>` : '')
     + (missing ? ` · ${tn(level === 'hz' ? 'map.missingZones' : 'map.missingProvinces', missing)}` : '');
   document.getElementById('legLo').textContent = S.mapMetric === 'presence' ? fmtPct(0) : '0';
   document.getElementById('legHi').textContent = S.mapMetric === 'presence' ? fmtPct(1) : fmtN(scale.vmax);

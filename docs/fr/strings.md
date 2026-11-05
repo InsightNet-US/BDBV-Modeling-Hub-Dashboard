@@ -4,7 +4,7 @@ Generated from `assets/i18n.js` by `node scripts/i18n-table.js`; do not edit the
 
 How to read the table: `{n}`, `{d}`, `{loc}` and similar are placeholders filled at run time (a number, a date, a location name); the *Example* column shows one filled-in rendering. Rows with *(one)* and *(other)* are the singular and plural forms; French uses the singular for 0 and 1. Bold parts of a message are shown as "bold part — rest". The sign ␣ marks the narrow no-break space used in French numbers and before %. ISO dates such as 2026-10-24 identify a data release and stay as they are in both languages. Model names, team names and method descriptions come from the hub in English and are not translated. See `glossary.md` for the terminology choices.
 
-Try it: the French interface is on the test copy of the dashboard, `/mock/?lang=fr` (test phrase "testme"); the EN | FR switch is in the toolbar.
+Try it: the French interface is on the live dashboard, add `?lang=fr` to the address or use the EN | FR switch in the toolbar.
 
 ## Week labels
 
@@ -50,47 +50,23 @@ Try it: the French interface is on the test copy of the dashboard, `/mock/?lang=
 |  | Models | Modèles | Modèles |
 |  | Model | Modèle | Modèle |
 
-## Synthetic marks (mock copy)
+## Preview marks (preview copy)
 
 | Where | English | French | Example (French) |
 |---|---|---|---|
-|  | Synthetic model output | Résultats de modèles simulés | Résultats de modèles simulés |
-|  | Model output shown here is synthetic demonstration data, not team submissions | Les résultats de modèles affichés ici sont des données de démonstration simulées, pas des soumissions d’équipes | Les résultats de modèles affichés ici sont des données de démonstration simulées, pas des soumissions d’équipes |
-|  | SYNTHETIC MODEL OUTPUT · demonstration data, not team submissions ·  | RÉSULTATS DE MODÈLES SIMULÉS · données de démonstration, pas des soumissions d’équipes ·  | RÉSULTATS DE MODÈLES SIMULÉS · données de démonstration, pas des soumissions d’équipes ·  |
-|  | go to the live dashboard | aller au tableau de bord public | aller au tableau de bord public |
-| large watermark word on panels and map | Synthetic | Simulé | Simulé |
+| header badge on the preview copy (or with ?preview=1) | Preview | Aperçu | Aperçu |
+| hover text of that badge | Features under development, shown on the same data as the live dashboard | Fonctionnalités en cours de développement, affichées avec les mêmes données que le tableau de bord public | Fonctionnalités en cours de développement, affichées avec les mêmes données que le tableau de bord public |
+| banner under the header of the preview copy | PREVIEW · features under development on the same data as the live dashboard ·  | APERÇU · fonctionnalités en cours de développement, avec les mêmes données que le tableau de bord public ·  | APERÇU · fonctionnalités en cours de développement, avec les mêmes données que le tableau de bord public ·  |
+| link at the end of that banner | go to the live dashboard | aller au tableau de bord public | aller au tableau de bord public |
 
-## Weekly chart tooltip
-
-| Where | English | French | Example (French) |
-|---|---|---|---|
-| last line of every tooltip that shows synthetic output | SYNTHETIC MODEL OUTPUT · not a team submission | RÉSULTATS DE MODÈLES SIMULÉS · pas une soumission d’équipe | RÉSULTATS DE MODÈLES SIMULÉS · pas une soumission d’équipe |
-| tooltip heading | Week ending {d} | Semaine se terminant le {d} | Semaine se terminant le 24 oct. |
-| tooltip heading suffix |  · forecast wk 0 (reference week) |  · prévision sem. 0 (semaine de référence) |  · prévision sem. 0 (semaine de référence) |
-| tooltip heading suffix |  · forecast wk +{n} |  · prévision sem. +{n} |  · prévision sem. +3 |
-| tooltip heading suffix |  · nowcast |  · estimation en temps réel |  · estimation en temps réel |
-|  | Reported (as of {d}) | Déclarés (au {d}) | Déclarés (au 24 oct.) |
-|  | week in progress | semaine en cours | semaine en cours |
-|  | Reported | Déclarés | Déclarés |
-|  | no data yet | pas encore de données | pas encore de données |
-| tooltip row when the round shown is older than the latest release | Known at round time (as of {d}) | Connus au moment du cycle (au {d}) | Connus au moment du cycle (au 24 oct.) |
-| suffix after the reported count in the tooltip: change since the round | {n} since | {n} depuis | 3 depuis |
-| tooltip row of the hub-sourced ensemble | Hub ensemble | Ensemble multimodèle | Ensemble multimodèle |
-| tooltip row of the dashboard-computed ensemble | Dashboard ensemble | Ensemble du tableau de bord | Ensemble du tableau de bord |
-| after the ensemble label in the tooltip: how many models submitted that week *(one)* | · {n} model | · {n} modèle | · 1 modèle |
-| after the ensemble label in the tooltip: how many models submitted that week *(other)* | · {n} models | · {n} modèles | · 3 modèles |
-| after each model median in the tooltip: the 50% and 95% ranges | (50%: {r50} · 95%: {r95}) | (50 % : {r50} · 95 % : {r95}) | (50 % : 286–433 · 95 % : 150–720) |
-| tooltip last line | shown on map | affichée sur la carte | affichée sur la carte |
-| tooltip last line | click to show this week on the map | cliquer pour afficher cette semaine sur la carte | cliquer pour afficher cette semaine sur la carte |
-
-## Test-phrase gate (mock copy)
+## Test-phrase gate (preview copy)
 
 | Where | English | French | Example (French) |
 |---|---|---|---|
-|  | Test dashboard | Tableau de bord de test | Tableau de bord de test |
+|  | Preview dashboard | Aperçu du tableau de bord | Aperçu du tableau de bord |
 | gate paragraph, first part | This copy shows  | Cette copie présente des  | Cette copie présente des  |
-| gate paragraph, bold part | synthetic model output | résultats de modèles simulés | résultats de modèles simulés |
-| gate paragraph, middle |  for development and demonstration. Enter the test phrase to continue, or go to the  |  à des fins de développement et de démonstration. Saisissez la phrase de test pour continuer, ou allez au  |  à des fins de développement et de démonstration. Saisissez la phrase de test pour continuer, ou allez au  |
+| gate paragraph, bold part | features under development | fonctionnalités en cours de développement | fonctionnalités en cours de développement |
+| gate paragraph, middle |  on the same data as the live dashboard. Enter the test phrase to continue, or go to the  |  avec les mêmes données que le tableau de bord public. Saisissez la phrase de test pour continuer, ou allez au  |  avec les mêmes données que le tableau de bord public. Saisissez la phrase de test pour continuer, ou allez au  |
 | gate paragraph, link | live dashboard | tableau de bord public | tableau de bord public |
 | gate paragraph, end | . | . | . |
 |  | test phrase | phrase de test | phrase de test |
@@ -156,6 +132,28 @@ Try it: the French interface is on the test copy of the dashboard, `/mock/?lang=
 | caption under the x axis | week ending (Saturday) · cases by symptom onset | semaine se terminant le (samedi) · cas par date de début des symptômes | semaine se terminant le (samedi) · cas par date de début des symptômes |
 | hover text and accessible label of the week-window strip under the weekly chart (the selected dates are appended) | Weeks shown — drag the window or its handles, double-click to reset | Semaines affichées — glisser la fenêtre ou ses poignées, double-clic pour réinitialiser | Semaines affichées — glisser la fenêtre ou ses poignées, double-clic pour réinitialiser |
 
+## Weekly chart tooltip
+
+| Where | English | French | Example (French) |
+|---|---|---|---|
+| tooltip heading | Week ending {d} | Semaine se terminant le {d} | Semaine se terminant le 24 oct. |
+| tooltip heading suffix |  · forecast wk 0 (reference week) |  · prévision sem. 0 (semaine de référence) |  · prévision sem. 0 (semaine de référence) |
+| tooltip heading suffix |  · forecast wk +{n} |  · prévision sem. +{n} |  · prévision sem. +3 |
+| tooltip heading suffix |  · nowcast |  · estimation en temps réel |  · estimation en temps réel |
+|  | Reported (as of {d}) | Déclarés (au {d}) | Déclarés (au 24 oct.) |
+|  | week in progress | semaine en cours | semaine en cours |
+|  | Reported | Déclarés | Déclarés |
+|  | no data yet | pas encore de données | pas encore de données |
+| tooltip row when the round shown is older than the latest release | Known at round time (as of {d}) | Connus au moment du cycle (au {d}) | Connus au moment du cycle (au 24 oct.) |
+| suffix after the reported count in the tooltip: change since the round | {n} since | {n} depuis | 3 depuis |
+| tooltip row of the hub-sourced ensemble | Hub ensemble | Ensemble multimodèle | Ensemble multimodèle |
+| tooltip row of the dashboard-computed ensemble | Dashboard ensemble | Ensemble du tableau de bord | Ensemble du tableau de bord |
+| after the ensemble label in the tooltip: how many models submitted that week *(one)* | · {n} model | · {n} modèle | · 1 modèle |
+| after the ensemble label in the tooltip: how many models submitted that week *(other)* | · {n} models | · {n} modèles | · 3 modèles |
+| after each model median in the tooltip: the 50% and 95% ranges | (50%: {r50} · 95%: {r95}) | (50 % : {r50} · 95 % : {r95}) | (50 % : 286–433 · 95 % : 150–720) |
+| tooltip last line | shown on map | affichée sur la carte | affichée sur la carte |
+| tooltip last line | click to show this week on the map | cliquer pour afficher cette semaine sur la carte | cliquer pour afficher cette semaine sur la carte |
+
 ## Cumulative panel
 
 | Where | English | French | Example (French) |
@@ -204,7 +202,6 @@ Try it: the French interface is on the test copy of the dashboard, `/mock/?lang=
 | map subtitle | Median cases | Cas (médiane) | Cas (médiane) |
 | map subtitle | P(≥1 case) | P(≥1 cas) | P(≥1 cas) |
 |  | no model | aucun modèle | aucun modèle |
-| map subtitle (mock copy) | (synthetic) | (simulé) | (simulé) |
 | map subtitle *(one)* | {n} province without output (dashed) | {n} province sans prévision (hachurée) | 1 province sans prévision (hachurée) |
 | map subtitle *(other)* | {n} provinces without output (dashed) | {n} provinces sans prévision (hachurées) | 3 provinces sans prévision (hachurées) |
 | map subtitle *(one)* | {n} zone without output (dashed) | {n} zone sans prévision (hachurée) | 1 zone sans prévision (hachurée) |
@@ -241,7 +238,6 @@ Try it: the French interface is on the test copy of the dashboard, `/mock/?lang=
 | tag after the dashboard-computed ensemble in the Models drawer | computed by the dashboard | calculé par le tableau de bord | calculé par le tableau de bord |
 | method paragraph of the dashboard-computed ensemble | Equal-weight linear pool of every trajectory submitted by the models in this round (100 per model), computed by the dashboard rather than submitted to the hub. Weekly values use the models that submitted that week; cumulative totals and forecast windows are computed trajectory by trajectory and then summarised. Locations submitted by fewer than {n} models are not covered. | Regroupement linéaire à poids égaux de toutes les trajectoires soumises par les modèles de ce cycle de projection (100 par modèle), calculé par le tableau de bord et non soumis au hub. Les valeurs hebdomadaires utilisent les modèles ayant soumis la semaine ; les cumuls et les fenêtres de prévision sont calculés trajectoire par trajectoire puis résumés. Les zones géographiques soumises par moins de {n} modèles ne sont pas couvertes. | Regroupement linéaire à poids égaux de toutes les trajectoires soumises par les modèles de ce cycle de projection (100 par modèle), calculé par le tableau de bord et non soumis au hub. Les valeurs hebdomadaires utilisent les modèles ayant soumis la semaine ; les cumuls et les fenêtres de prévision sont calculés trajectoire par trajectoire puis résumés. Les zones géographiques soumises par moins de 3 modèles ne sont pas couvertes. |
 | line under that paragraph listing the pooled models | Pooled models: {list} | Modèles regroupés : {list} | Modèles regroupés : OHTJHU-BM, CEPH-Rtrend_BDBV |
-| small tag after a model name | synthetic | simulé | simulé |
 | data inputs line of a model | Data: {s} | Données : {s} | Données : Données observées du hub |
 | last line of a model *(one)* | {n} location submitted | {n} zone géographique soumise | 1 zone géographique soumise |
 | last line of a model *(other)* | {n} locations submitted | {n} zones géographiques soumises | 3 zones géographiques soumises |
@@ -254,7 +250,6 @@ Try it: the French interface is on the test copy of the dashboard, `/mock/?lang=
 | footer provenance | Hub {repo}@{branch} ({commit}) | Hub {repo}@{branch} ({commit}) | Hub InsightNet-US/BDBV-Modeling-Hub@main (07b9844) |
 | footer provenance (ISO date kept) | latest target data as of {d} | dernières données observées au {d} | dernières données observées au 24 oct. |
 | footer provenance | built {d} | mis à jour le {d} | mis à jour le 24 oct. |
-| footer provenance (mock copy) | model output is synthetic | les résultats de modèles sont simulés | les résultats de modèles sont simulés |
 |  | Boundaries:  | Limites administratives :  | Limites administratives :  |
 |  |  (ODbL) ·  |  (ODbL) ·  |  (ODbL) ·  |
 |  | Hub repository | Dépôt du hub | Dépôt du hub |

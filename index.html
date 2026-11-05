@@ -3,6 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="bdbv-preview" content="" />
 <title>BDBV Modeling Hub — nowcasts and forecasts</title>
 <meta name="description" content="Nowcasts and short-term forecasts of weekly confirmed Bundibugyo virus disease cases by province, from the BDBV Modeling Hub." />
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -12,8 +13,8 @@
 <div id="gate" class="gate hidden" role="dialog" aria-labelledby="gateTitle">
   <div class="card">
     <div class="langlinks" aria-label="Language"><a href="#" data-lang="en">EN</a> · <a href="#" data-lang="fr">FR</a></div>
-    <h2 id="gateTitle" data-i18n="gate.title">Test dashboard</h2>
-    <p><span data-i18n="gate.p1">This copy shows </span><b data-i18n="gate.p2">synthetic model output</b><span data-i18n="gate.p3"> for development and demonstration. Enter the test phrase to continue, or go to the </span><a href="../" data-i18n="gate.live">live dashboard</a><span data-i18n="gate.p4">.</span></p>
+    <h2 id="gateTitle" data-i18n="gate.title">Preview dashboard</h2>
+    <p><span data-i18n="gate.p1">This copy shows </span><b data-i18n="gate.p2">features under development</b><span data-i18n="gate.p3"> on the same data as the live dashboard. Enter the test phrase to continue, or go to the </span><a href="../" data-i18n="gate.live">live dashboard</a><span data-i18n="gate.p4">.</span></p>
     <div class="row"><input id="gateInput" type="password" autocomplete="off" placeholder="test phrase" aria-label="Test phrase" data-i18n-ph="gate.ph" data-i18n-aria="gate.aria"><button type="button" id="gateBtn" data-i18n="gate.open">Open</button></div>
     <div class="err" id="gateErr"></div>
   </div>
@@ -21,7 +22,7 @@
 <header>
   <div class="titlebar">
     <h1>BDBV Modeling Hub <span class="tagline" data-i18n="hdr.subtitle">· nowcasts &amp; forecasts of weekly confirmed cases</span></h1>
-    <span class="badge hidden" id="mockBadge" title="Model output shown here is synthetic demonstration data, not team submissions" data-i18n="badge.synthetic" data-i18n-title="badge.title">Synthetic model output</span>
+    <span class="badge hidden" id="previewBadge" title="Features under development, shown on the same data as the live dashboard" data-i18n="badge.preview" data-i18n-title="badge.previewTitle">Preview</span>
   </div>
   <div class="toolbar">
   <div class="ctrl">
@@ -40,7 +41,7 @@
   <div class="dd" id="panelsDD"><button class="linkbtn ddarrow" id="panelsBtn" type="button" aria-haspopup="true" aria-expanded="false"><span data-i18n="panels.btn">Panels</span> ▾</button><div class="ddpanel right" id="panelsPanel"></div></div>
   </div>
 </header>
-<div id="mockBanner" class="mockbanner hidden" role="note"><span data-i18n="banner.text">SYNTHETIC MODEL OUTPUT · demonstration data, not team submissions · </span><a id="liveLink" href="../" class="hidden" data-i18n="banner.live">go to the live dashboard</a></div>
+<div id="previewBanner" class="previewbanner hidden" role="note"><span data-i18n="banner.preview">PREVIEW · features under development on the same data as the live dashboard · </span><a id="liveLink" href="../" class="hidden" data-i18n="banner.live">go to the live dashboard</a></div>
 
 <div class="grid" id="grid">
  <div class="left" id="left">
@@ -62,7 +63,6 @@
       <svg id="tsChart" width="100%" height="100%" preserveAspectRatio="none"></svg>
       <svg id="tsBrush" width="100%" role="img"></svg>
       <div class="note" id="tsEmpty" style="display:none"></div>
-      <div class="wm" aria-hidden="true"><span data-i18n="wm.word">Synthetic</span></div>
     </div>
   </section>
   <div class="split" id="hsplit" role="separator" aria-orientation="horizontal" tabindex="0" aria-valuemin="0" aria-valuemax="100" data-i18n-title="panels.hsplit" data-i18n-aria="panels.hsplit"></div>
@@ -82,7 +82,6 @@
     </div>
     <div class="bd" style="padding-top:6px">
       <svg id="cumChart" width="100%" height="200" preserveAspectRatio="none"></svg>
-      <div class="wm" aria-hidden="true"><span data-i18n="wm.word">Synthetic</span></div>
     </div>
   </section>
  </div>
@@ -108,7 +107,7 @@
       <div class="spacer"></div>
       <div class="legend"><span id="legLo">0</span><span class="bar"></span><span id="legHi">1</span></div>
     </div>
-    <div id="mapWrap" style="position:relative;flex:1;min-height:0;display:flex"><div id="map"></div><div class="wm" aria-hidden="true"><span data-i18n="wm.word">Synthetic</span></div></div>
+    <div id="mapWrap" style="position:relative;flex:1;min-height:0;display:flex"><div id="map"></div></div>
   </section>
   <div id="allHidden"><span data-i18n="panels.allHidden">All panels are hidden.</span><button type="button" class="linkbtn" id="showPanels" data-i18n="panels.show">Show panels</button></div>
 </div>

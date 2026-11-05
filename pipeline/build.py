@@ -1,8 +1,7 @@
-"""Build data/ from a hub checkout (plus synthetic submissions when MOCK_MODE=on)."""
+"""Build data/ from a hub checkout."""
 from __future__ import annotations
 
 import csv
-import hashlib
 import json
 import re
 import shutil
@@ -16,7 +15,6 @@ import pandas as pd
 
 import config
 import hub_io
-import mock
 from summarize import d, iso, last_complete_week, pool_members, samples_matrix, select_as_of, \
     summarize_location, validate_submission
 
@@ -192,26 +190,25 @@ def pool_round(mats: dict[str, dict[str, tuple]], reference_date: str, observed_
     return {"locations": locs_out, "members": members_all}
 
 
-def dashboard_ensemble_metadata(mock: bool) -> dict:
+def dashboard_ensemble_metadata() -> dict:
     return {"model_id": config.DASHBOARD_ENSEMBLE_ID, "team_name": "BDBV Modeling Hub", "team_abbr": "BDBV",
             "model_name": "BDBV dashboard ensemble", "model_abbr": "dashboard-ensemble",
             "methods": "", "data_inputs": "", "website_url": "", "repo_url": "", "license": "",
             "ensemble_of_hub_models": True, "computed_by": "dashboard", "ensemble_method": "linear_pool",
-            "min_models": config.ENSEMBLE_MIN_MODELS, "mock": mock}
+            "min_models": config.ENSEMBLE_MIN_MODELS}
 
 
 # ---------------------------------------------------------------- main
 def main() -> int:
     hub = config.hub_dir()
     info = hub_io.describe(hub)
-    print(f"hub: {hub} ({info.branch} @ {info.commit}); MOCK_MODE={config.MOCK_MODE}")
+    print(f"hub: {hub} ({info.branch} @ {info.commit})")
     rc = hub_io.read_round_config(hub)
     locs = hub_io.read_locations(hub)
     loc_table = location_table(locs)
     allowed = set(rc.locations)
     target = hub_io.read_target_data(hub)
     target = target[target["location"].isin(allowed)]
-    delays = hub_io.read_delays(hub)
     metadata = hub_io.read_model_metadata(hub)
 
     out_dir = config.DATA_DIR
@@ -233,24 +230,11 @@ def main() -> int:
         if df is None:
             continue
         n_real += 1
-        if config.MOCK_MODE == "on":
-            continue
         problems = validate_submission(df, ref, model_id, allowed)
         if problems:
             print(f"WARN {path.name}: {'; '.join(problems[:5])}")
         subs[(model_id, ref)] = df
-    if config.MOCK_MODE == "on":
-        if n_real:
-            print(f"!!! WARNING: MOCK_MODE=on but {n_real} real round-2 submission file(s) exist on the hub. "
-                  f"They are being IGNORED. Set MOCK_MODE=off to show real data. !!!")
-        subs = mock.generate(target, delays, locs)
-        metadata.update(mock.mock_metadata())
-        for (mid, ref), df in subs.items():
-            problems = validate_submission(df, ref, mid, allowed)
-            if problems:
-                raise RuntimeError(f"mock {mid} {ref} fails hub validation: {problems}")
-    else:
-        print(f"real round-2 submissions: {n_real}")
+    print(f"real round-2 submissions: {n_real}")
 
     # ---- hub ensemble id (used directly with ENSEMBLE_SOURCE=hub, or by auto when it submitted)
     flagged = [m for m, meta in metadata.items() if meta.get("ensemble_of_hub_models")]
@@ -291,13 +275,13 @@ def main() -> int:
                 metadata[mid] = {"model_id": mid, "team_name": mid.split("-")[0], "team_abbr": mid.split("-")[0],
                                  "model_name": mid, "model_abbr": mid, "methods": "", "data_inputs": "",
                                  "website_url": "", "repo_url": "", "license": "",
-                                 "ensemble_of_hub_models": False, "designated_model": True, "mock": False}
+                                 "ensemble_of_hub_models": False, "designated_model": True}
         ens_source, ens_id = resolve_ensemble(config.ENSEMBLE_SOURCE, hub_ensemble_id, models_out)
         if ens_source == "dashboard":
             pooled = pool_round(mats, ref, observed_by_loc, exclude=never_pool)
             if pooled["locations"]:
                 models_out[ens_id] = pooled
-                metadata[ens_id] = dashboard_ensemble_metadata(config.MOCK_MODE == "on")
+                metadata[ens_id] = dashboard_ensemble_metadata()
                 n_loc_type["ensemble"] = len(pooled["locations"])
             else:
                 print(f"WARN round {ref}: no location with >= {config.ENSEMBLE_MIN_MODELS} models; no ensemble")
@@ -332,9 +316,6 @@ def main() -> int:
     write_json(out_dir / "manifest.json", {
         "generated_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
         "hub": {"repo": config.HUB_REPO, "branch": info.branch, "commit": info.commit},
-        "mock": config.MOCK_MODE == "on",
-        "mock_gate": (hashlib.sha256(config.MOCK_PASSPHRASE.encode()).hexdigest()
-                      if config.MOCK_MODE == "on" and config.MOCK_PASSPHRASE else None),
         "target": config.TARGET, "horizons": config.HORIZONS, "quantile_levels": config.QUANTILE_LEVELS,
         "locations": loc_table, "national_code": NATIONAL,
         "as_of_versions": versions, "latest_as_of": latest,

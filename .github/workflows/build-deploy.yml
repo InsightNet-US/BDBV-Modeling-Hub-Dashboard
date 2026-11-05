@@ -25,8 +25,9 @@ concurrency:
   group: build-deploy
   cancel-in-progress: false
 
-# Two builds from the same hub checkout: the real dashboard at the site root (data/ committed to this repo)
-# and a synthetic-output copy at /mock/ for development and demos (never committed, gated by a passphrase).
+# One build from the hub checkout (data/ committed to this repo), staged twice by scripts/assemble-site.sh:
+# the live dashboard at the site root and a copy at /preview/ with the same data where features under
+# development are switched on (gated by a test phrase).
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -34,7 +35,7 @@ jobs:
       HUB_BRANCH: ${{ github.event.inputs.hub_branch || 'main' }}
       HUB_DIR: ${{ github.workspace }}/hub
       ENSEMBLE_MODEL_ID: ${{ vars.ENSEMBLE_MODEL_ID }}
-      # hub | auto | dashboard (empty = auto); applies to the live and the mock build alike (README, Ensemble)
+      # hub | auto | dashboard (empty = auto); see README, Ensemble
       ENSEMBLE_SOURCE: ${{ vars.ENSEMBLE_SOURCE }}
     steps:
       - uses: actions/checkout@v4
@@ -60,9 +61,7 @@ jobs:
       - name: Run pipeline tests
         run: python -m pytest pipeline/tests -q
 
-      - name: Build data/ (real submissions)
-        env:
-          MOCK_MODE: "off"
+      - name: Build data/
         run: python pipeline/build.py
 
       - name: Commit refreshed data
@@ -75,15 +74,10 @@ jobs:
             git push
           fi
 
-      - name: Build the mock copy (synthetic submissions)
+      - name: Assemble site (live root + gated preview copy)
         env:
-          MOCK_MODE: "on"
-          DATA_DIR: ${{ github.workspace }}/_mock/data
-          MOCK_PASSPHRASE: ${{ vars.MOCK_PASSPHRASE || 'testme' }}
-        run: python pipeline/build.py
-
-      - name: Assemble site
-        run: scripts/assemble-site.sh _site _mock/data "${GITHUB_SHA::7}"
+          PREVIEW_PASSPHRASE: ${{ vars.PREVIEW_PASSPHRASE || vars.MOCK_PASSPHRASE || 'testme' }}
+        run: scripts/assemble-site.sh "${{ github.workspace }}/_site" "${GITHUB_SHA::7}"
 
       - uses: actions/upload-pages-artifact@v3
         with:

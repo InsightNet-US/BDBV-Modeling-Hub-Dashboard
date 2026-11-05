@@ -9,6 +9,7 @@ const S = {
   mapMetric: 'median', mapModel: null, mapLayer: 'prov', geoHZ: null,
   layout: { col: 0.42, row: null, hidden: new Set(), weeks: null, fromURL: false },   // panel sizes, visibility, weekly-chart window
   cache: {},
+  preview: false, previewCopy: false, previewHash: null,   // see the preview block below
 };
 const NATIONAL = 'CD';
 const $ = id => document.getElementById(id);
@@ -55,8 +56,6 @@ function showTip(html, x, y) {
   tt.style.top = Math.min(y + 14, window.innerHeight - h - 8) + 'px';
 }
 function hideTip() { tt.style.opacity = 0; }
-/** footer line appended to any tooltip that shows model output while synthetic data are loaded */
-function synNote() { return S.manifest && S.manifest.mock ? `<div class="syn">${t('tip.syn')}</div>` : ''; }
 
 function locInfo(code) { return S.locIndex[code] || null; }
 function locName(code) {
@@ -204,6 +203,7 @@ function layoutURL() {
   u.searchParams.set('split', L.row == null ? L.col.toFixed(2) : `${L.col.toFixed(2)},${L.row.toFixed(2)}`);
   u.searchParams.delete('weeks');
   if (L.weeks) u.searchParams.set('weeks', `${L.weeks.start},${L.weeks.end}`);
+  u.searchParams.delete('preview');   // a copied link never switches preview features on for its recipient
   return u.toString();
 }
 /* geometry helpers: fractions are relative to the grid content width (what the CSS percentage resolves
@@ -277,6 +277,20 @@ function refreshPanelButtons() {
     b.title = label; b.setAttribute('aria-label', label);
   });
 }
+/* Preview features. The /preview/ copy of the site (same code, same data as the root) is marked by the
+   assembler with the gate hash in <meta name="bdbv-preview">; ?preview=1 on the root turns the features on
+   for that page load only (not stored, not copied into shared links). Convention for a feature under
+   development: JS checks S.preview where it builds or draws; markup-only pieces carry data-preview (hidden
+   by CSS unless body.preview); anything it persists (localStorage keys, extra layout fields, URL params)
+   must be ignored harmlessly by the root; its strings exist in both languages. Release = drop the check. */
+{
+  const pm = document.querySelector('meta[name="bdbv-preview"]'), c = pm ? pm.content.trim() : '';
+  if (c && !/^[0-9a-f]{64}$/.test(c)) console.warn('bdbv-preview marker is not a SHA-256 hash; treating this copy as the live site');
+  S.previewHash = /^[0-9a-f]{64}$/.test(c) ? c : null;
+  S.previewCopy = !!S.previewHash;
+  S.preview = S.previewCopy || new URLSearchParams(location.search).get('preview') === '1';
+  document.body.classList.toggle('preview', S.preview);
+}
 loadLayout(); applyLayoutCSS();   // before the first paint; scripts run after the DOM is parsed
 
 /* ---------- loading ---------- */
@@ -286,9 +300,10 @@ async function getJSON(path) {
   if (!r.ok) throw new Error(`${path}: ${r.status}`);
   return (S.cache[path] = await r.json());
 }
-/* Mock-dashboard gate: a phrase whose SHA-256 is in the manifest, remembered per browser. It only keeps
-   people from stumbling onto synthetic output; nothing on a static site is secret. */
-const GATE_KEY = 'bdbv-mock-unlocked';
+/* Preview gate: a phrase whose SHA-256 the assembler wrote into the page, remembered per browser. It only
+   keeps people from stumbling onto unfinished features; nothing on a static site is secret. */
+const GATE_KEY = 'bdbv-preview-unlocked';
+try { localStorage.removeItem('bdbv-mock-unlocked'); } catch (e) { /* fine */ }   // key of the former synthetic copy
 async function sha256(s) {
   const b = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(s));
   return [...new Uint8Array(b)].map(x => x.toString(16).padStart(2, '0')).join('');
@@ -310,13 +325,9 @@ function gate(hash) {
     inp.addEventListener('keydown', e => { if (e.key === 'Enter') go(); });
   });
 }
-/* Language: English and French. I18N_LIVE enables the switch on the live site (set false to confine it to
-   the mock copy again). The choice is remembered per browser; ?lang=xx in the URL overrides it. */
-const I18N_LIVE = true;
+/* Language: English and French. The choice is remembered per browser; ?lang=xx in the URL overrides it. */
 const LANG_KEY = 'bdbv-lang';
-function langEnabled() { return !!(S.manifest && (S.manifest.mock || I18N_LIVE)); }
 function setLang(lang, store) {
-  if (!langEnabled()) lang = 'en';
   LANG = I18N[lang] ? lang : 'en';
   if (store) { try { localStorage.setItem(LANG_KEY, LANG); } catch (e) { /* fine */ } }
   setToggle('langToggle', 'lang', LANG);
@@ -340,8 +351,7 @@ function buildHeader() {
   buildZoneSelect(locProvince(S.location));
   // separate spans so the footer wraps between items, not mid-sentence
   $('footProv').innerHTML = [t('foot.hub', { repo: manifest.hub.repo, branch: manifest.hub.branch, commit: manifest.hub.commit }),
-    t('foot.latest', { d: `<b>${manifest.latest_as_of}</b>` }), t('foot.built', { d: manifest.generated_at.replace('T', ' ').replace('Z', ' UTC') }),
-    manifest.mock ? `<b style="color:#9a5b00">${t('foot.synthetic')}</b>` : ''].filter(Boolean).map(x => `<span>${x}</span>`).join('');
+    t('foot.latest', { d: `<b>${manifest.latest_as_of}</b>` }), t('foot.built', { d: manifest.generated_at.replace('T', ' ').replace('Z', ' UTC') })].filter(Boolean).map(x => `<span>${x}</span>`).join('');
   buildPanelsMenu(); refreshPanelButtons();
 }
 async function init() {
@@ -354,23 +364,18 @@ async function init() {
   // blue for every id that is an ensemble in some round (hub model and/or dashboard pool)
   S.colors = assignColors(models, [manifest.ensemble_model_id, ...(manifest.rounds || []).map(r => r.ensemble_model_id)].filter(id => id && models[id]));
   S.obsLatest = await getJSON(`data/observed/${manifest.latest_as_of}.json`);
-  $('mockBadge').classList.toggle('hidden', !manifest.mock);
-  document.body.classList.toggle('mock', !!manifest.mock);
-  if (manifest.mock) {
-    $('mockBanner').classList.remove('hidden');
-    $('liveLink').classList.toggle('hidden', !/\/mock\/?$/.test(location.pathname.replace(/index\.html$/, '')));
+  $('previewBadge').classList.toggle('hidden', !S.preview);
+  if (S.previewCopy) {
+    $('previewBanner').classList.remove('hidden');
+    $('liveLink').classList.toggle('hidden', !/\/preview\/?$/.test(location.pathname.replace(/index\.html$/, '')));
   }
   // language (before the gate so the gate card is already translated)
-  let lang = 'en';
-  if (langEnabled()) {
-    $('langToggle').classList.remove('hidden');
-    const q = new URLSearchParams(location.search).get('lang');
-    let stored = null; try { stored = localStorage.getItem(LANG_KEY); } catch (e) { /* fine */ }
-    lang = q || stored || 'en';
-    document.querySelectorAll('[data-lang]').forEach(b => b.addEventListener('click', e => { e.preventDefault(); setLang(b.dataset.lang, true); }));
-  }
-  setLang(lang, langEnabled() && !!new URLSearchParams(location.search).get('lang'));   // a ?lang= link is remembered like a click
-  if (manifest.mock && manifest.mock_gate) await gate(manifest.mock_gate);
+  $('langToggle').classList.remove('hidden');
+  const q = new URLSearchParams(location.search).get('lang');
+  let stored = null; try { stored = localStorage.getItem(LANG_KEY); } catch (e) { /* fine */ }
+  document.querySelectorAll('[data-lang]').forEach(b => b.addEventListener('click', e => { e.preventDefault(); setLang(b.dataset.lang, true); }));
+  setLang(q || stored || 'en', !!q);   // a ?lang= link is remembered like a click
+  if (S.previewCopy) await gate(S.previewHash);
 
   initMap();
   wire();
@@ -520,7 +525,7 @@ function buildDrawer() {
     const m = S.models[id] || {}, nloc = Object.keys((S.round.models[id] || {}).locations || {}).length;
     const links = [m.website_url && `<a href="${m.website_url}" target="_blank" rel="noopener">${t('drawer.website')}</a>`, m.repo_url && `<a href="${m.repo_url}" target="_blank" rel="noopener">${t('drawer.code')}</a>`].filter(Boolean).join(' · ');
     const dash = m.computed_by === 'dashboard', members = dash ? ((S.round.models[id] || {}).members || []) : [];
-    return `<div class="model"><h3><i style="background:${modelColor(id)}"></i>${m.model_name || id} <span class="tag">${id}</span>${dash ? `<span class="tag">${t('drawer.tagDash')}</span>` : m.ensemble_of_hub_models ? `<span class="tag">${t('drawer.tagEns')}</span>` : ''}${m.mock ? `<span class="tag" style="color:#9a5b00;border-color:#f0c889">${t('drawer.tagSyn')}</span>` : ''}</h3>
+    return `<div class="model"><h3><i style="background:${modelColor(id)}"></i>${m.model_name || id} <span class="tag">${id}</span>${dash ? `<span class="tag">${t('drawer.tagDash')}</span>` : m.ensemble_of_hub_models ? `<span class="tag">${t('drawer.tagEns')}</span>` : ''}</h3>
       <div class="team">${m.team_name || ''}</div>
       ${dash ? `<p>${t('drawer.dashEnsMethods', { n: m.min_models || 2 })}</p><p class="sm" style="color:var(--muted)">${t('drawer.dashEnsMembers', { list: members.map(modelName).join(', ') })}</p>` : ''}
       ${m.methods ? `<p>${m.methods}</p>` : ''}

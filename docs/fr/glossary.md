@@ -8,8 +8,9 @@ partir de `assets/i18n.js`).
 
 **Où voir le résultat :** le tableau de bord public,
 <https://insightnet-us.github.io/BDBV-Modeling-Hub-Dashboard/?lang=fr>, avec le sélecteur EN | FR dans la
-barre d'outils (la version de test avec des données simulées reste à
-<https://insightnet-us.github.io/BDBV-Modeling-Hub-Dashboard/mock/?lang=fr>, phrase de test `testme`).
+barre d'outils (la copie d'aperçu, qui présente les fonctionnalités en cours de développement avec les
+mêmes données, est à <https://insightnet-us.github.io/BDBV-Modeling-Hub-Dashboard/preview/?lang=fr>,
+phrase de test `testme`).
 
 **Comment relire :** corrigez directement la colonne « Français retenu » ici et la colonne « French » de
 `strings.md` (pull request), ou envoyez vos remarques par courriel en citant le terme anglais. Les
@@ -18,8 +19,7 @@ Les points marqués **à vérifier** sont ceux sur lesquels nous hésitons le pl
 
 **Historique :** première relecture reçue le 2026-10-27 (deux relecteurs) et appliquée : estimation en
 temps réel, cycle de projection, semaines écoulées, cas déclarés, données observées, ensemble
-multimodèle, zone géographique, sans prévision, nombre total de cas estimé, résultats de modèles
-simulés, résultat du modèle, « Modèles ayant soumis des prévisions », « mis à jour le »,
+multimodèle, zone géographique, sans prévision, nombre total de cas estimé, résultat du modèle, « Modèles ayant soumis des prévisions », « mis à jour le »,
 Agrandir / Réduire. Restent à confirmer : « Projections au », « tableau de bord public », la
 terminologie officielle pour « cas déclarés », et les termes de l'ensemble calculé par le tableau de bord
 ajoutés le 2026-10-27 (« ensemble du tableau de bord », « modèles regroupés », « regroupement linéaire »).
@@ -97,10 +97,10 @@ Conventions adoptées, à confirmer :
 | reported, last 4 wk / reported to date | rapportés, 4 dernières sem. / rapportés à ce jour | — | Infobulle de la carte. |
 | Models (menu) / Models in this round | Modèles / Modèles ayant soumis des prévisions | Modèles de ce cycle | Relecteurs. |
 | tick (in the menu) | cocher | sélectionner | |
-| synthetic model output | résultats de modèles simulés | résultats de modèles synthétiques | Relecteurs : « synthétiques » ne serait pas compris. Filigrane : SIMULÉ. |
-| demonstration data | données de démonstration | — | |
+| preview (badge) | aperçu | prévisualisation | **à vérifier** (copie d'aperçu du tableau de bord, depuis le 2026-11-05). |
+| features under development | fonctionnalités en cours de développement | — | **à vérifier**. |
 | live dashboard | tableau de bord public | tableau de bord principal ; en production | **à vérifier**. |
-| test dashboard / test phrase / Open | tableau de bord de test / phrase de test / Ouvrir | — | |
+| preview dashboard / test phrase / Open | aperçu du tableau de bord / phrase de test / Ouvrir | — | |
 | boundaries | limites administratives | frontières ; découpage | Source geoBoundaries. |
 | hub repository | dépôt du hub | — | |
 | built (timestamp) | mis à jour le | généré le ; construit le | Relecteurs. |

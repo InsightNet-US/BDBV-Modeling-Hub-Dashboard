@@ -5,7 +5,7 @@ import os
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-# Output folder. The committed one is ROOT/data; the mock build in CI writes elsewhere (DATA_DIR env).
+# Output folder: the committed ROOT/data unless DATA_DIR says otherwise.
 DATA_DIR = Path(os.environ.get("DATA_DIR") or ROOT / "data").resolve()
 GEO_SRC = ROOT / "data" / "geo"   # committed boundary files + alias table, copied into DATA_DIR when it differs
 
@@ -27,15 +27,6 @@ def hub_dir() -> Path:
         f"(tried: {', '.join(str(c) for c in candidates)})"
     )
 
-
-# "on": synthetic submissions replace any real round-2 files; "off": real files only.
-MOCK_MODE = os.environ.get("MOCK_MODE", "off").strip().lower()
-if MOCK_MODE not in ("on", "off"):
-    raise ValueError("MOCK_MODE must be 'on' or 'off'")
-
-# Phrase that unlocks the mock dashboard (its SHA-256 goes into the manifest; the page compares hashes).
-# Only a nudge against stumbling onto synthetic output: everything on a static site is public.
-MOCK_PASSPHRASE = os.environ.get("MOCK_PASSPHRASE", "testme").strip()
 
 # Explicit hub ensemble model id; if empty, the single model flagged ensemble_of_hub_models wins.
 ENSEMBLE_MODEL_ID = os.environ.get("ENSEMBLE_MODEL_ID", "").strip() or None
@@ -60,4 +51,3 @@ HORIZONS = [0, 1, 2, 3]   # horizon 0 = the reference week itself; windows run f
 # A round's data version is the latest as_of on or before reference_date minus this many days
 # (the Tuesday closing the submission window; the Monday 5 pm ET release qualifies).
 AS_OF_LAG_DAYS = 4
-MOCK_SEED = 20261031

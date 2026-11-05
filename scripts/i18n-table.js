@@ -16,14 +16,14 @@ vm.runInContext(read('assets/i18n.js') + '\nthis.I18N = I18N;', ctx);
 const I18N = ctx.I18N, EN = I18N.en, FR = I18N.fr;
 
 /* where each key appears, for the reviewer; prefixes give the panel, specific keys refine it */
-const PANEL = { page: 'Page', hdr: 'Header', common: 'Header / panel labels', badge: 'Synthetic marks (mock copy)', banner: 'Synthetic marks (mock copy)',
-  wm: 'Synthetic marks (mock copy)', gate: 'Test-phrase gate (mock copy)', loc: 'Locations', model: 'Models', week: 'Week labels', dd: 'Model menus',
+const PANEL = { page: 'Page', hdr: 'Header', common: 'Header / panel labels', badge: 'Preview marks (preview copy)', banner: 'Preview marks (preview copy)',
+  gate: 'Test-phrase gate (preview copy)', loc: 'Locations', model: 'Models', week: 'Week labels', dd: 'Model menus',
   ts: 'Weekly chart', tip: 'Weekly chart tooltip', cum: 'Cumulative panel', map: 'Map', drawer: 'Models drawer', foot: 'Footer', panels: 'Panel layout', err: 'Errors' };
 const WHERE = {
   months: 'month abbreviations used in every date', 'page.title': 'browser tab title', 'page.desc': 'search-engine description',
   'hdr.subtitle': 'after the title "BDBV Modeling Hub"', 'hdr.roundTitle': 'hover text of the round selector', 'hdr.roundInfo': 'next to the round selector',
   'hdr.noRounds': 'round selector when no round has a submission', 'hdr.langTitle': 'hover text of the EN/FR switch',
-  'tip.syn': 'last line of every tooltip that shows synthetic output', 'wm.word': 'large watermark word on panels and map',
+  'badge.preview': 'header badge on the preview copy (or with ?preview=1)', 'badge.previewTitle': 'hover text of that badge', 'banner.preview': 'banner under the header of the preview copy', 'banner.live': 'link at the end of that banner',
   'gate.p1': 'gate paragraph, first part', 'gate.p2': 'gate paragraph, bold part', 'gate.p3': 'gate paragraph, middle', 'gate.live': 'gate paragraph, link', 'gate.p4': 'gate paragraph, end',
   'gate.https': 'gate error when the page is not served over https', 'gate.wrong': 'gate error after a wrong phrase',
   'loc.national': 'name of the country in subtitles', 'loc.nationalShort': 'country name after a zone name', 'loc.nationalOpt': 'first entry of the location selector', 'loc.wholeProvince': 'first entry of the zone selector',
@@ -41,11 +41,11 @@ const WHERE = {
   'cum.sub': 'cumulative panel subtitle', 'cum.toDate': 'section heading (shown in capitals)', 'cum.eventual': 'section heading (shown in capitals)', 'cum.nowcastCat': 'row label', 'cum.fcCat0': 'row label', 'cum.fcCat': 'row label',
   'cum.noNowcast': 'italic note next to a hollow dot', 'cum.noNowcastShort': 'short form of the same note when the panel is narrow', 'cum.colHead': 'small header above the number column of the cumulative panel', 'cum.notSubmitted': 'italic note', 'cum.noOutput': 'italic note', 'cum.noSub': 'italic note', 'cum.nowcastTip': 'tooltip of a nowcast box', 'cum.fcTip0': 'tooltip of a forecast box', 'cum.fcTip': 'tooltip of a forecast box',
   'map.levelTitle': 'hover text of the Provinces / Health zones switch', 'map.weekTitle': 'hover text of the week selector', 'map.nowcastWeeks': 'group heading in the week selector', 'map.forecastWeeks': 'group heading in the week selector',
-  'map.wkLabel': 'map subtitle and tooltip, e.g. "week ending 7 Nov (forecast +1 wk)"', 'map.subMedian': 'map subtitle', 'map.subPresence': 'map subtitle', 'map.synthetic': 'map subtitle (mock copy)',
+  'map.wkLabel': 'map subtitle and tooltip, e.g. "week ending 7 Nov (forecast +1 wk)"', 'map.subMedian': 'map subtitle', 'map.subPresence': 'map subtitle',
   'map.missingProvinces': 'map subtitle', 'map.missingZones': 'map subtitle', 'map.tipNotInHub': 'tooltip of an unmatched zone polygon', 'map.ctxZone': 'tooltip heading suffix for a zone',
   'map.actBack': 'tooltip last line', 'map.actClear': 'tooltip last line', 'map.actSelect': 'tooltip last line', 'map.zoomIn': 'hover text of the + button', 'map.zoomOut': 'hover text of the − button',
-  'drawer.sub': 'under the drawer title', 'drawer.englishNote': 'under the drawer title (French only)', 'drawer.data': 'data inputs line of a model', 'drawer.nloc': 'last line of a model', 'drawer.tagEns': 'small tag after a model name', 'drawer.tagSyn': 'small tag after a model name',
-  'foot.hub': 'footer provenance', 'foot.latest': 'footer provenance (ISO date kept)', 'foot.built': 'footer provenance', 'foot.synthetic': 'footer provenance (mock copy)', 'foot.pgInsp': 'hover text of the INSP + KSPH logos', 'foot.ksph': 'hover text of the KSPH logo',
+  'drawer.sub': 'under the drawer title', 'drawer.englishNote': 'under the drawer title (French only)', 'drawer.data': 'data inputs line of a model', 'drawer.nloc': 'last line of a model', 'drawer.tagEns': 'small tag after a model name',
+  'foot.hub': 'footer provenance', 'foot.latest': 'footer provenance (ISO date kept)', 'foot.built': 'footer provenance', 'foot.pgInsp': 'hover text of the INSP + KSPH logos', 'foot.ksph': 'hover text of the KSPH logo',
   'panels.btn': 'toolbar button opening the panel menu', 'panels.weekly': 'panel name in the menu and button labels', 'panels.cum': 'panel name in the menu and button labels', 'panels.map': 'panel name in the menu and button labels',
   'panels.reset': 'entry of the panel menu', 'panels.copy': 'entry of the panel menu', 'panels.copied': 'confirmation after copying', 'panels.hide': 'hover text of the × button in a panel header',
   'panels.allHidden': 'note shown when every panel is hidden', 'panels.show': 'button under that note', 'panels.vsplit': 'hover text of the gutter between the charts and the map', 'panels.hsplit': 'hover text of the gutter between the two charts',
@@ -98,7 +98,7 @@ function table() {
   let md = `# Dashboard strings, English and French\n\n`;
   md += `Generated from \`assets/i18n.js\` by \`node scripts/i18n-table.js\`; do not edit the French here by hand without also telling the developer, since the file is regenerated from the dictionary. Suggest changes in the French column (a pull request or comments by email are both fine) and they will be transferred to the dictionary.\n\n`;
   md += `How to read the table: \`{n}\`, \`{d}\`, \`{loc}\` and similar are placeholders filled at run time (a number, a date, a location name); the *Example* column shows one filled-in rendering. Rows with *(one)* and *(other)* are the singular and plural forms; French uses the singular for 0 and 1. Bold parts of a message are shown as "bold part — rest". The sign ␣ marks the narrow no-break space used in French numbers and before %. ISO dates such as 2026-10-24 identify a data release and stay as they are in both languages. Model names, team names and method descriptions come from the hub in English and are not translated. See \`glossary.md\` for the terminology choices.\n\n`;
-  md += `Try it: the French interface is on the test copy of the dashboard, \`/mock/?lang=fr\` (test phrase "testme"); the EN | FR switch is in the toolbar.\n\n`;
+  md += `Try it: the French interface is on the live dashboard, add \`?lang=fr\` to the address or use the EN | FR switch in the toolbar.\n\n`;
   for (const [panel, keys] of groups) {
     md += `## ${panel}\n\n| Where | English | French | Example (French) |\n|---|---|---|---|\n`;
     for (const k of keys) {

@@ -163,7 +163,7 @@ function drawTS() {
       teams.forEach(tm => { const q = qAt(tm.m, w); if (q) rows += `<div class="row"><span style="color:${tm.color}">${tm.name}</span><b>${fmtN(q[QI.med])} <span class="sm">${t('tip.ranges', { r50: fmtRange(q, 50), r95: fmtRange(q) })}</span></b></div>`; });
       const hasModel = (ens && qAt(ens, w)) || teams.some(tm => qAt(tm.m, w));
       const mapHint = mappable.has(w) ? `<div class="sm" style="margin-top:4px">${t(w === S.mapWeek ? 'tip.shownOnMap' : 'tip.clickMap')}</div>` : '';
-      showTip(`<b>${t('tip.weekEnding', { d: fmtDate(w, true) })}</b>${kind}${rows}${mapHint}${hasModel ? synNote() : ''}`, e.clientX, e.clientY);
+      showTip(`<b>${t('tip.weekEnding', { d: fmtDate(w, true) })}</b>${kind}${rows}${mapHint}`, e.clientX, e.clientY);
     });
     r.addEventListener('mouseleave', hideTip);
     r.addEventListener('click', () => { const w = weeks[+r.dataset.i]; if (mappable.has(w) && w !== S.mapWeek) setMapWeek(w); });
