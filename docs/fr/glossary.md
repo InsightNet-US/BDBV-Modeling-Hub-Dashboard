@@ -77,7 +77,7 @@ Conventions adoptées, à confirmer :
 | pooled models | modèles regroupés | modèles combinés ; modèles agrégés | **à vérifier**. Liste des modèles entrant dans l'ensemble du tableau de bord. |
 | linear pool | regroupement linéaire | mélange linéaire ; combinaison linéaire | **à vérifier**. Méthode de l'ensemble (toutes les trajectoires mises en commun). |
 | · 3 models (tooltip) | · 3 modèles | — | Nombre de modèles ayant soumis la semaine survolée, après le nom de l'ensemble. |
-| ensemble size (map metric) / models pooled | taille de l’ensemble / modèles regroupés | nombre de modèles | **à vérifier** (sur la branche d’aperçu depuis le 2026-11-05). |
+| models pooled (map tooltip) | modèles regroupés | nombre de modèles | **à vérifier** (sur la branche d’aperçu depuis le 2026-11-05). |
 | (pools 9 models) | (regroupe 9 modèles) | — | Après le nom de l’ensemble ; « regroupe » comme « regroupement linéaire ». |
 | model / team / submission | modèle / équipe / soumission | — | |
 | submitted (location) | soumis | — | « 7 lieux soumis ». |

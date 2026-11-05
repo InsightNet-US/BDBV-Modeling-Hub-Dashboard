@@ -91,10 +91,6 @@ const wkLabel = () => S.mapWeek ? t('map.wkLabel', { d: fmtDate(S.mapWeek), kind
 
 /* ---- values and styles ---- */
 function locValue(code) {
-  if (S.mapMetric === 'models') {   // models pooled by the dashboard ensemble, whatever model is mapped
-    const e = code && S.mapWeek ? ensCounts(code) : null, k = e ? e.weeks.indexOf(S.mapWeek) : -1;
-    return k < 0 ? null : e.n_models_wk[k];
-  }
   const m = S.mapModel && S.mapWeek && code ? modelLoc(S.mapModel, code) : null;
   if (!m) return null;
   const i = m.weeks.indexOf(S.mapWeek);
@@ -103,7 +99,6 @@ function locValue(code) {
 }
 /** subtitle key, legend ends and gradient per metric (kept together so they cannot drift apart) */
 function metricInfo() {
-  if (S.mapMetric === 'models') return { sub: 'map.subModels', lo: '1', hi: fmtN(Math.max(2, S.ensMax || 2)), gradient: M_GRADIENT };
   if (S.mapMetric === 'presence') return { sub: 'map.subPresence', lo: fmtPct(0), hi: fmtPct(1), gradient: P_GRADIENT };
   return { sub: 'map.subMedian', lo: '0', hi: fmtN(scale.vmax), gradient: N_GRADIENT };
 }
@@ -114,7 +109,7 @@ function featStyle(f, level) {
   const w = selected ? SEL_W[level] : level === 'hz' ? 0.6 : 1;
   if (!code) return { color: '#9aa3ad', weight: 0.5, dashArray: '2 3', fillColor: '#eceff3', fillOpacity: 0.3 };
   if (v == null) return { color: selected ? '#0b0f14' : '#6b7684', weight: w, dashArray: selected ? null : '3 3', fillColor: '#e6e9ee', fillOpacity: 0.5 };
-  const fill = S.mapMetric === 'models' ? colorForM(v, S.ensMax) : S.mapMetric === 'presence' ? colorForP(v) : colorFor(Math.log1p(v) / Math.log1p(scale.vmax));
+  const fill = S.mapMetric === 'presence' ? colorForP(v) : colorFor(Math.log1p(v) / Math.log1p(scale.vmax));
   return { color: '#0b0f14', weight: w, dashArray: null, fillColor: fill, fillOpacity: 0.8 };
 }
 /* dissolved province outline on the zone layer: heavier for the province in focus */
@@ -162,9 +157,9 @@ function drawMap() {
     provOutline.eachLayer(l => { l.setStyle(outlineStyle(l.feature)); if (l.feature.properties.location === sel) l.bringToFront(); });
   }
   const missing = feats.length - vals.length;
-  const mi = metricInfo(), shown = S.mapMetric === 'models' ? S.ensembleId : S.mapModel;
+  const mi = metricInfo();
   const mt = `${t(mi.sub)}, <span class="horizonval">${wkLabel()}</span>`;
-  document.getElementById('mapSub').innerHTML = `${mt} · ${shown ? modelLabel(shown) : t('map.noModel')}`
+  document.getElementById('mapSub').innerHTML = `${mt} · ${S.mapModel ? modelLabel(S.mapModel) : t('map.noModel')}`
     + (missing ? ` · ${tn(level === 'hz' ? 'map.missingZones' : 'map.missingProvinces', missing)}` : '');
   document.getElementById('legLo').textContent = mi.lo;
   document.getElementById('legHi').textContent = mi.hi;

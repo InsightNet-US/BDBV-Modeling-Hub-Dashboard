@@ -77,8 +77,8 @@ the site twice with `scripts/assemble-site.sh`:
   layout links). It reveals only such pieces present on `main`, not the branch.
 
 Currently on the preview branch: the size of the dashboard ensemble per week and place (issue #1): an
-"n=…" label above each ensemble estimate in the weekly chart, an "Ensemble size" map metric with a
-tooltip row, and the count after the ensemble's name in the cumulative menu and tooltips. Synthetic ("mock") model output was removed
+"n=…" label above each ensemble estimate in the weekly chart, a "Models pooled, same week" row in the
+map tooltip, and the count after the ensemble's name in the cumulative menu and tooltips. Synthetic ("mock") model output was removed
 on 2026-11-05 once real submissions had been flowing for weeks; the generator (`pipeline/mock.py`) is in
 the git history up to commit `24d9cd5`.
 
