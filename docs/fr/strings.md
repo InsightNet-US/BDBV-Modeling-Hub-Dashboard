@@ -55,8 +55,12 @@ Try it: the French interface is on the live dashboard, add `?lang=fr` to the add
 | Where | English | French | Example (French) |
 |---|---|---|---|
 | header badge on the preview copy (or with ?preview=1) | Preview | Aperçu | Aperçu |
-| hover text of that badge | Features under development, shown on the same data as the live dashboard | Fonctionnalités en cours de développement, affichées avec les mêmes données que le tableau de bord public | Fonctionnalités en cours de développement, affichées avec les mêmes données que le tableau de bord public |
-| banner under the header of the preview copy | PREVIEW · features under development on the same data as the live dashboard ·  | APERÇU · fonctionnalités en cours de développement, avec les mêmes données que le tableau de bord public ·  | APERÇU · fonctionnalités en cours de développement, avec les mêmes données que le tableau de bord public ·  |
+| hover text of that badge | Features under development, built from the same hub snapshot as the live dashboard | Fonctionnalités en cours de développement, à partir du même instantané du hub que le tableau de bord public | Fonctionnalités en cours de développement, à partir du même instantané du hub que le tableau de bord public |
+| banner under the header of the preview copy | PREVIEW · features under development, built from the same hub snapshot as the live dashboard ·  | APERÇU · fonctionnalités en cours de développement, à partir du même instantané du hub que le tableau de bord public ·  | APERÇU · fonctionnalités en cours de développement, à partir du même instantané du hub que le tableau de bord public ·  |
+| in that banner: which commit of the preview branch is shown | branch {branch} @ {commit}, built {d} ·  | branche {branch} @ {commit}, générée le {d} ·  | branche main @ 07b9844, générée le 24 oct. ·  |
+| replaces the banner text when the preview branch failed to build | PREVIEW · the preview branch failed to build on {d} · showing the live version ·  | APERÇU · la branche d’aperçu n’a pas pu être générée le {d} · version publique affichée ·  | APERÇU · la branche d’aperçu n’a pas pu être générée le 24 oct. · version publique affichée ·  |
+| link in that notice to the Actions run | see the run | voir l’exécution | voir l’exécution |
+| replaces the banner text while there is no preview branch | PREVIEW · no preview branch yet · showing the live version ·  | APERÇU · pas encore de branche d’aperçu · version publique affichée ·  | APERÇU · pas encore de branche d’aperçu · version publique affichée ·  |
 | link at the end of that banner | go to the live dashboard | aller au tableau de bord public | aller au tableau de bord public |
 
 ## Test-phrase gate (preview copy)
@@ -66,7 +70,7 @@ Try it: the French interface is on the live dashboard, add `?lang=fr` to the add
 |  | Preview dashboard | Aperçu du tableau de bord | Aperçu du tableau de bord |
 | gate paragraph, first part | This copy shows  | Cette copie présente des  | Cette copie présente des  |
 | gate paragraph, bold part | features under development | fonctionnalités en cours de développement | fonctionnalités en cours de développement |
-| gate paragraph, middle |  on the same data as the live dashboard. Enter the test phrase to continue, or go to the  |  avec les mêmes données que le tableau de bord public. Saisissez la phrase de test pour continuer, ou allez au  |  avec les mêmes données que le tableau de bord public. Saisissez la phrase de test pour continuer, ou allez au  |
+| gate paragraph, middle |  built from the same hub snapshot as the live dashboard. Enter the test phrase to continue, or go to the  |  à partir du même instantané du hub que le tableau de bord public. Saisissez la phrase de test pour continuer, ou allez au  |  à partir du même instantané du hub que le tableau de bord public. Saisissez la phrase de test pour continuer, ou allez au  |
 | gate paragraph, link | live dashboard | tableau de bord public | tableau de bord public |
 | gate paragraph, end | . | . | . |
 |  | test phrase | phrase de test | phrase de test |

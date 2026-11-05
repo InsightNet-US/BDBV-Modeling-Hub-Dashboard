@@ -42,33 +42,42 @@ small JSON summaries under `data/`, and a GitHub Action rebuilds and deploys to 
 
 ## Live and preview copies
 
-The Action runs the pipeline once and stages the site twice (`scripts/assemble-site.sh`):
+The Action always runs from `main` (the Pages environment deploys only the default branch) and stages
+the site twice with `scripts/assemble-site.sh`:
 
-- **Live** (site root): the public dashboard; its `data/` is committed to this repo.
-- **Preview** (`/preview/`): the same code and the same data, with features under development switched
-  on. It carries a "Preview" badge and a banner linking back to the live site, and asks for a test phrase
-  once per browser (repository variable `PREVIEW_PASSPHRASE`, falling back to `MOCK_PASSPHRASE`, default
-  `testme`; only its SHA-256 is written into the page). The gate just keeps people from stumbling onto
-  unfinished work: a static site has no secrets. Pages caches HTML for about ten minutes, so a changed
-  phrase takes effect with a short delay.
+- **Live** (site root): `main`'s code; its `data/` is built from the hub and committed back to this repo.
+- **Preview** (`/preview/`): the `preview` branch's code with its own pipeline output from the same hub
+  snapshot. It carries a "Preview" badge, a banner naming the branch commit it was built from and linking
+  back to the live site, and asks for a test phrase once per browser (repository variable
+  `PREVIEW_PASSPHRASE`, falling back to `MOCK_PASSPHRASE`, default `testme`; only its SHA-256 is written
+  into the page). The gate just keeps people from stumbling onto unfinished work: a static site has no
+  secrets. Pages caches HTML for about ten minutes, so a changed phrase or a preview push takes effect
+  with a short delay (the `?v=` stamp keeps old HTML paired with its own assets meanwhile).
 
-### Previewing features
+### Working with the preview branch
 
-A feature under development is merged into `main` behind the preview flag, so it appears on `/preview/`
-with the next deploy while the live root is unchanged; releasing it is one commit that drops the check.
-Conventions (see the comment above `loadLayout()` in `assets/app.js`):
+- Build a feature on a branch, verify it locally, then merge it into `preview`. A push to `preview` runs
+  `.github/workflows/preview-push.yml`, which dispatches the main workflow; testers see the change at
+  `/preview/` minutes later. No feature flag is needed on the branch.
+- When the feature is ready, squash-merge it into `main`, then reset the branch so the two never drift:
+  `git push --force origin main:preview`. `preview` must therefore never be branch-protected (and if
+  `main` ever is, the Action's data commit needs a bypass).
+- **Fail-soft:** the preview build (its tests and pipeline) never blocks the live site. If the branch is
+  missing or fails to build, `/preview/` is staged from `main` and its banner says so, with a link to the
+  Actions run; the Action opens an issue labelled `preview-build` (or comments on the open one on later
+  runs) and closes it automatically once the branch builds again (`scripts/preview-alert.sh`). The
+  record of each build is `preview/status.json` next to the page.
+- Anything a preview feature persists (localStorage keys, extra layout fields, URL parameters) must be
+  ignored harmlessly by the live code, because browser storage is shared between `/` and `/preview/`;
+  strings exist in both languages (`node scripts/i18n-table.js --check` scans the whole page).
+- The older in-code mechanism is still available for a partial reveal on `main`: JavaScript may check
+  `S.preview` and markup may carry a `data-preview` attribute (hidden unless `body.preview`), and
+  `?preview=1` on the live root switches that flag on for one page load (not stored, dropped from copied
+  layout links). It reveals only such pieces present on `main`, not the branch.
 
-- JavaScript checks `S.preview` where it builds a control or draws; markup-only pieces carry a
-  `data-preview` attribute and stay hidden unless `body.preview`.
-- `?preview=1` on the live root switches the flag on for that page load only (not stored, and dropped
-  from copied layout links) for a quick check at the public address.
-- Anything a preview feature persists (new localStorage keys, extra layout fields, URL parameters) must be
-  ignored harmlessly by the live code; strings exist in both languages (`node scripts/i18n-table.js --check`
-  scans the whole page); every feature is checked at the root, at the root with `?preview=1` and at
-  `/preview/`.
-
-Synthetic ("mock") model output was removed on 2026-11-05 once real submissions had been flowing for
-weeks; the generator (`pipeline/mock.py`) is in the git history up to commit `24d9cd5`.
+Currently on the preview branch: see that branch's README. Synthetic ("mock") model output was removed
+on 2026-11-05 once real submissions had been flowing for weeks; the generator (`pipeline/mock.py`) is in
+the git history up to commit `24d9cd5`.
 
 ## Panel layout
 
@@ -113,9 +122,10 @@ data/                        generated by the pipeline (committed by the Action)
                              and health-zone name aliases (HDX spelling -> hub spelling)
 pipeline/                    Python pipeline (build.py, summarize.py, hub_io.py, geo.py, tests/)
 scripts/assemble-site.sh     stages the Pages artifact: live site at the root, gated preview copy under preview/
+scripts/preview-alert.sh     opens, updates or closes the preview-build issue (run by the Action)
 scripts/i18n-table.js        regenerates docs/fr/strings.md from assets/i18n.js (--check for CI-style validation)
 docs/fr/                     French glossary, string table and EN/FR screenshots for the translation review
-.github/workflows/           daily build + Pages deploy
+.github/workflows/           daily build + Pages deploy (build-deploy.yml) and the preview-branch trigger (preview-push.yml)
 ```
 
 ## Running locally
@@ -133,6 +143,8 @@ To reproduce the deployed layout (live at `/`, gated preview at `/preview/`, tes
 ```sh
 .venv/bin/python pipeline/build.py
 scripts/assemble-site.sh /tmp/site && (cd /tmp/site && python3 -m http.server 8000)
+# with a second checkout of the preview branch (its data/ built the same way) staged at /preview/:
+scripts/assemble-site.sh /tmp/site local /path/to/preview-checkout
 ```
 
 Environment variables: `HUB_DIR` (hub checkout; defaults to `./hub` or `~/Development/BDBV-Modeling-Hub`),

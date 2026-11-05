@@ -300,6 +300,24 @@ async function getJSON(path) {
   if (!r.ok) throw new Error(`${path}: ${r.status}`);
   return (S.cache[path] = await r.json());
 }
+/* Preview copy: what /preview/ was built from (status.json: ok, source, branch, commit, built, run_url,
+   reason). Built from the preview branch: "branch preview @ sha, built ...". Fallback to main's code
+   (branch missing or its build failed): the lead sentence is replaced by a notice and, on a failed
+   build, a link to the Actions run. Text goes in through textContent, never innerHTML. */
+function renderPreviewStatus() {
+  const st = S.previewStatus, el = $('previewStatus'), lead = $('previewLead');
+  if (!st || !el) return;
+  el.textContent = '';
+  const d = st.built ? `${fmtDate(st.built.slice(0, 10))} ${st.built.slice(11, 16)} UTC` : '';
+  if (st.ok) { lead.classList.remove('hidden'); el.textContent = t('banner.previewBuilt', { branch: st.branch || 'preview', commit: st.commit || '?', d }); return; }
+  lead.classList.add('hidden');
+  if (st.reason === 'no preview branch') { el.textContent = t('banner.previewNoBranch'); return; }
+  el.textContent = t('banner.previewBroken', { d });
+  if (typeof st.run_url === 'string' && st.run_url.startsWith('https://github.com/')) {
+    const a = document.createElement('a'); a.href = st.run_url; a.target = '_blank'; a.rel = 'noopener'; a.textContent = t('banner.previewRun');
+    el.appendChild(a); el.appendChild(document.createTextNode(' · '));
+  }
+}
 /* Preview gate: a phrase whose SHA-256 the assembler wrote into the page, remembered per browser. It only
    keeps people from stumbling onto unfinished features; nothing on a static site is secret. */
 const GATE_KEY = 'bdbv-preview-unlocked';
@@ -332,6 +350,7 @@ function setLang(lang, store) {
   if (store) { try { localStorage.setItem(LANG_KEY, LANG); } catch (e) { /* fine */ } }
   setToggle('langToggle', 'lang', LANG);
   applyStatic();
+  renderPreviewStatus();
   if (S.manifest) buildHeader();
   setBasemap(LANG);
   if (S.obsRound) afterRound();
@@ -368,6 +387,8 @@ async function init() {
   if (S.previewCopy) {
     $('previewBanner').classList.remove('hidden');
     $('liveLink').classList.toggle('hidden', !/\/preview\/?$/.test(location.pathname.replace(/index\.html$/, '')));
+    // what this copy was built from (written by the Action next to the page); not awaited
+    getJSON('status.json').then(st => { S.previewStatus = st; renderPreviewStatus(); }).catch(() => {});
   }
   // language (before the gate so the gate card is already translated)
   $('langToggle').classList.remove('hidden');

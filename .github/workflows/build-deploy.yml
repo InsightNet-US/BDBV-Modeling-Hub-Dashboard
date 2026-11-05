@@ -20,14 +20,20 @@ permissions:
   contents: write
   pages: write
   id-token: write
+  issues: write
 
 concurrency:
   group: build-deploy
   cancel-in-progress: false
 
-# One build from the hub checkout (data/ committed to this repo), staged twice by scripts/assemble-site.sh:
-# the live dashboard at the site root and a copy at /preview/ with the same data where features under
-# development are switched on (gated by a test phrase).
+# Always runs from main (the Pages environment only deploys the default branch; a push to the preview
+# branch dispatches this workflow through preview-push.yml). Two sources, one hub snapshot:
+#   - the live dashboard at the site root: main's code, data/ built here and committed back;
+#   - /preview/: the preview branch's code and its own pipeline output, gated by a test phrase.
+# The preview build is fail-soft: if the branch is missing or fails to build, /preview/ is staged from
+# main with a notice in its banner (status.json) and an issue labelled preview-build is opened or
+# updated, then closed automatically once the branch builds again. A failure of the main build still
+# fails the run.
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -74,10 +80,68 @@ jobs:
             git push
           fi
 
-      - name: Assemble site (live root + gated preview copy)
+      # ---- preview branch (fail-soft from here to the assembly) ----
+      - name: Look for the preview branch
+        id: pvref
+        run: |
+          if git ls-remote --exit-code --heads origin preview >/dev/null; then echo "exists=true" >> "$GITHUB_OUTPUT"; else
+            echo "exists=false" >> "$GITHUB_OUTPUT"; echo "::notice::no preview branch; /preview/ will be staged from main"; fi
+
+      - name: Check out the preview branch
+        if: steps.pvref.outputs.exists == 'true'
+        uses: actions/checkout@v4
+        with:
+          ref: preview
+          path: _pv
+
+      - name: Build the preview branch (its tests and pipeline, same hub snapshot)
+        id: pvbuild
+        if: steps.pvref.outputs.exists == 'true'
+        continue-on-error: true
+        timeout-minutes: 15
+        run: |
+          set -o pipefail
+          {
+            echo "preview branch at $(git -C _pv rev-parse --short HEAD)"
+            pip install -q -r _pv/pipeline/requirements.txt
+            grep -q 'name="bdbv-preview" content=""' _pv/index.html || { echo "index.html on the preview branch lacks the bdbv-preview marker"; exit 1; }
+            cd _pv && python -m pytest pipeline/tests -q && python pipeline/build.py
+          } 2>&1 | tee "$GITHUB_WORKSPACE/preview-build.log"
+
+      - name: Assemble site (live root + gated preview copy) and write preview/status.json
         env:
           PREVIEW_PASSPHRASE: ${{ vars.PREVIEW_PASSPHRASE || vars.MOCK_PASSPHRASE || 'testme' }}
-        run: scripts/assemble-site.sh "${{ github.workspace }}/_site" "${GITHUB_SHA::7}"
+          PV_EXISTS: ${{ steps.pvref.outputs.exists }}
+          PV_OUTCOME: ${{ steps.pvbuild.outcome }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          set -e
+          root_sha=$(git rev-parse --short HEAD)
+          if [ "$PV_OUTCOME" = "success" ]; then
+            pv_sha=$(git -C _pv rev-parse --short HEAD)
+            scripts/assemble-site.sh "$GITHUB_WORKSPACE/_site" "$root_sha" "$GITHUB_WORKSPACE/_pv" "$pv_sha"
+            reason=""
+          else
+            scripts/assemble-site.sh "$GITHUB_WORKSPACE/_site" "$root_sha"
+            pv_sha=""
+            if [ "$PV_EXISTS" = "true" ]; then reason="build failed"; else reason="no preview branch"; fi
+          fi
+          python3 - "$reason" "$pv_sha" "$RUN_URL" <<'EOF'
+          import json, sys, datetime
+          reason, sha, url = sys.argv[1:4]
+          json.dump({"ok": not reason, "source": "preview" if not reason else "main", "branch": "preview",
+                     "commit": sha or None, "built": datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+                     "run_url": url, "reason": reason or None}, open("_site/preview/status.json", "w"))
+          EOF
+          echo "preview status: $(cat _site/preview/status.json)"
+
+      - name: Alert on a failed preview build (issue labelled preview-build), or close the alert
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          PV_OUTCOME: ${{ steps.pvbuild.outcome }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: scripts/preview-alert.sh
 
       - uses: actions/upload-pages-artifact@v3
         with:

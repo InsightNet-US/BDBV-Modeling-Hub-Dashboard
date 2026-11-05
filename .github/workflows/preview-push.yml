@@ -1,0 +1,21 @@
+name: Preview branch pushed
+
+# A push to the preview branch re-runs the main workflow (from main, as the Pages environment requires);
+# that workflow builds /preview/ from this branch. This file only fires on the preview branch and is
+# kept on main so the post-release reset (main -> preview) carries it along.
+on:
+  push:
+    branches: [preview]
+
+permissions:
+  actions: write
+
+jobs:
+  dispatch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Dispatch "Build data and deploy to GitHub Pages" on main
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: gh workflow run build-deploy.yml --ref main

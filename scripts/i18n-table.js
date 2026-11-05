@@ -23,7 +23,7 @@ const WHERE = {
   months: 'month abbreviations used in every date', 'page.title': 'browser tab title', 'page.desc': 'search-engine description',
   'hdr.subtitle': 'after the title "BDBV Modeling Hub"', 'hdr.roundTitle': 'hover text of the round selector', 'hdr.roundInfo': 'next to the round selector',
   'hdr.noRounds': 'round selector when no round has a submission', 'hdr.langTitle': 'hover text of the EN/FR switch',
-  'badge.preview': 'header badge on the preview copy (or with ?preview=1)', 'badge.previewTitle': 'hover text of that badge', 'banner.preview': 'banner under the header of the preview copy', 'banner.live': 'link at the end of that banner',
+  'badge.preview': 'header badge on the preview copy (or with ?preview=1)', 'badge.previewTitle': 'hover text of that badge', 'banner.preview': 'banner under the header of the preview copy', 'banner.previewBuilt': 'in that banner: which commit of the preview branch is shown', 'banner.previewBroken': 'replaces the banner text when the preview branch failed to build', 'banner.previewRun': 'link in that notice to the Actions run', 'banner.previewNoBranch': 'replaces the banner text while there is no preview branch', 'banner.live': 'link at the end of that banner',
   'gate.p1': 'gate paragraph, first part', 'gate.p2': 'gate paragraph, bold part', 'gate.p3': 'gate paragraph, middle', 'gate.live': 'gate paragraph, link', 'gate.p4': 'gate paragraph, end',
   'gate.https': 'gate error when the page is not served over https', 'gate.wrong': 'gate error after a wrong phrase',
   'loc.national': 'name of the country in subtitles', 'loc.nationalShort': 'country name after a zone name', 'loc.nationalOpt': 'first entry of the location selector', 'loc.wholeProvince': 'first entry of the zone selector',

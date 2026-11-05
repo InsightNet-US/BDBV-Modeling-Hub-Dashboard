@@ -14,7 +14,7 @@
   <div class="card">
     <div class="langlinks" aria-label="Language"><a href="#" data-lang="en">EN</a> · <a href="#" data-lang="fr">FR</a></div>
     <h2 id="gateTitle" data-i18n="gate.title">Preview dashboard</h2>
-    <p><span data-i18n="gate.p1">This copy shows </span><b data-i18n="gate.p2">features under development</b><span data-i18n="gate.p3"> on the same data as the live dashboard. Enter the test phrase to continue, or go to the </span><a href="../" data-i18n="gate.live">live dashboard</a><span data-i18n="gate.p4">.</span></p>
+    <p><span data-i18n="gate.p1">This copy shows </span><b data-i18n="gate.p2">features under development</b><span data-i18n="gate.p3"> built from the same hub snapshot as the live dashboard. Enter the test phrase to continue, or go to the </span><a href="../" data-i18n="gate.live">live dashboard</a><span data-i18n="gate.p4">.</span></p>
     <div class="row"><input id="gateInput" type="password" autocomplete="off" placeholder="test phrase" aria-label="Test phrase" data-i18n-ph="gate.ph" data-i18n-aria="gate.aria"><button type="button" id="gateBtn" data-i18n="gate.open">Open</button></div>
     <div class="err" id="gateErr"></div>
   </div>
@@ -22,7 +22,7 @@
 <header>
   <div class="titlebar">
     <h1>BDBV Modeling Hub <span class="tagline" data-i18n="hdr.subtitle">· nowcasts &amp; forecasts of weekly confirmed cases</span></h1>
-    <span class="badge hidden" id="previewBadge" title="Features under development, shown on the same data as the live dashboard" data-i18n="badge.preview" data-i18n-title="badge.previewTitle">Preview</span>
+    <span class="badge hidden" id="previewBadge" title="Features under development, built from the same hub snapshot as the live dashboard" data-i18n="badge.preview" data-i18n-title="badge.previewTitle">Preview</span>
   </div>
   <div class="toolbar">
   <div class="ctrl">
@@ -41,7 +41,7 @@
   <div class="dd" id="panelsDD"><button class="linkbtn ddarrow" id="panelsBtn" type="button" aria-haspopup="true" aria-expanded="false"><span data-i18n="panels.btn">Panels</span> ▾</button><div class="ddpanel right" id="panelsPanel"></div></div>
   </div>
 </header>
-<div id="previewBanner" class="previewbanner hidden" role="note"><span data-i18n="banner.preview">PREVIEW · features under development on the same data as the live dashboard · </span><a id="liveLink" href="../" class="hidden" data-i18n="banner.live">go to the live dashboard</a></div>
+<div id="previewBanner" class="previewbanner hidden" role="note"><span id="previewLead" data-i18n="banner.preview">PREVIEW · features under development, built from the same hub snapshot as the live dashboard · </span><span id="previewStatus"></span><a id="liveLink" href="../" class="hidden" data-i18n="banner.live">go to the live dashboard</a></div>
 
 <div class="grid" id="grid">
  <div class="left" id="left">
