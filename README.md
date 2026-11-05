@@ -138,6 +138,10 @@ ensemble model; optional, otherwise the single model with `ensemble_of_hub_model
 - Only round-2 files are used: target `wk inc confirmed cases`, `output_type == sample`. Files failing the
   model-output README rules (100 samples per location, Saturdays, shared week sets) are reported but still
   summarised.
+- Models whose hub metadata sets `designated_model: false` (the hub's convention for models that are
+  neither shown publicly nor pooled, such as its `BDBVHub-baseline`) are skipped entirely: not displayed,
+  not listed and never a member of the dashboard ensemble. A missing field means designated. Skipped
+  models are reported as `NOTE` lines in the build log.
 - Resubmissions: the hub's `forecast_date` column (the date a model was run; a team resubmits by appending
   a complete new forecast with a later date to the same file) is honoured by keeping only the latest
   forecast date per location. Dropped earlier forecasts are reported as `NOTE` lines in the build log.

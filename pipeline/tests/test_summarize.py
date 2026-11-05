@@ -168,3 +168,19 @@ def test_loader_keeps_latest_forecast_per_location(tmp_path):
     old.drop(columns="forecast_date").to_csv(p, index=False)
     df3 = hub_io.read_sample_submission(p, warn=notes.append)
     assert "forecast_date" not in df3.columns and len(df3) == 1400 and len(notes) == 1
+
+
+def test_non_designated_models_are_dropped(tmp_path):
+    import hub_io
+    md = tmp_path / "model-metadata"; md.mkdir()
+    (md / "hub-baseline.yml").write_text("team_name: hub\nmodel_name: baseline\ndesignated_model: false\n")
+    (md / "team-a.yml").write_text("team_name: team\nmodel_name: a\ndesignated_model: true\n")
+    (md / "team-b.yml").write_text("team_name: team\nmodel_name: b\n")   # field omitted: designated
+    meta = hub_io.read_model_metadata(tmp_path)
+    assert [meta[m]["designated_model"] for m in ("hub-baseline", "team-a", "team-b")] == [False, True, True]
+    files = [("hub-baseline", R, tmp_path / "x1.csv"), ("hub-baseline", "2026-11-07", tmp_path / "x2.csv"),
+             ("team-a", R, tmp_path / "a.csv"), ("team-b", R, tmp_path / "b.csv"), ("team-c", R, tmp_path / "c.csv")]
+    notes = []
+    kept = hub_io.drop_non_designated(files, meta, warn=notes.append)
+    assert [f[0] for f in kept] == ["team-a", "team-b", "team-c"]   # team-c has no metadata at all: kept
+    assert len(notes) == 1 and notes[0].startswith("NOTE hub-baseline") and "2 submission" in notes[0]

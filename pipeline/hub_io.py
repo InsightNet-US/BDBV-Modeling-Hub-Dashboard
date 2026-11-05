@@ -119,9 +119,21 @@ def read_model_metadata(hub: Path) -> dict[str, dict]:
             "repo_url": meta.get("repo_url", ""),
             "license": meta.get("license", ""),
             "ensemble_of_hub_models": bool(meta.get("ensemble_of_hub_models", False)),
+            "designated_model": bool(meta.get("designated_model", True)),   # hub default: eligible
             "mock": False,
         }
     return out
+
+
+def drop_non_designated(files: list[tuple[str, str, Path]], metadata: dict[str, dict], warn=print):
+    """Drop every submission of a model whose metadata sets `designated_model: false` (the hub's own
+    convention for models that are neither shown publicly nor pooled, e.g. its baseline). A model without
+    metadata, or without the field, is designated. One note per skipped model."""
+    skipped = sorted({mid for mid, _, _ in files if not metadata.get(mid, {}).get("designated_model", True)})
+    for mid in skipped:
+        n = sum(1 for m, _, _ in files if m == mid)
+        warn(f"NOTE {mid}: designated_model is false on the hub; {n} submission file(s) skipped (not shown, not pooled)")
+    return [f for f in files if f[0] not in skipped]
 
 
 FILE_RE = re.compile(r"^(\d{4}-\d{2}-\d{2})-(.+)\.(csv|parquet)$")

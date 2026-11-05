@@ -226,7 +226,7 @@ def main() -> int:
 
     # ---- collect submissions: {(model_id, reference_date): DataFrame}
     subs: dict[tuple[str, str], pd.DataFrame] = {}
-    real_files = hub_io.list_model_output_files(hub)
+    real_files = hub_io.drop_non_designated(hub_io.list_model_output_files(hub), metadata)
     n_real = 0
     for model_id, ref, path in real_files:
         df = hub_io.read_sample_submission(path, warn=lambda m: print(f"NOTE {m}"))
@@ -291,7 +291,7 @@ def main() -> int:
                 metadata[mid] = {"model_id": mid, "team_name": mid.split("-")[0], "team_abbr": mid.split("-")[0],
                                  "model_name": mid, "model_abbr": mid, "methods": "", "data_inputs": "",
                                  "website_url": "", "repo_url": "", "license": "",
-                                 "ensemble_of_hub_models": False, "mock": False}
+                                 "ensemble_of_hub_models": False, "designated_model": True, "mock": False}
         ens_source, ens_id = resolve_ensemble(config.ENSEMBLE_SOURCE, hub_ensemble_id, models_out)
         if ens_source == "dashboard":
             pooled = pool_round(mats, ref, observed_by_loc, exclude=never_pool)

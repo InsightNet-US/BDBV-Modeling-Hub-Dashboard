@@ -57,7 +57,7 @@ def mock_metadata() -> dict[str, dict]:
                         model_name=t["name"], model_abbr=model, methods=t["methods"],
                         data_inputs="Hub target data and auxiliary reporting delays (synthetic demo).",
                         website_url="", repo_url="", license="CC-BY-4.0",
-                        ensemble_of_hub_models=False, mock=True)
+                        ensemble_of_hub_models=False, designated_model=True, mock=True)
     out[ENSEMBLE_ID] = dict(model_id=ENSEMBLE_ID, team_name="BDBV Modeling Hub", team_abbr="hub",
                             model_name="Hub ensemble (linear pool)", model_abbr="ensemble",
                             methods="Equal-weight linear pool of all submitted sample trajectories for each "
