@@ -67,10 +67,6 @@ Conventions (see the comment above `loadLayout()` in `assets/app.js`):
   scans the whole page); every feature is checked at the root, at the root with `?preview=1` and at
   `/preview/`.
 
-Currently in preview: the size of the dashboard ensemble per week and place (issue #1): a row of
-counts under the weekly chart, an "Ensemble size" map metric with a tooltip row, and the count after the
-ensemble's name in the cumulative menu and tooltips.
-
 Synthetic ("mock") model output was removed on 2026-11-05 once real submissions had been flowing for
 weeks; the generator (`pipeline/mock.py`) is in the git history up to commit `24d9cd5`.
 

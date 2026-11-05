@@ -90,15 +90,12 @@ Try it: the French interface is on the live dashboard, add `?lang=fr` to the add
 |---|---|---|---|
 | label of the hub-sourced ensemble wherever models are listed | Hub ensemble | Ensemble multimodèle | Ensemble multimodèle |
 | label of the ensemble computed by the dashboard wherever models are listed | Dashboard ensemble | Ensemble du tableau de bord | Ensemble du tableau de bord |
-| suffix after the ensemble name in the cumulative menu and tooltips (preview feature) *(one)* | (pools {n} model) | (regroupe {n} modèle) | (regroupe 1 modèle) |
-| suffix after the ensemble name in the cumulative menu and tooltips (preview feature) *(other)* | (pools {n} models) | (regroupe {n} modèles) | (regroupe 3 modèles) |
 
 ## Model menus
 
 | Where | English | French | Example (French) |
 |---|---|---|---|
 | top of the weekly-chart model menu | Ensemble median always shown | La médiane de l’ensemble multimodèle est toujours affichée | La médiane de l’ensemble multimodèle est toujours affichée |
-| second hint line of the weekly-chart model menu (preview feature: ensemble size) | pools {n} models for {loc} | regroupe {n} modèles pour {loc} | regroupe 3 modèles pour Ituri |
 | ensemble entry in the weekly-chart model menu | Ensemble 50% and 95% intervals | Intervalles à 50 % et 95 % de l’ensemble multimodèle | Intervalles à 50 % et 95 % de l’ensemble multimodèle |
 | hover text of a greyed-out model | No submission for {loc} | Pas de soumission pour {loc} | Pas de soumission pour Ituri |
 | model menu when the round has no submission | No submissions in this round | Aucune soumission dans ce cycle de projection | Aucune soumission dans ce cycle de projection |
@@ -133,8 +130,6 @@ Try it: the French interface is on the live dashboard, add `?lang=fr` to the add
 | message over the chart when no model covers the location | No model output for {loc} — No model submitted this location in this round. | Aucun résultat de modèle pour {loc} — Aucun modèle n’a soumis cette zone géographique dans ce cycle de projection. | Aucun résultat de modèle pour Ituri — Aucun modèle n’a soumis cette zone géographique dans ce cycle de projection. |
 | message over the chart before any submission | No submissions yet — The first accepted reference date is {d}. Reported cases are shown. | Pas encore de soumissions — La première date de référence acceptée est le {d}. Les cas déclarés sont affichés. | Pas encore de soumissions — La première date de référence acceptée est le 24 oct.. Les cas déclarés sont affichés. |
 | caption under the x axis | week ending (Saturday) · cases by symptom onset | semaine se terminant le (samedi) · cas par date de début des symptômes | semaine se terminant le (samedi) · cas par date de début des symptômes |
-| caption of the per-week model-count row under the weekly chart (preview feature) | models | modèles | modèles |
-| hover text of that caption | models pooled in the ensemble that week | modèles regroupés dans l’ensemble cette semaine-là | modèles regroupés dans l’ensemble cette semaine-là |
 | hover text and accessible label of the week-window strip under the weekly chart (the selected dates are appended) | Weeks shown — drag the window or its handles, double-click to reset | Semaines affichées — glisser la fenêtre ou ses poignées, double-clic pour réinitialiser | Semaines affichées — glisser la fenêtre ou ses poignées, double-clic pour réinitialiser |
 
 ## Weekly chart tooltip
@@ -192,7 +187,6 @@ Try it: the French interface is on the live dashboard, add `?lang=fr` to the add
 |  | Health zones | Zones de santé | Zones de santé |
 |  | Median cases | Cas (médiane) | Cas (médiane) |
 |  | P(≥1 case) | P(≥1 cas) | P(≥1 cas) |
-| third button of the map metric switch (preview feature) | Ensemble size | Taille de l’ensemble | Taille de l’ensemble |
 |  | Week | Semaine | Semaine |
 |  | Earlier week | Semaine précédente | Semaine précédente |
 |  | Later week | Semaine suivante | Semaine suivante |
@@ -207,7 +201,6 @@ Try it: the French interface is on the live dashboard, add `?lang=fr` to the add
 |  | no week | aucune semaine | aucune semaine |
 | map subtitle | Median cases | Cas (médiane) | Cas (médiane) |
 | map subtitle | P(≥1 case) | P(≥1 cas) | P(≥1 cas) |
-| map subtitle for that metric | Ensemble size (models pooled) | Taille de l’ensemble (modèles regroupés) | Taille de l’ensemble (modèles regroupés) |
 |  | no model | aucun modèle | aucun modèle |
 | map subtitle *(one)* | {n} province without output (dashed) | {n} province sans prévision (hachurée) | 1 province sans prévision (hachurée) |
 | map subtitle *(other)* | {n} provinces without output (dashed) | {n} provinces sans prévision (hachurées) | 3 provinces sans prévision (hachurées) |
@@ -216,7 +209,6 @@ Try it: the French interface is on the live dashboard, add `?lang=fr` to the add
 | tooltip of an unmatched zone polygon | zone not in the hub's location list | zone absente de la liste des zones géographiques du hub | zone absente de la liste des zones géographiques du hub |
 |  | Median cases, {wk} | Cas (médiane), {wk} | Cas (médiane), semaine se terminant le 7 nov. (prévision +1 sem.) |
 |  | P(≥1 case), same week | P(≥1 cas), même semaine | P(≥1 cas), même semaine |
-| map tooltip row (preview feature) | Models pooled, same week | Modèles regroupés, même semaine | Modèles regroupés, même semaine |
 |  | Reported so far, same week | Déclarés à ce jour, même semaine | Déclarés à ce jour, même semaine |
 |  | (as of {d}) | (au {d}) | (au 24 oct.) |
 |  | Model output | Résultat du modèle | Résultat du modèle |
