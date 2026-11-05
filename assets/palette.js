@@ -52,3 +52,13 @@ function colorFor(p) {
   }
   return 'rgb(192,57,43)';
 }
+
+/* 1..vmax -> single-hue blue ramp for ensemble member counts (first stop clearly tinted so a count of 1
+   is distinct from the no-output grey) */
+const M_STOPS = ['#c6dbef', '#6baed6', '#2171b5', '#08306b'];
+function colorForM(v, vmax) {
+  const p = Math.max(0, Math.min(1, (v - 1) / (Math.max(2, vmax) - 1)));
+  const x = p * (M_STOPS.length - 1), i = Math.min(M_STOPS.length - 2, Math.floor(x));
+  return mix(M_STOPS[i], M_STOPS[i + 1], x - i);
+}
+const M_GRADIENT = `linear-gradient(90deg,${M_STOPS.join(',')})`;

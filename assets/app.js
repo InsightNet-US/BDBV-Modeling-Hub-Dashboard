@@ -6,7 +6,7 @@ const S = {
   location: 'CD', locIndex: {},
   mapWeek: null, mapRel: 0,   // week shown on the map and its offset in weeks from the reference date
   tsSelected: new Set(), cumSelected: new Set(),
-  mapMetric: 'median', mapModel: null, mapLayer: 'prov', geoHZ: null,
+  mapMetric: 'median', mapModel: null, mapLayer: 'prov', geoHZ: null, ensMax: 0,   // ensMax: largest member count of the round's dashboard ensemble
   layout: { col: 0.42, row: null, hidden: new Set(), weeks: null, fromURL: false },   // panel sizes, visibility, weekly-chart window
   cache: {},
   preview: false, previewCopy: false, previewHash: null,   // see the preview block below
@@ -70,6 +70,11 @@ const provinces = () => S.manifest.locations.filter(l => l.type === 'province');
 const zonesOf = p => S.manifest.locations.filter(l => l.type === 'health zone' && l.parent === p);
 function modelName(id) { const m = S.models[id]; return m ? (m.model_name && m.model_name !== id ? `${m.team_abbr}-${m.model_abbr}` : id) : id; }
 function modelLabel(id) { const dash = S.ensembleSource === 'dashboard'; return id === S.ensembleId ? t(dash ? 'model.ensembleDash' : 'model.ensemble') : modelName(id); }
+/* preview feature (issue #1): how many models the dashboard ensemble pools. ensCounts(loc) is the
+   ensemble's entry for a location when it carries per-week member counts (dashboard pool only; a hub
+   ensemble has none); ensLabelN(loc) is the ensemble's name followed by "(pools n models)". */
+function ensCounts(loc) { const e = S.ensembleId ? modelLoc(S.ensembleId, loc) : null; return e && e.n_models_wk ? e : null; }
+function ensLabelN(loc) { const e = S.preview ? ensCounts(loc) : null; return modelLabel(S.ensembleId) + (e && e.n_models ? ` ${tn('model.nModels', e.n_models)}` : ''); }
 function modelColor(id) { return S.colors[id] || '#888'; }
 /** observed counts {week: n} for a location in an observed-data version object */
 function obsMap(ov, loc) {
@@ -395,6 +400,8 @@ function setEnsemble(info) {
   const id = (info && 'ensemble_model_id' in info) ? info.ensemble_model_id : S.manifest.ensemble_model_id;
   S.ensembleId = id && S.models[id] && S.round && S.round.models[id] ? id : null;
   S.ensembleSource = S.ensembleId ? ((info && info.ensemble_source) || S.manifest.ensemble_source || 'hub') : null;
+  const locs = S.ensembleId && S.ensembleSource === 'dashboard' ? Object.values(S.round.models[S.ensembleId].locations || {}) : [];
+  S.ensMax = locs.reduce((a, l) => Math.max(a, l.n_models || 0), 0);
 }
 function afterRound() {
   // default model selections: the ensemble (hub or dashboard) when there is one, otherwise every model; the map
@@ -413,6 +420,11 @@ function afterRound() {
   const sel = $('mapModelSel');
   sel.innerHTML = ms.map(id => `<option value="${id}">${modelLabel(id)}</option>`).join('') || `<option value="">${t('map.noModels')}</option>`;
   sel.value = S.mapModel || '';
+  // preview feature: the "Ensemble size" metric exists only for a round with a dashboard ensemble
+  const hasCounts = S.preview && S.ensembleSource === 'dashboard';
+  document.querySelector('#metricToggle [data-m="models"]').classList.toggle('hidden', !hasCounts);
+  if (!hasCounts && S.mapMetric === 'models') { S.mapMetric = 'median'; setToggle('metricToggle', 'm', 'median'); }
+  sel.disabled = S.mapMetric === 'models';
   // mapped week: keep the same offset from the reference date across rounds, default week 0
   const ws = roundWeeks(), R = S.roundRef, want = R ? addDays(R, 7 * S.mapRel) : null;
   S.mapWeek = ws.includes(want) ? want : ws.includes(R) ? R : ws[ws.length - 1] || null;
@@ -436,12 +448,13 @@ function afterRound() {
 function buildModelDropdown(btnId, panelId, selSet, isTS) {
   const btn = $(btnId), panel = $(panelId), ms = roundModels();
   const avail = new Set(modelsForLocation(S.location));
-  const hint = S.ensembleId && ms.includes(S.ensembleId) && isTS ? `<div class="hint">${t('dd.hintEns')}</div>` : '';
+  const ec = S.preview && isTS ? ensCounts(S.location) : null;
+  const hint = S.ensembleId && ms.includes(S.ensembleId) && isTS ? `<div class="hint">${t('dd.hintEns')}${ec && ec.n_models ? ` · ${t('dd.hintEnsN', { n: ec.n_models, loc: locName(S.location) })}` : ''}</div>` : '';
   panel.innerHTML = hint + ms.map(id => {
     const isEns = id === S.ensembleId, dis = !avail.has(id);
     const sw = isEns ? `<span class="sw" style="border:1.5px dashed ${modelColor(id)};background:transparent"></span>`
                      : `<span class="sw" style="background:${modelColor(id)}"></span>`;
-    const label = isEns && isTS ? t('dd.ensCI') : modelLabel(id);
+    const label = isEns ? (isTS ? t('dd.ensCI') : ensLabelN(S.location)) : modelLabel(id);
     return `<label class="${dis ? 'disabled' : ''}" title="${dis ? t('dd.noSub', { loc: locName(S.location) }) : ''}"><input type="checkbox" value="${id}" ${selSet.has(id) ? 'checked' : ''} ${dis ? 'disabled' : ''}>${sw}${label}</label>`;
   }).join('') || `<div class="hint">${t('dd.none')}</div>`;
   // label: models selected AND submitted for the location (the ensemble median is always drawn on the chart)
@@ -474,7 +487,7 @@ function wire() {
   $('hzSel').addEventListener('change', e => { S.location = e.target.value || locProvince(S.location) || NATIONAL; onLocationChange(); });
   document.querySelectorAll('#layerToggle button').forEach(b => b.addEventListener('click', () => setLayer(b.dataset.l, b.dataset.l === 'hz' ? locProvince(S.location) : null)));
   $('mapWeekSel').addEventListener('change', e => setMapWeek(e.target.value));
-  document.querySelectorAll('#metricToggle button').forEach(b => b.addEventListener('click', () => { S.mapMetric = b.dataset.m; setToggle('metricToggle', 'm', S.mapMetric); drawMap(); }));
+  document.querySelectorAll('#metricToggle button').forEach(b => b.addEventListener('click', () => { if (b.dataset.m === 'models' && !S.preview) return; S.mapMetric = b.dataset.m; setToggle('metricToggle', 'm', S.mapMetric); $('mapModelSel').disabled = S.mapMetric === 'models'; drawMap(); }));
   $('mapModelSel').addEventListener('change', e => { S.mapModel = e.target.value; drawMap(); });
   $('modelsBtn').addEventListener('click', () => toggleDrawer(true));
   $('drawerClose').addEventListener('click', () => toggleDrawer(false));
