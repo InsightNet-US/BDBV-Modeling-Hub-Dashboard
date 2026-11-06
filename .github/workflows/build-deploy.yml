@@ -47,6 +47,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
+          ref: main                            # the branch tip at run start, not the commit pinned when the run was
+                                               # queued (a dispatched run waiting behind a push run would otherwise
+                                               # build stale code and have its data commit rejected)
           ssh-key: ${{ secrets.DEPLOY_KEY }}   # pushes go over SSH with the deploy key
 
       - name: Clone the hub (requested branch, falling back to main)
@@ -81,7 +84,9 @@ jobs:
           git add data/
           if git diff --cached --quiet; then echo "data unchanged"; else
             git commit -m "data: refresh from hub $(git -C hub rev-parse --short HEAD)"
-            git push
+            # a rejected push means main moved while this run was building (release merged, another run's
+            # data commit); the site is still deployed from this build and the next run commits again
+            git push || echo "::warning::main moved during this run; data commit not pushed (the next run will refresh it)"
           fi
 
       # ---- preview branch (fail-soft from here to the assembly) ----
