@@ -97,6 +97,11 @@ function locValue(code) {
   if (i < 0) return null;
   return S.mapMetric === 'presence' ? m.presence_wk[i] : m.q[i][QI.med];
 }
+/** subtitle key, legend ends and gradient per metric (kept together so they cannot drift apart) */
+function metricInfo() {
+  if (S.mapMetric === 'presence') return { sub: 'map.subPresence', lo: fmtPct(0), hi: fmtPct(1), gradient: P_GRADIENT };
+  return { sub: 'map.subMedian', lo: '0', hi: fmtN(scale.vmax), gradient: N_GRADIENT };
+}
 let scale = { vmax: 1 };
 function featStyle(f, level) {
   const code = f.properties.location, v = S.round ? locValue(code) : null;
@@ -127,6 +132,10 @@ function featTip(f, level) {
     rows += `<div class="row"><span>${t('map.tipPresence')}</span><b>${fmtPct(m.presence_wk[i])}</b></div>`;
     if (obs[S.mapWeek] != null) rows += `<div class="row"><span>${t('map.tipReportedSame')} <span class="sm">${t('map.tipAsOf', { d: fmtDate(S.obsRound.as_of) })}</span></span><b>${fmtN(obs[S.mapWeek])}</b></div>`;
   } else rows += `<div class="row"><span>${S.mapModel ? modelLabel(S.mapModel) : t('map.tipOutput')}</span><b>${t(m ? 'map.tipWeekNotSub' : 'map.tipNoSub')}</b></div>`;
+  { // ensemble size for this location and week (the ensemble entry's own week index)
+    const e = S.mapWeek ? ensCounts(code) : null, ei = e ? e.weeks.indexOf(S.mapWeek) : -1;
+    if (ei >= 0) rows += `<div class="row"><span>${t('map.tipModels')}</span><b>${fmtN(e.n_models_wk[ei])}</b></div>`;
+  }
   rows += `<div class="row"><span>${t('map.tipLast4')}</span><b>${fmtN(recent)}</b></div><div class="row"><span>${t('map.tipToDate')}</span><b>${fmtN(total)}</b></div>`;
   const ctx = level === 'hz' ? ` <span class="sm">${t('map.ctxZone', { prov: locName(f.properties.parent) })}</span>` : ` <span class="sm">· ${code}</span>`;
   const act = t(code === S.location ? (level === 'hz' ? 'map.actBack' : 'map.actClear') : 'map.actSelect');
@@ -148,11 +157,12 @@ function drawMap() {
     provOutline.eachLayer(l => { l.setStyle(outlineStyle(l.feature)); if (l.feature.properties.location === sel) l.bringToFront(); });
   }
   const missing = feats.length - vals.length;
-  const mt = `${t(S.mapMetric === 'presence' ? 'map.subPresence' : 'map.subMedian')}, <span class="horizonval">${wkLabel()}</span>`;
+  const mi = metricInfo();
+  const mt = `${t(mi.sub)}, <span class="horizonval">${wkLabel()}</span>`;
   document.getElementById('mapSub').innerHTML = `${mt} · ${S.mapModel ? modelLabel(S.mapModel) : t('map.noModel')}`
     + (missing ? ` · ${tn(level === 'hz' ? 'map.missingZones' : 'map.missingProvinces', missing)}` : '');
-  document.getElementById('legLo').textContent = S.mapMetric === 'presence' ? fmtPct(0) : '0';
-  document.getElementById('legHi').textContent = S.mapMetric === 'presence' ? fmtPct(1) : fmtN(scale.vmax);
-  document.querySelector('.map .legend .bar').style.background = S.mapMetric === 'presence' ? P_GRADIENT : N_GRADIENT;
+  document.getElementById('legLo').textContent = mi.lo;
+  document.getElementById('legHi').textContent = mi.hi;
+  document.querySelector('.map .legend .bar').style.background = mi.gradient;
   if (!mapFitted) { fitProvince(null); mapFitted = true; }
 }

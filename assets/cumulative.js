@@ -18,7 +18,7 @@ function drawCum() {
   const reportedRound = older && Object.keys(obs).length ? sumTo(obs) : null;   // known at round time (null: same release)
   sub.textContent = t('cum.sub', { loc: locName(loc), d: fmtDate(upTo, true) });
 
-  const sel = roundModels().filter(id => S.cumSelected.has(id)).map(id => ({ id, name: modelLabel(id), color: modelColor(id), m: modelLoc(id, loc) })).filter(tm => tm.m);
+  const sel = roundModels().filter(id => S.cumSelected.has(id)).map(id => ({ id, name: id === S.ensembleId ? ensLabelN(loc) : modelLabel(id), color: modelColor(id), m: modelLoc(id, loc) })).filter(tm => tm.m);
   const H_LIST = S.manifest.horizons;
   const n = Math.max(1, sel.length);
   const mLc = LANG === 'fr' ? 190 : 162, mT = 8, mB = 18, gp = 13, ggap = 6;   // wider label gutter for French

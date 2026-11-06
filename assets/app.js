@@ -70,6 +70,11 @@ const provinces = () => S.manifest.locations.filter(l => l.type === 'province');
 const zonesOf = p => S.manifest.locations.filter(l => l.type === 'health zone' && l.parent === p);
 function modelName(id) { const m = S.models[id]; return m ? (m.model_name && m.model_name !== id ? `${m.team_abbr}-${m.model_abbr}` : id) : id; }
 function modelLabel(id) { const dash = S.ensembleSource === 'dashboard'; return id === S.ensembleId ? t(dash ? 'model.ensembleDash' : 'model.ensemble') : modelName(id); }
+/* How many models the dashboard ensemble pools (issue #1). ensCounts(loc) is the
+   ensemble's entry for a location when it carries per-week member counts (dashboard pool only; a hub
+   ensemble has none); ensLabelN(loc) is the ensemble's name followed by "(pools n models)". */
+function ensCounts(loc) { const e = S.ensembleId ? modelLoc(S.ensembleId, loc) : null; return e && e.n_models_wk ? e : null; }
+function ensLabelN(loc) { const e = ensCounts(loc); return modelLabel(S.ensembleId) + (e && e.n_models ? ` ${tn('model.nModels', e.n_models)}` : ''); }
 function modelColor(id) { return S.colors[id] || '#888'; }
 /** observed counts {week: n} for a location in an observed-data version object */
 function obsMap(ov, loc) {
@@ -457,12 +462,13 @@ function afterRound() {
 function buildModelDropdown(btnId, panelId, selSet, isTS) {
   const btn = $(btnId), panel = $(panelId), ms = roundModels();
   const avail = new Set(modelsForLocation(S.location));
-  const hint = S.ensembleId && ms.includes(S.ensembleId) && isTS ? `<div class="hint">${t('dd.hintEns')}</div>` : '';
+  const ec = isTS ? ensCounts(S.location) : null;
+  const hint = S.ensembleId && ms.includes(S.ensembleId) && isTS ? `<div class="hint">${t('dd.hintEns')}${ec && ec.n_models ? ` · ${t('dd.hintEnsN', { n: ec.n_models, loc: locName(S.location) })}` : ''}</div>` : '';
   panel.innerHTML = hint + ms.map(id => {
     const isEns = id === S.ensembleId, dis = !avail.has(id);
     const sw = isEns ? `<span class="sw" style="border:1.5px dashed ${modelColor(id)};background:transparent"></span>`
                      : `<span class="sw" style="background:${modelColor(id)}"></span>`;
-    const label = isEns && isTS ? t('dd.ensCI') : modelLabel(id);
+    const label = isEns ? (isTS ? t('dd.ensCI') : ensLabelN(S.location)) : modelLabel(id);
     return `<label class="${dis ? 'disabled' : ''}" title="${dis ? t('dd.noSub', { loc: locName(S.location) }) : ''}"><input type="checkbox" value="${id}" ${selSet.has(id) ? 'checked' : ''} ${dis ? 'disabled' : ''}>${sw}${label}</label>`;
   }).join('') || `<div class="hint">${t('dd.none')}</div>`;
   // label: models selected AND submitted for the location (the ensemble median is always drawn on the chart)

@@ -125,6 +125,10 @@ function drawTS() {
       s += `<line x1="${cx - cap}" y1="${yh}" x2="${cx + cap}" y2="${yh}" stroke="var(--muted)" stroke-width="1.5"/>`;
       s += `<line x1="${cx - cap}" y1="${yl}" x2="${cx + cap}" y2="${yl}" stroke="var(--muted)" stroke-width="1.5"/>`;
       s += `<line x1="${cx}" y1="${y(eq[QI.hi50])}" x2="${cx}" y2="${y(eq[QI.lo50])}" stroke="var(--muted)" stroke-width="5" stroke-linecap="butt" opacity="0.55"/>`; }
+    // ensemble size: "n=9" just above the 95% whisker (or the median outline when the intervals are off)
+    if (eq && ens.n_models_wk) { const k = ens.weeks.indexOf(w), n = k >= 0 ? ens.n_models_wk[k] : null;
+      if (n != null) { const yt = y(showEnsCI && eq[QI.hi95] > eq[QI.lo95] ? eq[QI.hi95] : eq[QI.med]);
+        s += `<text x="${cx}" y="${Math.max(mT + 8, yt - 5)}" text-anchor="middle" style="font-size:8px;fill:#6b7684">n=${n}</text>`; } }
     // team overlays
     const nB = teams.length, jw = slotW * 0.26;
     teams.forEach((tm, k) => { const q = qAt(tm.m, w); if (!q) return;

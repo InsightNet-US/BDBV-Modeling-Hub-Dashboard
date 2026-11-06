@@ -94,12 +94,15 @@ Try it: the French interface is on the live dashboard, add `?lang=fr` to the add
 |---|---|---|---|
 | label of the hub-sourced ensemble wherever models are listed | Hub ensemble | Ensemble multimodèle | Ensemble multimodèle |
 | label of the ensemble computed by the dashboard wherever models are listed | Dashboard ensemble | Ensemble du tableau de bord | Ensemble du tableau de bord |
+| suffix after the ensemble name in the cumulative menu and tooltips *(one)* | (pools {n} model) | (regroupe {n} modèle) | (regroupe 1 modèle) |
+| suffix after the ensemble name in the cumulative menu and tooltips *(other)* | (pools {n} models) | (regroupe {n} modèles) | (regroupe 3 modèles) |
 
 ## Model menus
 
 | Where | English | French | Example (French) |
 |---|---|---|---|
 | top of the weekly-chart model menu | Ensemble median always shown | La médiane de l’ensemble multimodèle est toujours affichée | La médiane de l’ensemble multimodèle est toujours affichée |
+| second hint line of the weekly-chart model menu (ensemble size) | pools {n} models for {loc} | regroupe {n} modèles pour {loc} | regroupe 3 modèles pour Ituri |
 | ensemble entry in the weekly-chart model menu | Ensemble 50% and 95% intervals | Intervalles à 50 % et 95 % de l’ensemble multimodèle | Intervalles à 50 % et 95 % de l’ensemble multimodèle |
 | hover text of a greyed-out model | No submission for {loc} | Pas de soumission pour {loc} | Pas de soumission pour Ituri |
 | model menu when the round has no submission | No submissions in this round | Aucune soumission dans ce cycle de projection | Aucune soumission dans ce cycle de projection |
@@ -213,6 +216,7 @@ Try it: the French interface is on the live dashboard, add `?lang=fr` to the add
 | tooltip of an unmatched zone polygon | zone not in the hub's location list | zone absente de la liste des zones géographiques du hub | zone absente de la liste des zones géographiques du hub |
 |  | Median cases, {wk} | Cas (médiane), {wk} | Cas (médiane), semaine se terminant le 7 nov. (prévision +1 sem.) |
 |  | P(≥1 case), same week | P(≥1 cas), même semaine | P(≥1 cas), même semaine |
+| map tooltip row | Models pooled, same week | Modèles regroupés, même semaine | Modèles regroupés, même semaine |
 |  | Reported so far, same week | Déclarés à ce jour, même semaine | Déclarés à ce jour, même semaine |
 |  | (as of {d}) | (au {d}) | (au 24 oct.) |
 |  | Model output | Résultat du modèle | Résultat du modèle |
