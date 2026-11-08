@@ -169,6 +169,11 @@ svg text{fill:var(--muted);font-size:10px}
 .leaflet-container{font-family:var(--font)}
 .leaflet-container a{color:var(--accent)}
 
+.ribbon{display:flex;align-items:baseline;gap:10px;padding:4px 20px;flex-shrink:0;border-top:1px solid var(--line);background:var(--panel);font-size:11px}
+.ribbon .rlabel{font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);flex-shrink:0}
+.ribbon .chips{display:flex;flex-wrap:wrap;align-items:center;gap:3px 14px;min-width:0}
+.ribbon .rnote{color:var(--muted)}
+.chip.nodata{opacity:.45}
 footer{display:flex;align-items:center;gap:24px;padding:4px 20px;min-height:var(--footer-h);flex-shrink:0;font-size:11px;color:var(--muted);border-top:1px solid var(--line);background:#f7f9fb;overflow:hidden}
 @media (max-width:1000px){ footer{flex-wrap:wrap;gap:6px 24px} }
 footer .spacer{flex:1}
@@ -208,6 +213,7 @@ footer .spacer{flex:1}
 
 @media (max-width:1000px){
   body{height:auto}
+  .ribbon{position:sticky;bottom:0;z-index:1100}
   .grid{grid-template-columns:1fr;grid-template-rows:auto 520px;flex:none;gap:14px}
   .left{gap:14px}.ts{flex:none;height:400px}.cum{max-height:none}
   .split{display:none}

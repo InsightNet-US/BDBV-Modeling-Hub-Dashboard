@@ -12,9 +12,12 @@ small JSON summaries under `data/`, and a GitHub Action rebuilds and deploys to 
 - **Models** (one menu in the toolbar) chooses the models every panel shows: tick the ensemble and any team
   models, and the weekly chart, Trend, Cumulative and the map all use the same set. The weekly chart always
   draws the ensemble median; ticking the ensemble adds its intervals there and puts it in the other panels.
+  A **Models ribbon** above the footer, always shown whatever panels are open, gives each ticked model's
+  colour (greyed when the model has no output for the selected location; wraps to more lines when needed,
+  and sticks to the bottom of the window on narrow screens).
   The map shows one of the ticked models: pick it in the map's model selector (ticked models only) or click
-  a model in the weekly legend, a model name in the Trend tab or a box in the Cumulative tab; the mapped
-  model is bold with a pin in the legend. By default the map shows the ensemble when ticked, otherwise the
+  a model in the ribbon, a model name in the Trend tab or a box in the Cumulative tab; the mapped
+  model is bold with a pin in the ribbon. By default the map shows the ensemble when ticked, otherwise the
   ticked model covering the most locations. Ticks carry over between rounds (a model missing from a round
   is simply not shown there) and are remembered per browser and in copied links. The menu ends with
   "About the models…", the model descriptions.
@@ -22,7 +25,8 @@ small JSON summaries under `data/`, and a GitHub Action rebuilds and deploys to 
   (when an older round is shown, the part known at round time is blue and cases reported since the round are
   stacked on top in a lighter blue; "week in progress" hatching follows the latest release), the ensemble's nowcast
   and forecast medians (dotted bars, optional 50% and 95% intervals: thick and thin whiskers) and selected
-  team models (points + 50% and 95% intervals). The week shown on the map is highlighted; clicking a week column maps that week.
+  team models (points + 50% and 95% intervals; their colours are in the Models ribbon, the chart's own legend
+  keys the bars and the ensemble). The week shown on the map is highlighted; clicking a week column maps that week.
   A brush strip under the chart shows the whole outbreak faintly (current counts) with a band over the weeks that have model
   output; drag its window or handles to choose the weeks shown (default: the 24 weeks ending three weeks
   after the reference date), drag on empty strip for a new window, double-click to go back to the default.

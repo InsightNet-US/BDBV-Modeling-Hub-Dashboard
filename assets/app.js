@@ -549,6 +549,23 @@ function buildMapModelSel() {
   sel.value = S.mapModel || '';
 }
 /** clicks on a [data-model] element inside el (legend chips, chart rows) put that model on the map */
+/** legend chip; a ticked model's chip is a button that puts the model on the map (wireMapPick) */
+const MAP_PIN = '<svg class="pin" width="9" height="11" viewBox="0 0 9 11" aria-hidden="true"><path d="M4.5 0.6a3.9 3.9 0 0 0-3.9 3.9c0 2.9 3.9 6 3.9 6s3.9-3.1 3.9-6a3.9 3.9 0 0 0-3.9-3.9z" fill="currentColor"/><circle cx="4.5" cy="4.5" r="1.4" fill="#fff"/></svg>';
+function mapChip(id, inner, cls = '', title = '') {
+  if (!id) return `<span class="chip">${inner}</span>`;
+  const on = id === S.mapModel;
+  return `<span class="chip pick${on ? ' onmap' : ''}${cls ? ' ' + cls : ''}" data-model="${id}" role="button" tabindex="0" aria-pressed="${on}" title="${title || t(on ? 'ts.leg.onMap' : 'ts.leg.mapTitle')}">${inner}${on ? MAP_PIN : ''}</span>`;
+}
+/** ribbon above the footer: the ticked models' colours, whatever panels are shown; click one to map it */
+function drawRibbon() {
+  const ms = selectedModels(), loc = S.location;
+  $('modelRibbon').classList.toggle('hidden', !roundModels().length);
+  $('ribbonChips').innerHTML = ms.length ? ms.map(id => {
+    const ens = id === S.ensembleId, none = !modelLoc(id, loc);
+    const sw = ens ? '<i style="border:1.5px dashed var(--median);background:transparent"></i>' : `<i style="background:${modelColor(id)}"></i>`;
+    return mapChip(id, sw + (ens ? ensLabelN(loc) : modelLabel(id)), none ? 'nodata' : '', none ? t('ribbon.noOutput', { loc: locName(loc) }) : '');
+  }).join('') : `<span class="rnote">${noneTickedNote()}</span>`;
+}
 function wireMapPick(el, keys) {
   const go = e => { const c = e.target.closest('[data-model]'); if (!c) return false;
     const id = c.dataset.model, focused = keys && document.activeElement === c; pickMapModel(id);
@@ -576,7 +593,7 @@ function wire() {
         if (over > 0) panel.style.left = `${-Math.min(over, r.left - 12)}px`; } });
     document.addEventListener('click', e => { if (!panel.contains(e.target) && e.target !== btn) { panel.classList.remove('open'); btn.setAttribute('aria-expanded', 'false'); } });
   }
-  wireMapPick($('tsLegend'), true); wireMapPick($('cumChart'), false);
+  wireMapPick($('modelRibbon'), true); wireMapPick($('cumChart'), false);
   $('drawerClose').addEventListener('click', () => toggleDrawer(false));
   $('drawerBg').addEventListener('click', () => toggleDrawer(false));
   window.addEventListener('resize', () => { drawTS(); drawLower(); });
@@ -618,7 +635,7 @@ function drawLower() {
   $('trendLegend').innerHTML = '';
   drawCum();
 }
-function sync() { drawTS(); drawLower(); drawMap(); }
+function sync() { drawRibbon(); drawTS(); drawLower(); drawMap(); }   // ribbon first: the charts measure after it
 
 /* ---------- models drawer ---------- */
 function toggleDrawer(open) { $('drawer').classList.toggle('open', open); $('drawerBg').classList.toggle('open', open); }

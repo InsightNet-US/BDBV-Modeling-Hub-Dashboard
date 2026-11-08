@@ -1,14 +1,8 @@
 /* Weekly confirmed cases by week of symptom onset: reported counts from the latest release (the part
    known at round time in blue, cases reported since the round stacked on top in a lighter blue),
    nowcast/forecast from the ensemble (hub or dashboard; dotted outline + optional interval) and
-   selected team models (points + 50% and 95% intervals). */
-/** legend chip; a ticked model's chip is a button that puts the model on the map (app.js wireMapPick) */
-const MAP_PIN = '<svg class="pin" width="9" height="11" viewBox="0 0 9 11" aria-hidden="true"><path d="M4.5 0.6a3.9 3.9 0 0 0-3.9 3.9c0 2.9 3.9 6 3.9 6s3.9-3.1 3.9-6a3.9 3.9 0 0 0-3.9-3.9z" fill="currentColor"/><circle cx="4.5" cy="4.5" r="1.4" fill="#fff"/></svg>';
-function mapChip(id, inner) {
-  if (!id) return `<span class="chip">${inner}</span>`;
-  const on = id === S.mapModel;
-  return `<span class="chip pick${on ? ' onmap' : ''}" data-model="${id}" role="button" tabindex="0" aria-pressed="${on}" title="${t(on ? 'ts.leg.onMap' : 'ts.leg.mapTitle')}">${inner}${on ? MAP_PIN : ''}</span>`;
-}
+   selected team models (points + 50% and 95% intervals). The legend keys the chart only; the models'
+   colours are in the ribbon above the footer (app.js drawRibbon). */
 function drawTS() {
   const svg = document.getElementById('tsChart'), empty = document.getElementById('tsEmpty');
   const R = S.roundRef, loc = S.location, maxH = Math.max(0, ...(S.manifest.horizons || [3]));
@@ -46,8 +40,7 @@ function drawTS() {
   legend.innerHTML = `<span class="chip"><i style="background:var(--past)"></i>${t('ts.leg.reported', { d: fmtDate(asOf) })}</span>`
     + (older ? `<span class="chip"><i style="background:var(--since)"></i>${t('ts.leg.since', { d: fmtDate(latestAsOf) })}</span>` : '')
     + `<span class="chip"><i style="background:repeating-linear-gradient(135deg,var(--past) 0 2px,#fff 2px 4px)"></i>${t('ts.leg.inProgress')}</span>`
-    + (ens ? mapChip(showEnsCI && S.ensembleId, `<i style="border:1.5px dashed var(--median);background:transparent"></i>${dash ? t(showEnsCI ? 'ts.leg.ensMedianCIDash' : 'ts.leg.ensMedianDash') : t(showEnsCI ? 'ts.leg.ensMedianCI' : 'ts.leg.ensMedian')}`) : '')
-    + teams.map(tm => mapChip(tm.id, `<i style="background:${tm.color}"></i>${tm.name}`)).join('')
+    + (ens ? mapChip(null, `<i style="border:1.5px dashed var(--median);background:transparent"></i>${dash ? t(showEnsCI ? 'ts.leg.ensMedianCIDash' : 'ts.leg.ensMedianDash') : t(showEnsCI ? 'ts.leg.ensMedianCI' : 'ts.leg.ensMedian')}`) : '')
     + (mapIdx >= 0 ? `<span class="chip"><i style="background:var(--accent);opacity:.35"></i>${t('ts.leg.weekOnMap')}</span>` : '');
 
   if (S.round && !anyModel && roundModels().length) {

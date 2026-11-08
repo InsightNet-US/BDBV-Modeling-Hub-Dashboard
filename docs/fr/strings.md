@@ -131,7 +131,7 @@ Try it: the French interface is on the live dashboard, add `?lang=fr` to the add
 | legend (dashboard-computed ensemble) | Dashboard ensemble median | Médiane de l’ensemble du tableau de bord | Médiane de l’ensemble du tableau de bord |
 | legend (dashboard-computed ensemble) | Dashboard ensemble median + 50% and 95% intervals | Médiane de l’ensemble du tableau de bord + intervalles à 50 % et 95 % | Médiane de l’ensemble du tableau de bord + intervalles à 50 % et 95 % |
 | legend | week on map | semaine sur la carte | semaine sur la carte |
-| hover text of a model in the weekly legend and of a model name in the Trend tab | Click to show this model on the map | Cliquer pour afficher ce modèle sur la carte | Cliquer pour afficher ce modèle sur la carte |
+| hover text of a model in the Models ribbon above the footer and of a model name in the Trend tab | Click to show this model on the map | Cliquer pour afficher ce modèle sur la carte | Cliquer pour afficher ce modèle sur la carte |
 | the same hover text for the model shown on the map | Shown on the map | Affiché sur la carte | Affiché sur la carte |
 | message over the chart when the ticked models lack the location *(one)* | None of the selected models covers {loc} — One model submitted it in this round: {list}. Tick it in the Models menu. | Aucun des modèles sélectionnés ne couvre {loc} — Un modèle l’a soumise dans ce cycle de projection : {list}. Cochez-le dans le menu Modèles. | Aucun des modèles sélectionnés ne couvre Ituri — Un modèle l’a soumise dans ce cycle de projection : OHTJHU-BM, CEPH-Rtrend_BDBV. Cochez-le dans le menu Modèles. |
 | message over the chart when the ticked models lack the location *(other)* | None of the selected models covers {loc} — {n} models submitted it in this round: {list}. Tick them in the Models menu. | Aucun des modèles sélectionnés ne couvre {loc} — {n} modèles l’ont soumise dans ce cycle de projection : {list}. Cochez-les dans le menu Modèles. | Aucun des modèles sélectionnés ne couvre Ituri — 3 modèles l’ont soumise dans ce cycle de projection : OHTJHU-BM, CEPH-Rtrend_BDBV. Cochez-les dans le menu Modèles. |
@@ -140,6 +140,12 @@ Try it: the French interface is on the live dashboard, add `?lang=fr` to the add
 | message over the chart before any submission | No submissions yet — The first accepted reference date is {d}. Reported cases are shown. | Pas encore de soumissions — La première date de référence acceptée est le {d}. Les cas déclarés sont affichés. | Pas encore de soumissions — La première date de référence acceptée est le 24 oct.. Les cas déclarés sont affichés. |
 | caption under the x axis | week ending (Saturday) · cases by symptom onset | semaine se terminant le (samedi) · cas par date de début des symptômes | semaine se terminant le (samedi) · cas par date de début des symptômes |
 | hover text and accessible label of the week-window strip under the weekly chart (the selected dates are appended) | Weeks shown — drag the window or its handles, double-click to reset | Semaines affichées — glisser la fenêtre ou ses poignées, double-clic pour réinitialiser | Semaines affichées — glisser la fenêtre ou ses poignées, double-clic pour réinitialiser |
+
+## Other
+
+| Where | English | French | Example (French) |
+|---|---|---|---|
+| hover text of a model in the Models ribbon when it has no output for the location | No output for {loc}. Click to show this model on the map | Pas de résultats pour {loc}. Cliquer pour afficher ce modèle sur la carte | Pas de résultats pour Ituri. Cliquer pour afficher ce modèle sur la carte |
 
 ## Weekly chart tooltip
 
