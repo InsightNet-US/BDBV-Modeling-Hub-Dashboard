@@ -124,6 +124,10 @@ function setTicked(id, on) {
   const set = new Set(tickedSet()); on ? set.add(prefId(id)) : set.delete(prefId(id));
   S.selPref = set; onSelectionChange();
 }
+/** tick a model (if needed) and put it on the map, in one redraw */
+function tickAndMap(id) {
+  const set = new Set(tickedSet()); set.add(prefId(id)); S.selPref = set; S.mapPref = prefId(id); onSelectionChange();
+}
 function pickMapModel(id) {
   if (!id || !isTicked(id)) return;
   S.mapPref = prefId(id); onSelectionChange();
@@ -549,15 +553,10 @@ function buildMapModelSel() {
   sel.value = S.mapModel || '';
 }
 /** clicks on a [data-model] element inside el (legend chips, chart rows) put that model on the map */
-/** legend chip; a ticked model's chip is a button that puts the model on the map (wireMapPick) */
+/** pin marking the model shown on the map */
 const MAP_PIN = '<svg class="pin" width="9" height="11" viewBox="0 0 9 11" aria-hidden="true"><path d="M4.5 0.6a3.9 3.9 0 0 0-3.9 3.9c0 2.9 3.9 6 3.9 6s3.9-3.1 3.9-6a3.9 3.9 0 0 0-3.9-3.9z" fill="currentColor"/><circle cx="4.5" cy="4.5" r="1.4" fill="#fff"/></svg>';
-function mapChip(id, inner, cls = '', title = '') {
-  if (!id) return `<span class="chip">${inner}</span>`;
-  const on = id === S.mapModel;
-  return `<span class="chip pick${on ? ' onmap' : ''}${cls ? ' ' + cls : ''}" data-model="${id}" role="button" tabindex="0" aria-pressed="${on}" title="${title || t(on ? 'ts.leg.onMap' : 'ts.leg.mapTitle')}">${inner}${on ? MAP_PIN : ''}</span>`;
-}
 /** ribbon above the footer: every model of the round with its colour, whatever panels are shown; unticked
-   models greyed (click to tick), ticked ones put on the map by a click */
+   models greyed. Click ticks/unticks, double click puts the model on the map (wired in wire()) */
 function drawRibbon() {
   const ms = roundModels(), loc = S.location;
   $('modelRibbon').classList.toggle('hidden', !ms.length);
@@ -565,8 +564,9 @@ function drawRibbon() {
     const ens = id === S.ensembleId, none = !modelLoc(id, loc);
     const sw = ens ? '<i style="border:1.5px dashed var(--median);background:transparent"></i>' : `<i style="background:${modelColor(id)}"></i>`;
     const inner = sw + (ens ? ensLabelN(loc) : modelLabel(id));
-    if (!isTicked(id)) return `<span class="chip pick off" data-tick="${id}" role="button" tabindex="0" title="${t('ribbon.untickedTitle')}">${inner}</span>`;
-    return mapChip(id, inner, none ? 'nodata' : '', none ? t('ribbon.noOutput', { loc: locName(loc) }) : '');
+    const on = isTicked(id), mapped = id === S.mapModel;
+    const tip = (on && none ? t('ribbon.noOutput', { loc: locName(loc) }) + ' ' : '') + t(mapped ? 'ribbon.tipMapped' : on ? 'ribbon.tipOn' : 'ribbon.tipOff');
+    return `<span class="chip pick${on ? '' : ' off'}${mapped ? ' onmap' : ''}${on && none ? ' nodata' : ''}" data-model="${id}" role="checkbox" aria-checked="${on}" tabindex="0" title="${tip}">${inner}${mapped ? MAP_PIN : ''}</span>`;
   }).join('');
 }
 function wireMapPick(el, keys) {
@@ -596,15 +596,21 @@ function wire() {
         if (over > 0) panel.style.left = `${-Math.min(over, r.left - 12)}px`; } });
     document.addEventListener('click', e => { if (!panel.contains(e.target) && e.target !== btn) { panel.classList.remove('open'); btn.setAttribute('aria-expanded', 'false'); } });
   }
-  wireMapPick($('modelRibbon'), true);
-  { // a greyed (unticked) model in the ribbon: a click ticks it, focus follows the redrawn chip
-    const rib = $('modelRibbon'), tick = e => { const c = e.target.closest('[data-tick]'); if (!c) return false;
-      const id = c.dataset.tick, focused = document.activeElement === c; setTicked(id, true); buildModelDropdown();
-      if (focused) { const n = rib.querySelector(`[data-model="${CSS.escape(id)}"]`); if (n) n.focus(); }
-      return true; };
-    rib.addEventListener('click', tick);
-    rib.addEventListener('keydown', e => { if ((e.key === 'Enter' || e.key === ' ') && tick(e)) e.preventDefault(); });
-  } wireMapPick($('cumChart'), false);
+  { // ribbon: a click ticks/unticks a model, a double click (ticks it and) puts it on the map; the single
+    // click waits a moment so a double click does not toggle first. Keys: Space ticks/unticks, Enter maps.
+    const rib = $('modelRibbon'); let timer = null;
+    const act = (id, map, refocus) => { clearTimeout(timer); timer = null;
+      if (map) tickAndMap(id); else setTicked(id, !isTicked(id));
+      buildModelDropdown();
+      if (refocus) { const n = rib.querySelector(`[data-model="${CSS.escape(id)}"]`); if (n) n.focus(); } };
+    rib.addEventListener('click', e => { const c = e.target.closest('[data-model]'); if (!c) return;
+      const id = c.dataset.model;
+      if (e.detail >= 2) act(id, true, false);
+      else { clearTimeout(timer); timer = setTimeout(() => act(id, false, false), 250); } });
+    rib.addEventListener('keydown', e => { const c = e.target.closest('[data-model]'); if (!c) return;
+      if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); act(c.dataset.model, e.key === 'Enter', true); } });
+  }
+  wireMapPick($('cumChart'), false);
   $('drawerClose').addEventListener('click', () => toggleDrawer(false));
   $('drawerBg').addEventListener('click', () => toggleDrawer(false));
   window.addEventListener('resize', () => { drawTS(); drawLower(); });

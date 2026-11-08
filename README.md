@@ -13,11 +13,12 @@ small JSON summaries under `data/`, and a GitHub Action rebuilds and deploys to 
   models, and the weekly chart, Trend, Cumulative and the map all use the same set. The weekly chart always
   draws the ensemble median; ticking the ensemble adds its intervals there and puts it in the other panels.
   A **Models ribbon** above the footer, always shown whatever panels are open, lists every model of the
-  round with its colour: unticked models are greyed (click one to tick it), a ticked model without output
-  for the selected location is in italics. It wraps to more lines when needed and sticks to the bottom of
+  round with its colour: unticked models are greyed, a ticked model without output for the selected
+  location is in italics. Click a model there to tick or untick it, double-click to put it on the map
+  (keys: Space ticks/unticks, Enter maps); the hover text says so. It wraps to more lines when needed and sticks to the bottom of
   the window on narrow screens.
-  The map shows one of the ticked models: pick it in the map's model selector (ticked models only) or click
-  a model in the ribbon, a model name in the Trend tab or a box in the Cumulative tab; the mapped
+  The map shows one of the ticked models: pick it in the map's model selector (ticked models only), double-click
+  it in the ribbon, or click a model name in the Trend tab or a box in the Cumulative tab; the mapped
   model is bold with a pin in the ribbon. By default the map shows the ensemble when ticked, otherwise the
   ticked model covering the most locations. Ticks carry over between rounds (a model missing from a round
   is simply not shown there) and are remembered per browser and in copied links. The menu ends with

@@ -40,7 +40,7 @@ function drawTS() {
   legend.innerHTML = `<span class="chip"><i style="background:var(--past)"></i>${t('ts.leg.reported', { d: fmtDate(asOf) })}</span>`
     + (older ? `<span class="chip"><i style="background:var(--since)"></i>${t('ts.leg.since', { d: fmtDate(latestAsOf) })}</span>` : '')
     + `<span class="chip"><i style="background:repeating-linear-gradient(135deg,var(--past) 0 2px,#fff 2px 4px)"></i>${t('ts.leg.inProgress')}</span>`
-    + (ens ? mapChip(null, `<i style="border:1.5px dashed var(--median);background:transparent"></i>${dash ? t(showEnsCI ? 'ts.leg.ensMedianCIDash' : 'ts.leg.ensMedianDash') : t(showEnsCI ? 'ts.leg.ensMedianCI' : 'ts.leg.ensMedian')}`) : '')
+    + (ens ? `<span class="chip"><i style="border:1.5px dashed var(--median);background:transparent"></i>${dash ? t(showEnsCI ? 'ts.leg.ensMedianCIDash' : 'ts.leg.ensMedianDash') : t(showEnsCI ? 'ts.leg.ensMedianCI' : 'ts.leg.ensMedian')}</span>` : '')
     + (mapIdx >= 0 ? `<span class="chip"><i style="background:var(--accent);opacity:.35"></i>${t('ts.leg.weekOnMap')}</span>` : '');
 
   if (S.round && !anyModel && roundModels().length) {

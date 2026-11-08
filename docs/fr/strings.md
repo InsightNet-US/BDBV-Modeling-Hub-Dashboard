@@ -131,7 +131,7 @@ Try it: the French interface is on the live dashboard, add `?lang=fr` to the add
 | legend (dashboard-computed ensemble) | Dashboard ensemble median | Médiane de l’ensemble du tableau de bord | Médiane de l’ensemble du tableau de bord |
 | legend (dashboard-computed ensemble) | Dashboard ensemble median + 50% and 95% intervals | Médiane de l’ensemble du tableau de bord + intervalles à 50 % et 95 % | Médiane de l’ensemble du tableau de bord + intervalles à 50 % et 95 % |
 | legend | week on map | semaine sur la carte | semaine sur la carte |
-| hover text of a model in the Models ribbon above the footer and of a model name in the Trend tab | Click to show this model on the map | Cliquer pour afficher ce modèle sur la carte | Cliquer pour afficher ce modèle sur la carte |
+| hover text of a model name in the Trend tab | Click to show this model on the map | Cliquer pour afficher ce modèle sur la carte | Cliquer pour afficher ce modèle sur la carte |
 | the same hover text for the model shown on the map | Shown on the map | Affiché sur la carte | Affiché sur la carte |
 | message over the chart when the ticked models lack the location *(one)* | None of the selected models covers {loc} — One model submitted it in this round: {list}. Tick it in the Models menu. | Aucun des modèles sélectionnés ne couvre {loc} — Un modèle l’a soumise dans ce cycle de projection : {list}. Cochez-le dans le menu Modèles. | Aucun des modèles sélectionnés ne couvre Ituri — Un modèle l’a soumise dans ce cycle de projection : OHTJHU-BM, CEPH-Rtrend_BDBV. Cochez-le dans le menu Modèles. |
 | message over the chart when the ticked models lack the location *(other)* | None of the selected models covers {loc} — {n} models submitted it in this round: {list}. Tick them in the Models menu. | Aucun des modèles sélectionnés ne couvre {loc} — {n} modèles l’ont soumise dans ce cycle de projection : {list}. Cochez-les dans le menu Modèles. | Aucun des modèles sélectionnés ne couvre Ituri — 3 modèles l’ont soumise dans ce cycle de projection : OHTJHU-BM, CEPH-Rtrend_BDBV. Cochez-les dans le menu Modèles. |
@@ -145,8 +145,10 @@ Try it: the French interface is on the live dashboard, add `?lang=fr` to the add
 
 | Where | English | French | Example (French) |
 |---|---|---|---|
-| hover text of a model in the Models ribbon when it has no output for the location | No output for {loc}. Click to show this model on the map | Pas de résultats pour {loc}. Cliquer pour afficher ce modèle sur la carte | Pas de résultats pour Ituri. Cliquer pour afficher ce modèle sur la carte |
-| hover text of a greyed (unticked) model in the Models ribbon | Not ticked. Click to tick this model | Non coché. Cliquer pour cocher ce modèle | Non coché. Cliquer pour cocher ce modèle |
+| start of the hover text of a ticked model in the Models ribbon with no output for the location | No output for {loc}. | Pas de résultats pour {loc}. | Pas de résultats pour Ituri. |
+| hover text of a greyed (unticked) model in the Models ribbon | Not ticked. Click to tick this model; double-click to tick it and show it on the map (keys: Space ticks, Enter maps) | Non coché. Cliquer pour cocher ce modèle ; double-cliquer pour le cocher et l’afficher sur la carte (touches : Espace coche, Entrée affiche sur la carte) | Non coché. Cliquer pour cocher ce modèle ; double-cliquer pour le cocher et l’afficher sur la carte (touches : Espace coche, Entrée affiche sur la carte) |
+| hover text of a ticked model in the Models ribbon | Ticked. Click to untick this model; double-click to show it on the map (keys: Space unticks, Enter maps) | Coché. Cliquer pour décocher ce modèle ; double-cliquer pour l’afficher sur la carte (touches : Espace décoche, Entrée affiche sur la carte) | Coché. Cliquer pour décocher ce modèle ; double-cliquer pour l’afficher sur la carte (touches : Espace décoche, Entrée affiche sur la carte) |
+| hover text of the model shown on the map, in the Models ribbon | Ticked and shown on the map. Click to untick this model (keys: Space) | Coché et affiché sur la carte. Cliquer pour décocher ce modèle (touche : Espace) | Coché et affiché sur la carte. Cliquer pour décocher ce modèle (touche : Espace) |
 
 ## Weekly chart tooltip
 
