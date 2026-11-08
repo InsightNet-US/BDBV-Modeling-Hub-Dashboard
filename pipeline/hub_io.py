@@ -57,8 +57,30 @@ def read_round_config(hub: Path) -> RoundConfig:
 
 
 def read_locations(hub: Path) -> pd.DataFrame:
+    """auxiliary-data/locations.csv with config.PARENT_OVERRIDES applied to health zones' parents."""
     df = pd.read_csv(hub / "auxiliary-data" / "locations.csv", dtype=str, keep_default_na=False)
+    for code, parent in config.PARENT_OVERRIDES.items():
+        hit = (df["location"] == code) & (df["parent"] != parent)
+        if hit.any():
+            print(f"NOTE {code} ({df.loc[hit, 'location_name'].iloc[0]}): parent {df.loc[hit, 'parent'].iloc[0]} "
+                  f"-> {parent} (config.PARENT_OVERRIDES)")
+            df.loc[hit, "parent"] = parent
     return df
+
+
+def read_hz_dhis2(hub: Path) -> dict[str, str]:
+    """DHIS2 code -> hub health-zone code, from auxiliary-data/health-zone-code-mapping.csv.
+
+    Codes that are missing ("NA", empty) or shared by several zones (Bandalungwa and Kinshasa) are left
+    out, so those zones fall back to name matching.
+    """
+    path = hub / "auxiliary-data" / "health-zone-code-mapping.csv"
+    if not path.exists():
+        return {}
+    df = pd.read_csv(path, dtype=str, keep_default_na=False)
+    df = df[~df["Code_DHIS2"].isin(["", "NA"])]
+    once = df["Code_DHIS2"].map(df["Code_DHIS2"].value_counts()) == 1
+    return dict(zip(df.loc[once, "Code_DHIS2"], df.loc[once, "location"]))
 
 
 def read_target_data(hub: Path) -> pd.DataFrame:

@@ -67,11 +67,15 @@
   </section>
   <div class="split" id="hsplit" role="separator" aria-orientation="horizontal" tabindex="0" aria-valuemin="0" aria-valuemax="100" data-i18n-title="panels.hsplit" data-i18n-aria="panels.hsplit"></div>
 
-  <!-- CUMULATIVE -->
+  <!-- TREND | CUMULATIVE (tabs) -->
   <section class="panel cum">
     <div class="hd">
       <span class="pbtns"><button type="button" class="pbtn hide" data-panel="cum">×</button></span>
-      <h2 data-i18n="cum.title">Cumulative confirmed cases</h2>
+      <h2 class="sr-only" data-i18n="lower.title">Trend and cumulative confirmed cases</h2>
+      <div class="toggle small" id="lowerTabs" role="tablist">
+        <button type="button" role="tab" data-t="trend" class="active" aria-selected="true" data-i18n="trend.tab">Trend</button>
+        <button type="button" role="tab" data-t="cum" aria-selected="false" data-i18n="cum.tab">Cumulative cases</button>
+      </div>
       <span class="sub" id="cumSub"></span>
       <div class="spacer"></div>
       <span class="tlabel" data-i18n="common.models">Models</span>
@@ -81,6 +85,7 @@
       </div>
     </div>
     <div class="bd" style="padding-top:6px">
+      <div class="legend" id="trendLegend"></div>
       <svg id="cumChart" width="100%" height="200" preserveAspectRatio="none"></svg>
     </div>
   </section>
@@ -115,7 +120,7 @@
 <footer>
   <div class="footinfo">
     <span id="footProv"></span>
-    <span><span data-i18n="foot.boundaries">Boundaries: </span><a href="https://www.geoboundaries.org/" target="_blank" rel="noopener">geoBoundaries</a><span data-i18n="foot.odbl"> (ODbL) · </span><a href="https://github.com/InsightNet-US/BDBV-Modeling-Hub" target="_blank" rel="noopener" data-i18n="foot.hubRepo">Hub repository</a></span>
+    <span><span data-i18n="foot.boundaries">Boundaries: </span><a href="https://data.grid3.org/datasets/GRID3::grid3-cod-health-zones-v8-0" target="_blank" rel="noopener">GRID3 COD Health Zones v8.0</a><span data-i18n="foot.grid3"> (DRC Ministry of Health zones, as on the INRB dashboard) · </span><a href="https://github.com/InsightNet-US/BDBV-Modeling-Hub" target="_blank" rel="noopener" data-i18n="foot.hubRepo">Hub repository</a></span>
   </div>
   <span class="partners" aria-label="Partners" data-i18n-aria="foot.partners">
     <span class="partner-group" title="Institut National de Santé Publique (DRC), the Kinshasa School of Public Health and ANICNS" data-i18n-title="foot.pgInsp">
@@ -148,6 +153,7 @@
 <script src="assets/palette.js?v=dev"></script>
 <script src="assets/timeseries.js?v=dev"></script>
 <script src="assets/cumulative.js?v=dev"></script>
+<script src="assets/trend.js?v=dev"></script>
 <script src="assets/map.js?v=dev"></script>
 <script src="assets/app.js?v=dev"></script>
 </body>

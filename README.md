@@ -17,14 +17,23 @@ small JSON summaries under `data/`, and a GitHub Action rebuilds and deploys to 
   A brush strip under the chart shows the whole outbreak faintly (current counts) with a band over the weeks that have model
   output; drag its window or handles to choose the weeks shown (default: the 24 weeks ending three weeks
   after the reference date), drag on empty strip for a new window, double-click to go back to the default.
-- **Cumulative confirmed cases**: reported to date (latest release; for an older round a blue dot marks the
+- **Trend** (first tab of the lower-left panel, shown by default): for weeks 0 to +3, the chance that
+  weekly confirmed cases fall (by more than 10%), stay within ±10% or rise (by more than 10%) compared
+  with week −1, for the ensemble and the team models chosen in the panel's model menu. Each cell is a
+  fan: a dot with three arrows, up (increase, orange), level (stable, grey) and down (decrease, teal),
+  each arrow's width and shading growing with its probability; the percentages sit beside the arrows
+  when there is room, and in the tooltip. The legend gives each class's threshold. The map's week is highlighted.
+- **Cumulative confirmed cases** (second tab, same model menu): reported to date (latest release; for an older round a blue dot marks the
   total known at round time and a lighter bar the cases reported since), each model's nowcast of the eventual total through the
   reference date, and forecast cumulative totals through weeks 0 (the reference week) to +3; the ensemble's
   name carries how many models it pools for the location shown. The figures
   form a right-aligned column: median, then the 95% interval in parentheses (dropped when the panel is
   very narrow).
 - **Map** at province or health-zone level, coloured by a model's median cases in a chosen week, or by
-  P(at least one case) in that week. The week control (arrows, or click the date to pick) steps through
+  P(at least one case) in that week. Cases use a continuous log scale from 0 to the largest median on the
+  layer in ColorBrewer YlOrRd (pale yellow to dark red), close to the reds of the
+  [INRB epidemic dashboard](https://inrb-umie.github.io/BDBV2026-Epidemic_Dashboard/); unlike there, 0 is
+  the start of the scale rather than a separate grey. Countries outside the DRC are veiled in grey. The week control (arrows, or click the date to pick) steps through
   every week with model output in the round, labelled with the date and its offset from the
   projections-from date: nowcast weeks (-1 wk and earlier) and forecast weeks 0 (the reference week) to
   +3. Clicking a province or zone selects it; selecting a zone switches the map to the zone layer and
@@ -96,9 +105,8 @@ The flow is enforced by two repository rulesets and three small workflows:
 - If a Dependabot configuration is ever added, its `target-branch` must be `preview`; PRs against
   `main` from any other branch are blocked by design.
 
-Currently on the preview branch: the size of the dashboard ensemble per week and place (issue #1): an
-"n=…" label above each ensemble estimate in the weekly chart, a "Models pooled, same week" row in the
-map tooltip, and the count after the ensemble's name in the cumulative menu and tooltips. Synthetic ("mock") model output was removed
+Currently on the preview branch: the Trend tab (issue #2): the chance of a decrease, no change or an
+increase over weeks 0 to +3, in a tab beside the cumulative panel. Synthetic ("mock") model output was removed
 on 2026-11-05 once real submissions had been flowing for weeks; the generator (`pipeline/mock.py`) is in
 the git history up to commit `24d9cd5`.
 
@@ -108,8 +116,10 @@ Drag the gutter between the charts and the map, or between the two charts, to re
 (double-click a gutter, or press Home/End on it, to reset that axis; arrow keys nudge it). Each panel
 header has a × that hides it; the **Panels** menu in the toolbar lists the three
 panels, resets the layout and copies a link that reproduces it (`?panels=weekly,cum,map` lists the panels
-to show, `none` hides all; `?split=0.55` or `?split=0.55,0.7` sets the column share and the weekly
-chart's share of the column). Sizes and hidden panels are remembered per browser; a layout given in the
+to show, `none` hides all, `cum` being the lower-left Trend / cumulative panel; `?split=0.55` or
+`?split=0.55,0.7` sets the column share and the weekly chart's share of the column; `?tab=trend` or
+`?tab=cum` picks the lower-left tab, which is remembered with the layout and set back to Trend by Reset
+layout). Sizes and hidden panels are remembered per browser; a layout given in the
 URL only seeds the page and is not stored until the visitor changes something (unlike `?lang=`, which is
 stored); once the visitor does change something, the layout parameters are dropped from the address bar so
 a reload shows the stored layout. The weekly chart's week window travels with the layout:
@@ -138,11 +148,12 @@ data/                        generated by the pipeline (committed by the Action)
   manifest.json              rounds (each with its ensemble id and source), locations, data versions, provenance
   models.json                model metadata from the hub's model-metadata/*.yml
   observed/<as_of>.json      weekly reported cases per location (country, provinces, zones) per release
-  rounds/<reference_date>.json  per model x location: weekly quantiles and P(>=1), horizon sums, cumulative;
+  rounds/<reference_date>.json  per model x location: weekly quantiles and P(>=1), horizon sums, cumulative,
+                             trend probabilities;
                              the dashboard ensemble also lists its members and models per week
-  geo/                       simplified boundaries (one-off, see below) stamped with hub codes at build
-                             time, province outlines dissolved from the zone polygons (hz-provinces.json),
-                             and health-zone name aliases (HDX spelling -> hub spelling)
+  geo/                       simplified GRID3 health-zone boundaries (one-off, see below) stamped with hub
+                             codes at build time, province outlines dissolved from them (provinces.json,
+                             hz-provinces.json), and health-zone name aliases (GRID3 spelling -> hub spelling)
 pipeline/                    Python pipeline (build.py, summarize.py, hub_io.py, geo.py, tests/)
 scripts/assemble-site.sh     stages the Pages artifact: live site at the root, gated preview copy under preview/
 scripts/preview-alert.sh     opens, updates or closes the preview-build issue (run by the Action)
@@ -195,6 +206,15 @@ ensemble model; optional, otherwise the single model with `ensemble_of_hub_model
   per-trajectory sum over forecast windows from week 0 (the reference week, not yet finished at submission) through +h, h = 0..3; share of trajectories with at least one case in each window;
   nowcast cumulative through the last closed week (filling closed weeks the model did not submit with the
   round's reported counts) and forecast cumulative through weeks 0..+3 (which must be submitted). Samples are never summed across provinces (they are joint only across weeks).
+- Trend (`trend`: per horizon h = 0..3, `[P(decrease), P(stable), P(increase)]`): each trajectory's
+  week R+h value is compared with the same trajectory's week R−7 value (its own nowcast of the last
+  closed week; the reported count for that week is still far from complete at round time): increase
+  above 1.1 × baseline, decrease below 0.9 × baseline (`TREND_THRESHOLD` = 0.10 in `pipeline/config.py`),
+  stable otherwise; a zero baseline counts as stable when the week is also 0 and as an increase
+  otherwise. No case minimum, so in places with very few cases a change of one case is a trend. A
+  trajectory counts for horizon h only when its model submitted both weeks; a model without week R−7
+  gets `null`. The dashboard ensemble pools the trajectories of its members, each against its own
+  baseline.
 - National view: reported provincial counts summed; model output appears only if the hub adds a national
   location (`CD`) to `tasks.json`.
 
@@ -227,12 +247,24 @@ variable `ENSEMBLE_SOURCE` to `hub` turns it off without a code change.
 
 ## Boundaries (one-off)
 
-`pipeline/geo.py` downloads and simplifies (mapshaper via `npx`) the province boundaries from
-[geoBoundaries](https://www.geoboundaries.org/) (COD ADM1, ODbL; `shapeISO` matches the hub codes) and the
-health-zone boundaries from [DSNIS via HDX](https://data.humdata.org/dataset/drc-health-data) (519 zones,
-2022, ODbL). Health zones are matched to the hub's `locations.csv` names by normalised name within province
-plus `data/geo/hz-aliases.csv`. Rerun with `.venv/bin/pip install -r pipeline/requirements-geo.txt &&
-.venv/bin/python pipeline/geo.py`; the outputs in `data/geo/` are committed.
+The map uses the DRC Ministry of Health's 519 health zones from
+[GRID3 COD Health Zones v8.0](https://data.grid3.org/datasets/GRID3::grid3-cod-health-zones-v8-0)
+(CIESIN / GRID3; free to use with attribution), the boundaries of the
+[INRB epidemic dashboard](https://inrb-umie.github.io/BDBV2026-Epidemic_Dashboard/) and of the INSP and WHO
+situation reports, so the two maps match zone for zone. `pipeline/geo.py` downloads the copy in
+[INRB-UMIE/BDBV2026-Data](https://github.com/INRB-UMIE/BDBV2026-Data/tree/main/data/shapefiles) at a pinned
+commit (checked by SHA256) into the git-ignored `pipeline/geo-src/`, and simplifies it with mapshaper (via
+`npx`), lightly for zones under 300 km² (the urban zones of Kinshasa or Lubumbashi are a few km²) and more
+for rural ones. Zones are matched to hub codes by DHIS2 id (`ZSCode` against `Code_DHIS2` in the hub's
+`auxiliary-data/health-zone-code-mapping.csv`; ids that are missing or shared by two zones are skipped), then
+by normalised name within province plus `data/geo/hz-aliases.csv`; the build fails unless all 519 hub zones
+get a polygon. Province outlines are dissolved from the zones by GRID3's own province, so province and zone
+borders coincide. The hub's `locations.csv` files Manika (`CD-HK-19`), a Kolwezi zone, under Haut Katanga, a
+leftover of the former Katanga province; GRID3, INRB and the INSP place it in Lualaba, and so does the
+dashboard, through `PARENT_OVERRIDES` in `pipeline/config.py` (applied when the hub's locations are read;
+the code is unchanged, and the entry does nothing once the hub's file agrees). Rerun with `.venv/bin/pip install -r pipeline/requirements-geo.txt &&
+.venv/bin/python pipeline/geo.py`; the outputs in `data/geo/` are committed. Until 2026-11-08 the zones came
+from DSNIS via HDX (2022) and the provinces from geoBoundaries; those shapes differed noticeably from INRB's.
 
 ## Design
 

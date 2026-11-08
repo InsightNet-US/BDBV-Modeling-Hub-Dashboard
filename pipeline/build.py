@@ -74,22 +74,67 @@ def build_observed(target: pd.DataFrame, out_dir: Path) -> dict:
 
 # ---------------------------------------------------------------- geo
 def load_aliases() -> dict[tuple[str, str], tuple[str, str]]:
-    """HDX (norm name, norm province) -> hub (name, parent name)."""
+    """Boundary-file (norm name, norm province) -> hub (name, parent name), from data/geo/hz-aliases.csv."""
     path = config.GEO_SRC / "hz-aliases.csv"
     out = {}
     if path.exists():
         with path.open() as fh:
             for r in csv.DictReader(fh):
-                if r.get("hdx_name"):
-                    out[(norm(r["hdx_name"]), norm(r.get("hdx_province", "")))] = (r["hub_name"], r["hub_parent"])
+                if r.get("src_name"):
+                    out[(norm(r["src_name"]), norm(r.get("src_province", "")))] = (r["hub_name"], r["hub_parent"])
     return out
 
 
-def stamp_geo_codes(locs: pd.DataFrame, out_dir: Path) -> None:
+def match_zones(features: list[dict], locs: pd.DataFrame, dhis2: dict[str, str]) -> tuple[set, list]:
+    """Stamp hub codes on health-zone polygons in place; returns (hub codes used, unmatched polygons).
+
+    A polygon carries its boundary-file name, province and DHIS2 id, either raw from the GRID3 shapefile
+    (Nom, PROVINCE, ZSCode) or as src_name / src_province / dhis2 from an earlier stamp (kept unchanged, so
+    stamping is idempotent). Matching, first hit wins: DHIS2 id via the hub's code mapping; then the
+    alias table (name + province); then normalised name within province; then a hub zone name that is
+    unique across provinces. Each hub zone is given to one polygon only.
+    """
+    prov = locs[locs["location_type"] == "province"]
+    name2code = dict(zip(prov["location_name"], prov["location"]))
+    hz = locs[locs["location_type"] == "health zone"]
+    rows = {r["location"]: (r["location"], r["location_name"], name2code.get(r["parent"], r["parent"]))
+            for _, r in hz.iterrows()}
+    by_np = {(norm(r["location_name"]), norm(r["parent"])): rows[r["location"]] for _, r in hz.iterrows()}
+    by_name: dict[str, list] = {}
+    for k, v in by_np.items():
+        by_name.setdefault(k[0], []).append(v)
+    aliases = load_aliases()
+    used, unmatched = set(), []
+    for f in features:
+        p = f["properties"]
+        sn, sp = p.get("src_name") or p.get("Nom"), p.get("src_province") or p.get("PROVINCE")
+        code = p.get("dhis2") or p.get("ZSCode")
+        nn, np_ = norm(sn), norm(sp)
+        cands = [rows.get(dhis2.get(code or ""))]
+        a = aliases.get((nn, np_))
+        if a:
+            cands.append(by_np.get((norm(a[0]), norm(a[1]))))
+        cands.append(by_np.get((nn, np_)))
+        same = by_name.get(nn, [])
+        if len(same) == 1:
+            cands.append(same[0])
+        hit = next((c for c in cands if c and c[0] not in used), None)
+        if hit:
+            used.add(hit[0])
+            f["properties"] = {"location": hit[0], "name": hit[1], "parent": hit[2], "src_name": sn,
+                               "src_province": sp, "dhis2": code, "matched": True}
+        else:
+            unmatched.append((sn, sp))
+            f["properties"] = {"location": None, "name": sn, "parent": None, "src_name": sn,
+                               "src_province": sp, "dhis2": code, "matched": False}
+    return used, unmatched
+
+
+def stamp_geo_codes(locs: pd.DataFrame, out_dir: Path, dhis2: dict[str, str]) -> None:
     """Attach hub location codes to the committed boundary files.
 
-    Provinces: the geoBoundaries shapeISO (CD-XX) is the hub code. Health zones: HDX name + province
-    matched to locations.csv by normalised name (with data/geo/hz-aliases.csv for spelling differences).
+    Provinces (dissolved from the zones by pipeline/geo.py) already carry their hub code. Health zones:
+    see match_zones.
     """
     geo = out_dir / "geo"
     prov = locs[locs["location_type"] == "province"]
@@ -111,37 +156,7 @@ def stamp_geo_codes(locs: pd.DataFrame, out_dir: Path) -> None:
     if zfile.exists():
         gj = json.loads(zfile.read_text())
         hz = locs[locs["location_type"] == "health zone"]
-        by_np = {(norm(r["location_name"]), norm(r["parent"])): (r["location"], r["location_name"], name2code.get(r["parent"], r["parent"]))
-                 for _, r in hz.iterrows()}
-        by_name: dict[str, list] = {}
-        for k, v in by_np.items():
-            by_name.setdefault(k[0], []).append(v)
-        aliases = load_aliases()
-        used, unmatched = set(), []
-        for f in gj["features"]:
-            p = f["properties"]
-            hn, hp = p.get("hdx_name") or p.get("name"), p.get("hdx_province") or p.get("parent")
-            nn, np_ = norm(hn), norm(hp)
-            cands = []
-            a = aliases.get((nn, np_)) or aliases.get((nn, ""))
-            if a:
-                cands.append(by_np.get((norm(a[0]), norm(a[1]))))
-            cands.append(by_np.get((nn, np_)))
-            same = by_name.get(nn, [])
-            if len(same) == 1:
-                cands.append(same[0])
-            elif len(same) > 1:
-                loose = [c for c in same if norm(c[2]) and (norm(c[2]) in np_ or np_ in norm(c[2]))]
-                cands.append(loose[0] if len(loose) == 1 else None)
-            hit = next((c for c in cands if c), None)
-            if hit:
-                used.add(hit[0])
-                f["properties"] = {"location": hit[0], "name": hit[1], "parent": hit[2], "hdx_name": hn,
-                                   "hdx_province": hp, "pcode": p.get("pcode"), "matched": True}
-            else:
-                unmatched.append((hn, hp))
-                f["properties"] = {"location": None, "name": hn, "parent": name2code.get(hp, hp), "hdx_name": hn,
-                                   "hdx_province": hp, "pcode": p.get("pcode"), "matched": False}
+        used, unmatched = match_zones(gj["features"], locs, dhis2)
         write_json(zfile, gj)
         missing = sorted(set(hz["location"]) - used)
         print(f"health-zone boundaries: {len(gj['features']) - len(unmatched)}/{len(gj['features'])} polygons "
@@ -218,7 +233,7 @@ def main() -> int:
     for sub in ("observed", "rounds"):
         shutil.rmtree(out_dir / sub, ignore_errors=True)
     obs_info = build_observed(target, out_dir)
-    stamp_geo_codes(locs, out_dir)
+    stamp_geo_codes(locs, out_dir, hub_io.read_hz_dhis2(hub))
     versions = obs_info["versions"]
 
     # ---- collect submissions: {(model_id, reference_date): DataFrame}

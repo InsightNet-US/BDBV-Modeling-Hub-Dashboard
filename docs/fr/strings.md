@@ -161,11 +161,33 @@ Try it: the French interface is on the live dashboard, add `?lang=fr` to the add
 | tooltip last line | shown on map | affichée sur la carte | affichée sur la carte |
 | tooltip last line | click to show this week on the map | cliquer pour afficher cette semaine sur la carte | cliquer pour afficher cette semaine sur la carte |
 
+## Lower-left panel tabs
+
+| Where | English | French | Example (French) |
+|---|---|---|---|
+| heading of the lower-left panel (read by screen readers only) | Trend and cumulative confirmed cases | Tendance et cas confirmés cumulés | Tendance et cas confirmés cumulés |
+
+## Trend tab
+
+| Where | English | French | Example (French) |
+|---|---|---|---|
+| tab button | Trend | Tendance | Tendance |
+| Trend tab subtitle | {loc} · change from week −1 | {loc} · variation par rapport à la semaine −1 | Ituri · variation par rapport à la semaine −1 |
+| tooltip line under the week | change from wk −1 (±10%) | variation par rapport à sem. −1 (±10 %) | variation par rapport à sem. −1 (±10 %) |
+| legend (arrow up) | Increase (up more than 10%) | Hausse (plus de 10 %) | Hausse (plus de 10 %) |
+| legend (level arrow) | Stable (within ±10%) | Stable (à ±10 % près) | Stable (à ±10 % près) |
+| legend (arrow down) | Decrease (down more than 10%) | Baisse (plus de 10 %) | Baisse (plus de 10 %) |
+| column heading | Week 0 | Semaine 0 | Semaine 0 |
+| column heading | Week +{n} | Semaine +{n} | Semaine +3 |
+| second line of the column heading and tooltip title | ending {d} | fin {d} | fin 24 oct. |
+| short ensemble label when the panel is narrow | Ensemble | Ensemble | Ensemble |
+| italic note | No trend for the selected models here. | Aucune tendance pour les modèles sélectionnés ici. | Aucune tendance pour les modèles sélectionnés ici. |
+
 ## Cumulative panel
 
 | Where | English | French | Example (French) |
 |---|---|---|---|
-|  | Cumulative confirmed cases | Cas confirmés cumulés | Cas confirmés cumulés |
+| tab button | Cumulative cases | Cas cumulés | Cas cumulés |
 | cumulative panel subtitle | {loc} · through week ending {d} | {loc} · jusqu’à la semaine se terminant le {d} | Ituri · jusqu’à la semaine se terminant le 24 oct. |
 | section heading (shown in capitals) | To date | À ce jour | À ce jour |
 |  | Reported (as of {d}) | Déclarés (au {d}) | Déclarés (au 24 oct.) |
@@ -259,7 +281,7 @@ Try it: the French interface is on the live dashboard, add `?lang=fr` to the add
 | footer provenance (ISO date kept) | latest target data as of {d} | dernières données observées au {d} | dernières données observées au 24 oct. |
 | footer provenance | built {d} | mis à jour le {d} | mis à jour le 24 oct. |
 |  | Boundaries:  | Limites administratives :  | Limites administratives :  |
-|  |  (ODbL) ·  |  (ODbL) ·  |  (ODbL) ·  |
+|  |  (DRC Ministry of Health zones, as on the INRB dashboard) ·  |  (zones de santé du ministère de la Santé, comme sur le tableau de bord de l’INRB) ·  |  (zones de santé du ministère de la Santé, comme sur le tableau de bord de l’INRB) ·  |
 |  | Hub repository | Dépôt du hub | Dépôt du hub |
 |  | Partners | Partenaires | Partenaires |
 | hover text of the INSP + KSPH logos | Institut National de Santé Publique (DRC), the Kinshasa School of Public Health and ANICNS | Institut National de Santé Publique (RDC), École de Santé Publique de Kinshasa et ANICNS | Institut National de Santé Publique (RDC), École de Santé Publique de Kinshasa et ANICNS |
@@ -273,7 +295,7 @@ Try it: the French interface is on the live dashboard, add `?lang=fr` to the add
 |---|---|---|---|
 | toolbar button opening the panel menu | Panels | Panneaux | Panneaux |
 | panel name in the menu and button labels | Weekly chart | Graphique hebdomadaire | Graphique hebdomadaire |
-| panel name in the menu and button labels | Cumulative cases | Cas cumulés | Cas cumulés |
+| panel name in the menu and button labels | Trend / cumulative cases | Tendance / cas cumulés | Tendance / cas cumulés |
 | panel name in the menu and button labels | Map | Carte | Carte |
 | entry of the panel menu | Reset layout | Réinitialiser la disposition | Réinitialiser la disposition |
 | entry of the panel menu | Copy link to this layout | Copier le lien vers cette disposition | Copier le lien vers cette disposition |

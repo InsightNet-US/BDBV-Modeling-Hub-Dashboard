@@ -133,6 +133,44 @@ def _summaries(mat: np.ndarray, weeks: list[str], reference_date: str, present: 
     return out
 
 
+def trend_probs(mat: np.ndarray, present: np.ndarray, weeks: list[str], reference_date: str,
+                horizons=config.HORIZONS, threshold: float = config.TREND_THRESHOLD) -> dict | None:
+    """P(decrease), P(stable), P(increase) at each horizon, trajectory by trajectory.
+
+    Each row's week R+h value is compared with the same row's value for the last closed week R-7 (its
+    model's own nowcast of it): increase above (1 + threshold) x baseline, decrease below
+    (1 - threshold) x baseline, stable otherwise; a zero baseline is stable at 0 and an increase above.
+    A row counts for horizon h only when its model submitted both R-7 and R+h (per-week masking, not the
+    cumulative window mask). None when no row has R-7; a horizon without rows is None.
+    """
+    R = d(reference_date)
+    widx = {w: i for i, w in enumerate(weeks)}
+    base_w = iso(R - timedelta(days=7))
+    if base_w not in widx:
+        return None
+    ib = widx[base_w]
+    has_base = present[:, ib]
+    if not has_base.any():
+        return None
+    b = mat[:, ib]
+    out: dict = {}
+    for h in sorted(horizons):
+        w = iso(R + timedelta(days=7 * h))
+        if w not in widx:
+            out[str(h)] = None
+            continue
+        rows = has_base & present[:, widx[w]]
+        if not rows.any():
+            out[str(h)] = None
+            continue
+        v, bb = mat[rows, widx[w]], b[rows]
+        inc = np.where(bb > 0, v > (1 + threshold) * bb, v > 0)
+        dec = np.where(bb > 0, v < (1 - threshold) * bb, False)
+        p_inc, p_dec = float(inc.mean()), float(dec.mean())
+        out[str(h)] = [round(p_dec, 3), round(1.0 - p_inc - p_dec, 3), round(p_inc, 3)]
+    return out
+
+
 def summarize_location(mat: np.ndarray, weeks: list[str], reference_date: str,
                        observed: dict[str, float], horizons=config.HORIZONS) -> dict:
     """Summaries for one model/location.
@@ -144,8 +182,10 @@ def summarize_location(mat: np.ndarray, weeks: list[str], reference_date: str,
     R = d(reference_date)
     obs_fixed = sum(v for w, v in observed.items() if d(w) < R and w not in set(weeks))
     present = np.ones(mat.shape, dtype=bool)
-    return _summaries(mat, weeks, reference_date, present, np.full(mat.shape[0], float(obs_fixed)),
-                      horizons, observed_fixed=round(float(obs_fixed), 1))
+    out = _summaries(mat, weeks, reference_date, present, np.full(mat.shape[0], float(obs_fixed)),
+                     horizons, observed_fixed=round(float(obs_fixed), 1))
+    out["trend"] = trend_probs(mat, present, weeks, reference_date, horizons)
+    return out
 
 
 def pool_members(members: dict[str, tuple[np.ndarray, list[str]]], reference_date: str,
@@ -175,8 +215,9 @@ def pool_members(members: dict[str, tuple[np.ndarray, list[str]]], reference_dat
         blocks.append(full)
         pres.append(p)
         fixed.append(np.full(mat.shape[0], float(obs_fixed)))
-    out = _summaries(np.vstack(blocks), weeks, reference_date, np.vstack(pres), np.concatenate(fixed),
-                     horizons)
+    mat_all, pres_all = np.vstack(blocks), np.vstack(pres)
+    out = _summaries(mat_all, weeks, reference_date, pres_all, np.concatenate(fixed), horizons)
+    out["trend"] = trend_probs(mat_all, pres_all, weeks, reference_date, horizons)
     out["n_models"] = len(members)
     out["members"] = sorted(members)
     out["n_models_wk"] = [int(x) for x in n_models_wk]

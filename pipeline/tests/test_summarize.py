@@ -123,6 +123,7 @@ def test_summarize_location_matches_fixture():
     fx = json.loads((Path(__file__).with_name("fixtures") / "summarize_location.json").read_text())
     for name, (mat, weeks, obs) in fixture_inputs().items():
         got = json.loads(json.dumps(summarize_location(mat, weeks, fx["reference_date"], obs)))
+        got.pop("trend")   # newer field, tested in test_trend_* (the fixture pins the pre-trend output)
         assert got == fx["cases"][name]["out"], name
         assert list(got) == list(fx["cases"][name]["out"]), f"{name}: key order"
 
@@ -184,3 +185,40 @@ def test_non_designated_models_are_dropped(tmp_path):
     kept = hub_io.drop_non_designated(files, meta, warn=notes.append)
     assert [f[0] for f in kept] == ["team-a", "team-b", "team-c"]   # team-c has no metadata at all: kept
     assert len(notes) == 1 and notes[0].startswith("NOTE hub-baseline") and "2 submission" in notes[0]
+
+
+def test_trend_probs_classes_zero_baseline_and_missing_weeks():
+    from summarize import trend_probs
+    R = "2026-10-31"
+    weeks = ["2026-10-24", "2026-10-31", "2026-11-07", "2026-11-14", "2026-11-21"]   # R-7 .. R+21
+    mat = np.zeros((10, 5))
+    mat[:8, 0] = 100                                     # rows 8-9 have a zero baseline
+    # h=0: 2 decreases (<90), 3 stable (90, 100 and 110 are on or inside the band), 3 increases;
+    # zero baseline: 0 stays stable, 1 is an increase
+    mat[:8, 1] = [50, 89, 90, 100, 110, 111, 150, 200]
+    mat[8:, 1] = [0, 1]
+    # h=1: all zero -> 8 decreases, 2 stable
+    present = np.ones(mat.shape, dtype=bool)
+    out = trend_probs(mat, present, weeks, R, horizons=[0, 1, 2, 3], threshold=0.10)
+    assert out["0"] == [0.2, 0.4, 0.4]
+    assert out["1"] == [0.8, 0.2, 0.0]
+    # a horizon week nobody submitted -> None; the rest keep their rows
+    present[:, 4] = False
+    assert trend_probs(mat, present, weeks, R)["3"] is None
+    # rows without the baseline week drop out of every horizon
+    present[:5, 0] = False
+    out = trend_probs(mat, present, weeks, R)
+    assert out["0"] == [0.0, 0.2, 0.8]                   # rows 5-9: 111, 150, 200 and 0 -> 1 up; 0 -> 0 stable
+    # no baseline at all -> None; baseline week outside the matrix -> None
+    present[:, 0] = False
+    assert trend_probs(mat, present, weeks, R) is None
+    assert trend_probs(mat[:, 1:], np.ones((10, 4), dtype=bool), weeks[1:], R) is None
+
+
+def test_trend_in_single_model_summary():
+    mat, weeks, obs = fixture_inputs()["full"]
+    out = summarize_location(mat, weeks, "2026-10-31", obs)
+    assert set(out["trend"]) == {"0", "1", "2", "3"}
+    for h, p in out["trend"].items():
+        assert p is not None and len(p) == 3 and abs(sum(p) - 1) <= 0.002 and min(p) >= 0
+

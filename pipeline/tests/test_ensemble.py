@@ -136,3 +136,19 @@ def test_source_flag_validation(monkeypatch):
     monkeypatch.setenv("ENSEMBLE_SOURCE", "")
     importlib.reload(config)
     assert config.ENSEMBLE_SOURCE == "auto"
+
+
+def test_pool_trend_uses_each_rows_own_baseline_and_week_mask():
+    # a: baseline 10 then 20 everywhere (always up); b: no baseline week (10-24) -> leaves the pooled trend
+    W_A = ["2026-10-24", "2026-10-31", "2026-11-07", "2026-11-14", "2026-11-21"]
+    W_B = ["2026-10-31", "2026-11-07", "2026-11-14", "2026-11-21"]
+    a = const(100, W_A, 20.0); a[:, 0] = 10.0
+    b = const(100, W_B, 1.0)
+    out = pool_members({"a": (a, W_A), "b": (b, W_B)}, R, OBS)
+    assert out["trend"] == {"0": [0.0, 0.0, 1.0], "1": [0.0, 0.0, 1.0], "2": [0.0, 0.0, 1.0], "3": [0.0, 0.0, 1.0]}
+    # c has the baseline but stops at 11-07: it counts at h=0 and h=1 only (per-week mask, not window)
+    W_C = ["2026-10-24", "2026-10-31", "2026-11-07"]
+    c = const(100, W_C, 5.0)                             # flat -> stable
+    out = pool_members({"a": (a, W_A), "c": (c, W_C)}, R, OBS)
+    assert out["trend"]["0"] == [0.0, 0.5, 0.5] and out["trend"]["1"] == [0.0, 0.5, 0.5]
+    assert out["trend"]["2"] == [0.0, 0.0, 1.0] and out["trend"]["3"] == [0.0, 0.0, 1.0]

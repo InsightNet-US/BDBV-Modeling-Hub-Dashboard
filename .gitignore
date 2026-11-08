@@ -6,3 +6,5 @@ hub/
 .cache/
 .DS_Store
 pipeline/geo-src/
+# local scratch files (mockups, exports), never committed
+tmp/
