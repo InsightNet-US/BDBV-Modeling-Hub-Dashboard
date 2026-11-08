@@ -146,6 +146,7 @@ Try it: the French interface is on the live dashboard, add `?lang=fr` to the add
 | Where | English | French | Example (French) |
 |---|---|---|---|
 | hover text of a model in the Models ribbon when it has no output for the location | No output for {loc}. Click to show this model on the map | Pas de résultats pour {loc}. Cliquer pour afficher ce modèle sur la carte | Pas de résultats pour Ituri. Cliquer pour afficher ce modèle sur la carte |
+| hover text of a greyed (unticked) model in the Models ribbon | Not ticked. Click to tick this model | Non coché. Cliquer pour cocher ce modèle | Non coché. Cliquer pour cocher ce modèle |
 
 ## Weekly chart tooltip
 

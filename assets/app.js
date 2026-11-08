@@ -556,15 +556,18 @@ function mapChip(id, inner, cls = '', title = '') {
   const on = id === S.mapModel;
   return `<span class="chip pick${on ? ' onmap' : ''}${cls ? ' ' + cls : ''}" data-model="${id}" role="button" tabindex="0" aria-pressed="${on}" title="${title || t(on ? 'ts.leg.onMap' : 'ts.leg.mapTitle')}">${inner}${on ? MAP_PIN : ''}</span>`;
 }
-/** ribbon above the footer: the ticked models' colours, whatever panels are shown; click one to map it */
+/** ribbon above the footer: every model of the round with its colour, whatever panels are shown; unticked
+   models greyed (click to tick), ticked ones put on the map by a click */
 function drawRibbon() {
-  const ms = selectedModels(), loc = S.location;
-  $('modelRibbon').classList.toggle('hidden', !roundModels().length);
-  $('ribbonChips').innerHTML = ms.length ? ms.map(id => {
+  const ms = roundModels(), loc = S.location;
+  $('modelRibbon').classList.toggle('hidden', !ms.length);
+  $('ribbonChips').innerHTML = ms.map(id => {
     const ens = id === S.ensembleId, none = !modelLoc(id, loc);
     const sw = ens ? '<i style="border:1.5px dashed var(--median);background:transparent"></i>' : `<i style="background:${modelColor(id)}"></i>`;
-    return mapChip(id, sw + (ens ? ensLabelN(loc) : modelLabel(id)), none ? 'nodata' : '', none ? t('ribbon.noOutput', { loc: locName(loc) }) : '');
-  }).join('') : `<span class="rnote">${noneTickedNote()}</span>`;
+    const inner = sw + (ens ? ensLabelN(loc) : modelLabel(id));
+    if (!isTicked(id)) return `<span class="chip pick off" data-tick="${id}" role="button" tabindex="0" title="${t('ribbon.untickedTitle')}">${inner}</span>`;
+    return mapChip(id, inner, none ? 'nodata' : '', none ? t('ribbon.noOutput', { loc: locName(loc) }) : '');
+  }).join('');
 }
 function wireMapPick(el, keys) {
   const go = e => { const c = e.target.closest('[data-model]'); if (!c) return false;
@@ -593,7 +596,15 @@ function wire() {
         if (over > 0) panel.style.left = `${-Math.min(over, r.left - 12)}px`; } });
     document.addEventListener('click', e => { if (!panel.contains(e.target) && e.target !== btn) { panel.classList.remove('open'); btn.setAttribute('aria-expanded', 'false'); } });
   }
-  wireMapPick($('modelRibbon'), true); wireMapPick($('cumChart'), false);
+  wireMapPick($('modelRibbon'), true);
+  { // a greyed (unticked) model in the ribbon: a click ticks it, focus follows the redrawn chip
+    const rib = $('modelRibbon'), tick = e => { const c = e.target.closest('[data-tick]'); if (!c) return false;
+      const id = c.dataset.tick, focused = document.activeElement === c; setTicked(id, true); buildModelDropdown();
+      if (focused) { const n = rib.querySelector(`[data-model="${CSS.escape(id)}"]`); if (n) n.focus(); }
+      return true; };
+    rib.addEventListener('click', tick);
+    rib.addEventListener('keydown', e => { if ((e.key === 'Enter' || e.key === ' ') && tick(e)) e.preventDefault(); });
+  } wireMapPick($('cumChart'), false);
   $('drawerClose').addEventListener('click', () => toggleDrawer(false));
   $('drawerBg').addEventListener('click', () => toggleDrawer(false));
   window.addEventListener('resize', () => { drawTS(); drawLower(); });

@@ -12,9 +12,10 @@ small JSON summaries under `data/`, and a GitHub Action rebuilds and deploys to 
 - **Models** (one menu in the toolbar) chooses the models every panel shows: tick the ensemble and any team
   models, and the weekly chart, Trend, Cumulative and the map all use the same set. The weekly chart always
   draws the ensemble median; ticking the ensemble adds its intervals there and puts it in the other panels.
-  A **Models ribbon** above the footer, always shown whatever panels are open, gives each ticked model's
-  colour (greyed when the model has no output for the selected location; wraps to more lines when needed,
-  and sticks to the bottom of the window on narrow screens).
+  A **Models ribbon** above the footer, always shown whatever panels are open, lists every model of the
+  round with its colour: unticked models are greyed (click one to tick it), a ticked model without output
+  for the selected location is in italics. It wraps to more lines when needed and sticks to the bottom of
+  the window on narrow screens.
   The map shows one of the ticked models: pick it in the map's model selector (ticked models only) or click
   a model in the ribbon, a model name in the Trend tab or a box in the Cumulative tab; the mapped
   model is bold with a pin in the ribbon. By default the map shows the ensemble when ticked, otherwise the
