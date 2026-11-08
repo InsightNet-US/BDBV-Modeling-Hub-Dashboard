@@ -87,8 +87,7 @@ def build_health_zones(tmp: Path) -> None:
 def build_provinces(tmp: Path) -> None:
     """Province outlines dissolved from the zones by their GRID3 province (src_province), so the outlines
     follow the map as INRB draws it: provinces.json (location, name) for the province layer and
-    hz-provinces.json (location) for the outlines over the zone layer. Where the hub's parent differs,
-    config.PARENT_OVERRIDES brings it in line (Manika, a Kolwezi zone in Lualaba)."""
+    hz-provinces.json (location) for the outlines over the zone layer."""
     from shapely.geometry import mapping, shape
     from shapely.geometry.multipolygon import MultiPolygon
     from shapely.geometry.polygon import Polygon

@@ -54,14 +54,3 @@ def test_match_zones_restamp_is_idempotent_and_one_polygon_per_zone(monkeypatch)
     build.match_zones(fs, LOCS, dhis2)   # second stamp reads src_name / src_province / dhis2
     assert [f["properties"] for f in fs] == first
 
-
-def test_read_locations_applies_parent_overrides(tmp_path, monkeypatch):
-    import config
-    import hub_io
-    (tmp_path / "auxiliary-data").mkdir()
-    (tmp_path / "auxiliary-data" / "locations.csv").write_text(
-        '"location","location_name","location_type","parent"\n'
-        '"CD-HK-19","Manika","health zone","Haut Katanga"\n"CD-HK-01","Kampemba","health zone","Haut Katanga"\n')
-    monkeypatch.setattr(config, "PARENT_OVERRIDES", {"CD-HK-19": "Lualaba"})
-    df = hub_io.read_locations(tmp_path)
-    assert dict(zip(df["location"], df["parent"])) == {"CD-HK-19": "Lualaba", "CD-HK-01": "Haut Katanga"}

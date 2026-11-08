@@ -57,15 +57,8 @@ def read_round_config(hub: Path) -> RoundConfig:
 
 
 def read_locations(hub: Path) -> pd.DataFrame:
-    """auxiliary-data/locations.csv with config.PARENT_OVERRIDES applied to health zones' parents."""
-    df = pd.read_csv(hub / "auxiliary-data" / "locations.csv", dtype=str, keep_default_na=False)
-    for code, parent in config.PARENT_OVERRIDES.items():
-        hit = (df["location"] == code) & (df["parent"] != parent)
-        if hit.any():
-            print(f"NOTE {code} ({df.loc[hit, 'location_name'].iloc[0]}): parent {df.loc[hit, 'parent'].iloc[0]} "
-                  f"-> {parent} (config.PARENT_OVERRIDES)")
-            df.loc[hit, "parent"] = parent
-    return df
+    """auxiliary-data/locations.csv as strings."""
+    return pd.read_csv(hub / "auxiliary-data" / "locations.csv", dtype=str, keep_default_na=False)
 
 
 def read_hz_dhis2(hub: Path) -> dict[str, str]:
