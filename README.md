@@ -259,10 +259,8 @@ for rural ones. Zones are matched to hub codes by DHIS2 id (`ZSCode` against `Co
 `auxiliary-data/health-zone-code-mapping.csv`; ids that are missing or shared by two zones are skipped), then
 by normalised name within province plus `data/geo/hz-aliases.csv`; the build fails unless all 519 hub zones
 get a polygon. Province outlines are dissolved from the zones by GRID3's own province, so province and zone
-borders coincide. The hub's `locations.csv` files Manika (`CD-HK-19`), a Kolwezi zone, under Haut Katanga, a
-leftover of the former Katanga province; GRID3, INRB and the INSP place it in Lualaba, and so does the
-dashboard, through `PARENT_OVERRIDES` in `pipeline/config.py` (applied when the hub's locations are read;
-the code is unchanged, and the entry does nothing once the hub's file agrees). Rerun with `.venv/bin/pip install -r pipeline/requirements-geo.txt &&
+borders coincide. Manika (`CD-HK-19`), a Kolwezi zone, sits in Lualaba as in GRID3, INRB and the INSP (the
+hub moved it from Haut Katanga on 2026-11-08; the code is unchanged). Rerun with `.venv/bin/pip install -r pipeline/requirements-geo.txt &&
 .venv/bin/python pipeline/geo.py`; the outputs in `data/geo/` are committed. Until 2026-11-08 the zones came
 from DSNIS via HDX (2022) and the provinces from geoBoundaries; those shapes differed noticeably from INRB's.
 
