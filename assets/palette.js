@@ -39,12 +39,11 @@ function colorForP(p) {
   return mix(P_STOPS[i], P_STOPS[i + 1], x - i);
 }
 const P_GRADIENT = `linear-gradient(90deg,${P_STOPS.join(',')})`;
-/* 0..1 -> light-to-dark red sequential ramp for case counts (log-scaled by the caller); the stops are
-   sampled from the legend of the INRB epidemic dashboard (inrb-umie.github.io/BDBV2026-Epidemic_Dashboard)
-   so that the two maps read alike. A median of 0 gets ZERO_FILL, also as there. */
-const N_STOPS = ['#fff5eb', '#fee0c2', '#fdc395', '#fda16a', '#fc7e4a', '#f2593c', '#de372c', '#bc1d1d', '#8c1111'];
+/* 0..1 -> ColorBrewer YlOrRd (9 classes, interpolated) for case counts, log-scaled by the caller; a median of
+   0 is the pale-yellow start of the scale, not a separate grey, so it does not look like missing data. Close to
+   the reds of the INRB epidemic dashboard (inrb-umie.github.io/BDBV2026-Epidemic_Dashboard) without its grey. */
+const N_STOPS = ['#ffffcc', '#ffeda0', '#fed976', '#feb24c', '#fd8d3c', '#fc4e2a', '#e31a1c', '#bd0026', '#800026'];
 const N_GRADIENT = `linear-gradient(90deg,${N_STOPS.join(',')})`;
-const ZERO_FILL = '#c4bfb6';
 function colorFor(p) {
   p = Math.max(0, Math.min(1, p));
   const x = p * (N_STOPS.length - 1), i = Math.min(N_STOPS.length - 2, Math.floor(x));

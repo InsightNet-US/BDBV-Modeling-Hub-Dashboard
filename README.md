@@ -30,10 +30,10 @@ small JSON summaries under `data/`, and a GitHub Action rebuilds and deploys to 
   form a right-aligned column: median, then the 95% interval in parentheses (dropped when the panel is
   very narrow).
 - **Map** at province or health-zone level, coloured by a model's median cases in a chosen week, or by
-  P(at least one case) in that week. Cases use a continuous log scale from 1 to the largest median on the
-  layer, light cream to dark red, with grey for a median of 0 (the palette of the
-  [INRB epidemic dashboard](https://inrb-umie.github.io/BDBV2026-Epidemic_Dashboard/), so the two maps
-  read alike). The week control (arrows, or click the date to pick) steps through
+  P(at least one case) in that week. Cases use a continuous log scale from 0 to the largest median on the
+  layer in ColorBrewer YlOrRd (pale yellow to dark red), close to the reds of the
+  [INRB epidemic dashboard](https://inrb-umie.github.io/BDBV2026-Epidemic_Dashboard/); unlike there, 0 is
+  the start of the scale rather than a separate grey. Countries outside the DRC are veiled in grey. The week control (arrows, or click the date to pick) steps through
   every week with model output in the round, labelled with the date and its offset from the
   projections-from date: nowcast weeks (-1 wk and earlier) and forecast weeks 0 (the reference week) to
   +3. Clicking a province or zone selects it; selecting a zone switches the map to the zone layer and
