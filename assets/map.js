@@ -145,7 +145,8 @@ function featTip(f, level) {
     rows += `<div class="row"><span>${t('map.tipMedian', { wk: wkLabel() })}</span><b>${fmtN(q[QI.med])} <span class="sm">(${fmtRange(q)})</span></b></div>`;
     rows += `<div class="row"><span>${t('map.tipPresence')}</span><b>${fmtPct(m.presence_wk[i])}</b></div>`;
     if (obs[S.mapWeek] != null) rows += `<div class="row"><span>${t('map.tipReportedSame')} <span class="sm">${t('map.tipAsOf', { d: fmtDate(S.obsRound.as_of) })}</span></span><b>${fmtN(obs[S.mapWeek])}</b></div>`;
-  } else rows += `<div class="row"><span>${S.mapModel ? modelLabel(S.mapModel) : t('map.tipOutput')}</span><b>${t(m ? 'map.tipWeekNotSub' : 'map.tipNoSub')}</b></div>`;
+  } else rows += S.mapModel ? `<div class="row"><span>${modelLabel(S.mapModel)}</span><b>${t(m ? 'map.tipWeekNotSub' : 'map.tipNoSub')}</b></div>`
+    : `<div class="row"><span>${t('map.tipOutput')}</span><b>${noneTickedNote()}</b></div>`;
   { // ensemble size for this location and week (the ensemble entry's own week index)
     const e = S.mapWeek ? ensCounts(code) : null, ei = e ? e.weeks.indexOf(S.mapWeek) : -1;
     if (ei >= 0) rows += `<div class="row"><span>${t('map.tipModels')}</span><b>${fmtN(e.n_models_wk[ei])}</b></div>`;
@@ -173,8 +174,10 @@ function drawMap() {
   const missing = feats.length - vals.length;
   const mi = metricInfo();
   const mt = `${t(mi.sub)}, <span class="horizonval">${wkLabel()}</span>`;
-  document.getElementById('mapSub').innerHTML = `${mt} · ${S.mapModel ? modelLabel(S.mapModel) : t('map.noModel')}`
-    + (missing ? ` · ${tn(level === 'hz' ? 'map.missingZones' : 'map.missingProvinces', missing)}` : '');
+  // no ticked model: say so; a model with no output for the week anywhere: say that instead of counting areas
+  document.getElementById('mapSub').innerHTML = !S.mapModel ? `${mt} · ${roundModels().length ? noneTickedNote() : t('map.noModel')}`
+    : `${mt} · ${modelLabel(S.mapModel)}` + (S.round && !vals.length ? ` · ${t('map.noOutputWeek')}`
+    : missing ? ` · ${tn(level === 'hz' ? 'map.missingZones' : 'map.missingProvinces', missing)}` : '');
   document.getElementById('legLo').textContent = mi.lo;
   document.getElementById('legHi').textContent = mi.hi;
   document.querySelector('.map .legend .bar').style.background = mi.gradient;

@@ -5,7 +5,7 @@ const S = {
   roundRef: null, round: null, obsRound: null, obsLatest: null, geoProv: null,
   location: 'CD', locIndex: {},
   mapWeek: null, mapRel: 0,   // week shown on the map and its offset in weeks from the reference date
-  tsSelected: new Set(), cumSelected: new Set(),
+  selPref: null, mapPref: null,   // ticked models (ids, the ensemble as ENS_TOKEN) and the map's pick; null = defaults
   mapMetric: 'median', mapModel: null, mapLayer: 'prov', geoHZ: null,
   layout: { col: 0.42, row: null, hidden: new Set(), weeks: null, tab: 'trend', fromURL: false },   // panel sizes, visibility, weekly-chart window, lower-left tab
   cache: {},
@@ -95,6 +95,54 @@ function widestModel(ms) {
   ms.forEach(id => { const k = Object.keys(S.round.models[id].locations).length; if (k > n) { best = id; n = k; } });
   return best;
 }
+/* ---------- model selection: one set of ticked models for every panel; the map shows one of them ----------
+   S.selPref holds the user's ticks across rounds (not pruned when a round lacks a model; the round's
+   ensemble, hub or dashboard, is stored as ENS_TOKEN) and S.mapPref the model last picked for the map.
+   null = defaults: the ensemble alone, or every model when the round has none. The map shows mapPref when
+   it is ticked, else the ticked ensemble, else the ticked model covering the most locations. Kept in localStorage
+   MODELS_KEY (separate from the layout) with the newest round at the time, so a newly published round
+   starts again from the defaults, and in copied links (?models=, ?mapmodel=), which are kept as linked. */
+const ENS_TOKEN = 'ensemble', MODELS_KEY = 'bdbv-models';
+const newestRound = () => ((S.manifest && S.manifest.rounds[0]) || {}).reference_date || null;
+const prefId = id => id === S.ensembleId ? ENS_TOKEN : id;
+function tickedSet() {
+  if (S.selPref) return S.selPref;
+  return new Set(S.ensembleId && roundModels().includes(S.ensembleId) ? [ENS_TOKEN] : roundModels());
+}
+function isTicked(id) { return tickedSet().has(prefId(id)); }
+/** ticked models of the current round, ensemble first */
+function selectedModels() { return roundModels().filter(isTicked); }
+/** note for panels with nothing to show because no model of this round is ticked */
+const noneTickedNote = () => t(tickedSet().size ? 'common.noneInRound' : 'common.noneTicked');
+function resolveMapModel() {
+  const ms = selectedModels(), pick = S.mapPref === ENS_TOKEN ? S.ensembleId : S.mapPref;
+  if (pick && ms.includes(pick)) return pick;
+  if (S.ensembleId && ms.includes(S.ensembleId)) return S.ensembleId;
+  return ms.length ? widestModel(ms) : null;
+}
+function setTicked(id, on) {
+  const set = new Set(tickedSet()); on ? set.add(prefId(id)) : set.delete(prefId(id));
+  S.selPref = set; onSelectionChange();
+}
+function pickMapModel(id) {
+  if (!id || !isTicked(id)) return;
+  S.mapPref = prefId(id); onSelectionChange();
+}
+/** after a tick or a map pick: map model, header button, map menu, storage, panels */
+function onSelectionChange() {
+  S.mapModel = resolveMapModel(); refreshModelBtn(); buildMapModelSel(); saveLayout(); sync();
+}
+function loadModels(q) {
+  try { const st = JSON.parse(localStorage.getItem(MODELS_KEY) || 'null');
+    if (st) { S.modelsNewest = st.newest || null; if (Array.isArray(st.models)) S.selPref = new Set(st.models.map(String)); if (typeof st.map === 'string') S.mapPref = st.map; } } catch (e) { /* fine */ }
+  const ms = q.get('models'), mp = q.get('mapmodel');
+  if (ms != null) { S.selPref = new Set(ms === 'none' ? [] : ms.split(',').map(x => x.trim()).filter(Boolean)); S.layout.fromURL = S.modelsLinked = true; }
+  if (mp) { S.mapPref = mp.trim(); S.layout.fromURL = S.modelsLinked = true; }
+}
+function saveModels() {
+  try { if (S.selPref || S.mapPref) localStorage.setItem(MODELS_KEY, JSON.stringify({ models: S.selPref ? [...S.selPref] : null, map: S.mapPref, newest: newestRound() }));
+    else localStorage.removeItem(MODELS_KEY); } catch (e) { /* fine */ }
+}
 /** weeks with model output from any model/location in the current round, oldest first */
 function roundWeeks() {
   const set = new Set();
@@ -164,11 +212,13 @@ function loadLayout() {
     if (c > 0 && c < 1) { L.col = c; L.fromURL = true; }
     if (r > 0 && r < 1) { L.row = r; L.fromURL = true; } else if (split.split(',').length > 1 && isNaN(r)) L.row = null;
   }
+  loadModels(q);
 }
-const LAYOUT_PARAMS = ['panels', 'split', 'weeks', 'tab'];
+const LAYOUT_PARAMS = ['panels', 'split', 'weeks', 'tab', 'models', 'mapmodel'];
 function saveLayout() {
   const L = S.layout; L.fromURL = false;
   try { localStorage.setItem(LAYOUT_KEY, JSON.stringify({ col: L.col, row: L.row, hidden: [...L.hidden], weeks: L.weeks, tab: L.tab })); } catch (e) { /* fine */ }
+  saveModels();
   stripLayoutParams();   // the stored layout is now the truth; a reload must not re-seed from a shared link
 }
 function stripLayoutParams() {
@@ -203,8 +253,10 @@ function applyLayout(user) {
 function setHidden(panel, hidden) { if (hidden) S.layout.hidden.add(panel); else S.layout.hidden.delete(panel); applyLayout(true); }
 function resetLayout() {
   S.layout.col = COL_DEFAULT; S.layout.row = null; S.layout.hidden = new Set(); S.layout.weeks = null; S.layout.tab = 'trend';
+  S.selPref = null; S.mapPref = null;
+  if (S.manifest) { S.mapModel = resolveMapModel(); buildModelDropdown(); buildMapModelSel(); }
   applyLayout(true);
-  try { localStorage.removeItem(LAYOUT_KEY); } catch (e) { /* fine */ }
+  try { localStorage.removeItem(LAYOUT_KEY); localStorage.removeItem(MODELS_KEY); } catch (e) { /* fine */ }
   stripLayoutParams();
 }
 function layoutURL() {
@@ -214,6 +266,10 @@ function layoutURL() {
   u.searchParams.delete('weeks');
   if (L.weeks) u.searchParams.set('weeks', `${L.weeks.start},${L.weeks.end}`);
   u.searchParams.set('tab', L.tab);   // always: the recipient's own stored tab must not win
+  const ticked = [...tickedSet()];   // always too, for the same reason
+  u.searchParams.set('models', ticked.length ? ticked.join(',') : 'none');
+  u.searchParams.delete('mapmodel');
+  if (S.mapModel) u.searchParams.set('mapmodel', prefId(S.mapModel));
   u.searchParams.delete('preview');   // a copied link never switches preview features on for its recipient
   return u.toString();
 }
@@ -392,6 +448,11 @@ async function init() {
     getJSON('data/manifest.json'), getJSON('data/models.json'), getJSON('data/geo/provinces.json')]);
   S.manifest = manifest; S.models = models; S.geoProv = geoProv;
   manifest.locations.forEach(l => { S.locIndex[l.code] = l; });
+  // stored ticks are for the rounds out when they were made: a newly published round starts from the defaults
+  if (!S.modelsLinked && S.modelsNewest !== newestRound()) { S.selPref = null; S.mapPref = null; saveModels(); }
+  const known = id => id === ENS_TOKEN || !!models[id];   // stored or linked ids of models no longer in the data are dropped
+  if (S.selPref) S.selPref = new Set([...S.selPref].filter(known));
+  if (S.mapPref && !known(S.mapPref)) S.mapPref = null;
   S.ensembleId = manifest.ensemble_model_id && models[manifest.ensemble_model_id] ? manifest.ensemble_model_id : null;
   S.ensembleSource = S.ensembleId ? (manifest.ensemble_source || 'hub') : null;
   // blue for every id that is an ensemble in some round (hub model and/or dashboard pool)
@@ -432,22 +493,9 @@ function setEnsemble(info) {
   S.ensembleSource = S.ensembleId ? ((info && info.ensemble_source) || S.manifest.ensemble_source || 'hub') : null;
 }
 function afterRound() {
-  // default model selections: the ensemble (hub or dashboard) when there is one, otherwise every model; the map
-  // starts on the ensemble or, failing that, the model covering the most locations
-  const ms = roundModels(), hasEns = S.ensembleId && ms.includes(S.ensembleId);
-  for (const set of [S.tsSelected, S.cumSelected]) {
-    [...set].forEach(id => { if (!ms.includes(id) && id !== 'ensembleCI') set.delete(id); });
-    if (!set.size && ms.length) {
-      if (hasEns) set.add(S.ensembleId);
-      else ms.forEach(id => set.add(id));
-    }
-  }
-  if (!S.mapModel || !ms.includes(S.mapModel)) S.mapModel = hasEns ? S.ensembleId : widestModel(ms);
-  buildModelDropdown('tsModelBtn', 'tsModelPanel', S.tsSelected, true);
-  buildModelDropdown('cumModelBtn', 'cumModelPanel', S.cumSelected, false);
-  const sel = $('mapModelSel');
-  sel.innerHTML = ms.map(id => `<option value="${id}">${modelLabel(id)}</option>`).join('') || `<option value="">${t('map.noModels')}</option>`;
-  sel.value = S.mapModel || '';
+  // ticked models carry over between rounds (see the model-selection block); the map follows them
+  S.mapModel = resolveMapModel();
+  buildModelDropdown(); buildMapModelSel();
   // mapped week: keep the same offset from the reference date across rounds, default week 0
   const ws = roundWeeks(), R = S.roundRef, want = R ? addDays(R, 7 * S.mapRel) : null;
   S.mapWeek = ws.includes(want) ? want : ws.includes(R) ? R : ws[ws.length - 1] || null;
@@ -468,38 +516,46 @@ function afterRound() {
 }
 
 /* ---------- controls ---------- */
-function buildModelDropdown(btnId, panelId, selSet, isTS) {
-  const btn = $(btnId), panel = $(panelId), ms = roundModels();
-  const avail = new Set(modelsForLocation(S.location));
-  const ec = isTS ? ensCounts(S.location) : null;
-  const hint = S.ensembleId && ms.includes(S.ensembleId) && isTS ? `<div class="hint">${t('dd.hintEns')}${ec && ec.n_models ? ` · ${t('dd.hintEnsN', { n: ec.n_models, loc: locName(S.location) })}` : ''}</div>` : '';
+/** header Models menu: ensemble first, then team models; rows greyed (still tickable) where a model did not submit the location */
+function buildModelDropdown() {
+  const panel = $('modelPanel'), ms = roundModels();
+  const avail = new Set(modelsForLocation(S.location)), ec = ensCounts(S.location);
+  const hint = S.ensembleId && ms.includes(S.ensembleId) ? `<div class="hint">${t('dd.hintEns')}${ec && ec.n_models ? ` · ${t('dd.hintEnsN', { n: ec.n_models, loc: locName(S.location) })}` : ''}</div>` : '';
   panel.innerHTML = hint + ms.map(id => {
     const isEns = id === S.ensembleId, dis = !avail.has(id);
     const sw = isEns ? `<span class="sw" style="border:1.5px dashed ${modelColor(id)};background:transparent"></span>`
                      : `<span class="sw" style="background:${modelColor(id)}"></span>`;
-    const label = isEns ? (isTS ? t('dd.ensCI') : ensLabelN(S.location)) : modelLabel(id);
-    return `<label class="${dis ? 'disabled' : ''}" title="${dis ? t('dd.noSub', { loc: locName(S.location) }) : ''}"><input type="checkbox" value="${id}" ${selSet.has(id) ? 'checked' : ''} ${dis ? 'disabled' : ''}>${sw}${label}</label>`;
+    return `<label class="${dis ? 'disabled' : ''}" title="${dis ? t('dd.noSub', { loc: locName(S.location) }) : ''}"><input type="checkbox" value="${id}" ${isTicked(id) ? 'checked' : ''}>${sw}${isEns ? ensLabelN(S.location) : modelLabel(id)}</label>`;
   }).join('') || `<div class="hint">${t('dd.none')}</div>`;
-  // label: models selected AND submitted for the location (the ensemble median is always drawn on the chart)
-  const refresh = () => {
-    const hasEns = S.ensembleId && avail.has(S.ensembleId), ensOn = hasEns && selSet.has(S.ensembleId);
-    const teams = [...selSet].filter(id => id !== S.ensembleId && avail.has(id));
-    const plus = tn('dd.plus', teams.length);
-    let label;
-    if (isTS && hasEns) label = teams.length ? plus : ensOn ? t('dd.ensInterval') : t('dd.ens');
-    else if (ensOn) label = teams.length ? plus : t('dd.ens');
-    else label = teams.length === 0 ? t('dd.noneSel') : teams.length === 1 ? modelLabel(teams[0]) : teams.length === ms.length ? t('dd.all') : tn('dd.nModels', teams.length);
-    btn.textContent = label + ' ▾';
-  };
-  refresh();
-  panel.querySelectorAll('input').forEach(cb => cb.addEventListener('change', () => {
-    cb.checked ? selSet.add(cb.value) : selSet.delete(cb.value); refresh(); isTS ? drawTS() : drawLower();
-  }));
-  if (!btn.dataset.wired) {
-    btn.dataset.wired = '1';
-    btn.addEventListener('click', e => { e.stopPropagation(); document.querySelectorAll('.ddpanel.open').forEach(p => { if (p !== panel) p.classList.remove('open'); }); panel.classList.toggle('open'); });
-    document.addEventListener('click', e => { if (!panel.contains(e.target) && e.target !== btn) panel.classList.remove('open'); });
-  }
+  panel.insertAdjacentHTML('beforeend', `<button type="button" class="item" id="aboutModels">${t('hdr.models')}</button>`);
+  panel.querySelectorAll('input').forEach(cb => cb.addEventListener('change', () => setTicked(cb.value, cb.checked)));
+  $('aboutModels').addEventListener('click', () => { panel.classList.remove('open'); $('modelBtn').setAttribute('aria-expanded', 'false'); toggleDrawer(true); });
+  refreshModelBtn();
+}
+/** button label from the ticked models of the round (not the location, so it stays put when the location changes) */
+function refreshModelBtn() {
+  const ms = roundModels(), ens = S.ensembleId && ms.includes(S.ensembleId) ? S.ensembleId : null;
+  const all = ms.filter(id => id !== ens), teams = all.filter(isTicked);
+  let label;
+  if (ens && isTicked(ens)) label = teams.length ? tn('dd.plus', teams.length) : t('dd.ens');
+  else label = teams.length === 0 ? t('dd.noneSel') : teams.length === 1 ? modelLabel(teams[0]) : teams.length === all.length ? t('dd.all') : tn('dd.nModels', teams.length);
+  $('modelBtn').textContent = label + ' ▾';
+}
+/** map model menu: the ticked models only */
+function buildMapModelSel() {
+  const sel = $('mapModelSel'), ms = selectedModels();
+  sel.innerHTML = ms.map(id => `<option value="${id}">${modelLabel(id)}</option>`).join('') || `<option value="">${t(roundModels().length ? 'dd.noneSel' : 'map.noModels')}</option>`;
+  sel.disabled = !ms.length;
+  sel.value = S.mapModel || '';
+}
+/** clicks on a [data-model] element inside el (legend chips, chart rows) put that model on the map */
+function wireMapPick(el, keys) {
+  const go = e => { const c = e.target.closest('[data-model]'); if (!c) return false;
+    const id = c.dataset.model, focused = keys && document.activeElement === c; pickMapModel(id);
+    if (focused) { const n = el.querySelector(`[data-model="${CSS.escape(id)}"]`); if (n) n.focus(); }
+    return true; };
+  el.addEventListener('click', go);
+  if (keys) el.addEventListener('keydown', e => { if ((e.key === 'Enter' || e.key === ' ') && go(e)) e.preventDefault(); });
 }
 function setToggle(groupId, attr, value) {
   document.querySelectorAll(`#${groupId} button`).forEach(b => b.classList.toggle('active', b.dataset[attr] === value));
@@ -511,8 +567,16 @@ function wire() {
   document.querySelectorAll('#layerToggle button').forEach(b => b.addEventListener('click', () => setLayer(b.dataset.l, b.dataset.l === 'hz' ? locProvince(S.location) : null)));
   $('mapWeekSel').addEventListener('change', e => setMapWeek(e.target.value));
   document.querySelectorAll('#metricToggle button').forEach(b => b.addEventListener('click', () => { S.mapMetric = b.dataset.m; setToggle('metricToggle', 'm', S.mapMetric); drawMap(); }));
-  $('mapModelSel').addEventListener('change', e => { S.mapModel = e.target.value; drawMap(); });
-  $('modelsBtn').addEventListener('click', () => toggleDrawer(true));
+  $('mapModelSel').addEventListener('change', e => pickMapModel(e.target.value));
+  { // header Models menu: opens under its button, shifted left when it would run off the window
+    const btn = $('modelBtn'), panel = $('modelPanel');
+    btn.addEventListener('click', e => { e.stopPropagation(); document.querySelectorAll('.ddpanel.open').forEach(p => { if (p !== panel) p.classList.remove('open'); });
+      panel.style.left = ''; panel.classList.toggle('open'); btn.setAttribute('aria-expanded', panel.classList.contains('open'));
+      if (panel.classList.contains('open')) { const r = panel.getBoundingClientRect(), over = r.right - (window.innerWidth - 12);
+        if (over > 0) panel.style.left = `${-Math.min(over, r.left - 12)}px`; } });
+    document.addEventListener('click', e => { if (!panel.contains(e.target) && e.target !== btn) { panel.classList.remove('open'); btn.setAttribute('aria-expanded', 'false'); } });
+  }
+  wireMapPick($('tsLegend'), true); wireMapPick($('cumChart'), false);
   $('drawerClose').addEventListener('click', () => toggleDrawer(false));
   $('drawerBg').addEventListener('click', () => toggleDrawer(false));
   window.addEventListener('resize', () => { drawTS(); drawLower(); });
@@ -539,8 +603,7 @@ function onLocationChange() {
   const prov = locProvince(S.location);
   $('locSel').value = prov || NATIONAL;
   buildZoneSelect(prov);
-  buildModelDropdown('tsModelBtn', 'tsModelPanel', S.tsSelected, true);
-  buildModelDropdown('cumModelBtn', 'cumModelPanel', S.cumSelected, false);
+  buildModelDropdown();
   // a zone selection switches the map to the zone layer and zooms to its province; on the zone layer a
   // change of province refocuses the map
   const provChanged = prov !== lastProv; lastProv = prov;

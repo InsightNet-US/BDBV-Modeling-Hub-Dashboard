@@ -9,6 +9,15 @@ small JSON summaries under `data/`, and a GitHub Action rebuilds and deploys to 
 
 ## What it shows
 
+- **Models** (one menu in the toolbar) chooses the models every panel shows: tick the ensemble and any team
+  models, and the weekly chart, Trend, Cumulative and the map all use the same set. The weekly chart always
+  draws the ensemble median; ticking the ensemble adds its intervals there and puts it in the other panels.
+  The map shows one of the ticked models: pick it in the map's model selector (ticked models only) or click
+  a model in the weekly legend, a model name in the Trend tab or a box in the Cumulative tab; the mapped
+  model is bold with a pin in the legend. By default the map shows the ensemble when ticked, otherwise the
+  ticked model covering the most locations. Ticks carry over between rounds (a model missing from a round
+  is simply not shown there) and are remembered per browser and in copied links. The menu ends with
+  "About the models…", the model descriptions.
 - **Weekly confirmed cases** for the selected location: reported counts from the latest target-data release
   (when an older round is shown, the part known at round time is blue and cases reported since the round are
   stacked on top in a lighter blue; "week in progress" hatching follows the latest release), the ensemble's nowcast
@@ -19,11 +28,11 @@ small JSON summaries under `data/`, and a GitHub Action rebuilds and deploys to 
   after the reference date), drag on empty strip for a new window, double-click to go back to the default.
 - **Trend** (first tab of the lower-left panel, shown by default): for weeks 0 to +3, the chance that
   weekly confirmed cases fall (by more than 10%), stay within ±10% or rise (by more than 10%) compared
-  with week −1, for the ensemble and the team models chosen in the panel's model menu. Each cell is a
+  with week −1, for the ensemble and the ticked team models. Each cell is a
   fan: a dot with three arrows, up (increase, orange), level (stable, grey) and down (decrease, teal),
   each arrow's width and shading growing with its probability; the percentages sit beside the arrows
   when there is room, and in the tooltip. The legend gives each class's threshold. The map's week is highlighted.
-- **Cumulative confirmed cases** (second tab, same model menu): reported to date (latest release; for an older round a blue dot marks the
+- **Cumulative confirmed cases** (second tab, same models): reported to date (latest release; for an older round a blue dot marks the
   total known at round time and a lighter bar the cases reported since), each model's nowcast of the eventual total through the
   reference date, and forecast cumulative totals through weeks 0 (the reference week) to +3; the ensemble's
   name carries how many models it pools for the location shown. The figures
@@ -41,9 +50,10 @@ small JSON summaries under `data/`, and a GitHub Action rebuilds and deploys to 
 - **Locations** follow the hub's hierarchy: country `CD`, provinces `CD-XX`, health zones `CD-XX-NN`
   (548 locations in `auxiliary-data/locations.csv`). The header has a country/province selector and,
   for a province, a zone selector. Every panel works at any level; models that did not submit a location
-  are greyed out in the model menus. With an ensemble (the hub's, or the one the dashboard computes, see
-  [Ensemble](#ensemble)) the panels start on the ensemble alone; without one every model is selected and
-  the map starts on the model covering the most locations.
+  are greyed out in the Models menu (they stay tickable for other locations). With an ensemble (the hub's,
+  or the one the dashboard computes, see [Ensemble](#ensemble)) the panels start on the ensemble alone;
+  without one every model is ticked and the map starts on the model covering the most locations. The
+  selection goes back to this default whenever a new round is published.
 - **"Projections from" control** (arrows, or click the date) to move between rounds, by the week the
   projections were made (reference date). Each round is paired with the latest target-data release on or before the Tuesday
   closing its submission window (`reference_date - 4 days`). Models are summarised against that version
@@ -119,7 +129,11 @@ panels, resets the layout and copies a link that reproduces it (`?panels=weekly,
 to show, `none` hides all, `cum` being the lower-left Trend / cumulative panel; `?split=0.55` or
 `?split=0.55,0.7` sets the column share and the weekly chart's share of the column; `?tab=trend` or
 `?tab=cum` picks the lower-left tab, which is remembered with the layout and set back to Trend by Reset
-layout). Sizes and hidden panels are remembered per browser; a layout given in the
+layout; `?models=ensemble,TEAM-model` (or `none`) gives the ticked models, `ensemble` standing for the
+round's ensemble, and `?mapmodel=` the model on the map; Reset layout also returns the models to the
+defaults). Sizes, hidden panels and ticked models are remembered per browser (the models under their own
+key, `bdbv-models`, together with the newest round at the time, so a new round starts from the default
+again; a linked selection is kept as linked); a layout given in the
 URL only seeds the page and is not stored until the visitor changes something (unlike `?lang=`, which is
 stored); once the visitor does change something, the layout parameters are dropped from the address bar so
 a reload shows the stored layout. The weekly chart's week window travels with the layout:
@@ -267,7 +281,7 @@ from DSNIS via HDX (2022) and the provinces from geoBoundaries; those shapes dif
 ## Design
 
 Follows the motifs of the Insight Net interface prototype (light theme, reported/nowcast/forecast bar
-grammar, boxplot cumulative panel, choropleth with model selector). Team colours use one ColorBrewer
+grammar, boxplot cumulative panel, choropleth showing one of the ticked models). Team colours use one ColorBrewer
 Paired pair per team, as in the hub's own plotting scripts; blue is reserved for reported data and the
 ensemble (hub or dashboard).
 

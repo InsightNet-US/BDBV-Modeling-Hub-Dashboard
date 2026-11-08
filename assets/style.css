@@ -142,6 +142,16 @@ body.brushing[data-brush=pan],body.brushing[data-brush=pan] *{cursor:grabbing!im
 .legend .bar{height:10px;width:120px;border-radius:3px;background:linear-gradient(90deg,#12324a,#1e5f86,#2f9e5e,#f2c14e,#e8683f,#c0392b)}
 .chip{display:inline-flex;align-items:center;gap:5px;font-size:11px;color:var(--muted);white-space:nowrap}
 .chip i{width:10px;height:10px;border-radius:3px;display:inline-block;flex-shrink:0}
+/* legend chips of ticked models: click to show that model on the map; the mapped one is bold with a pin */
+.chip.pick{cursor:pointer;border-radius:4px;padding:1px 3px;margin:-1px -3px}
+.chip.pick:hover{background:var(--panel-2);color:var(--ink)}
+.chip.pick:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.chip.onmap{color:var(--ink);font-weight:600}
+.chip .pin{color:var(--accent);flex-shrink:0}
+#cumChart .mhit,#cumChart .cbox{cursor:pointer}
+#modelPanel{width:max-content;max-width:min(360px,calc(100vw - 24px));max-height:60vh;overflow:auto}
+#modelPanel label,#modelPanel .hint{white-space:normal}
+.msel:disabled{color:var(--muted)}
 .horizonval{color:var(--ink);font-weight:600}
 .empty{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;color:var(--muted);font-size:12px;padding:20px;pointer-events:none}
 .empty b{font-size:14px;color:#3b4654;margin-bottom:4px}

@@ -40,15 +40,17 @@ Try it: the French interface is on the live dashboard, add `?lang=fr` to the add
 |  | Location | Zone géographique | Zone géographique |
 |  | Country or province | Pays ou province | Pays ou province |
 |  | Health zone within the selected province | Zone de santé de la province sélectionnée | Zone de santé de la province sélectionnée |
-|  | Models | Modèles | Modèles |
+| last item of the Models menu, opens the model descriptions | About the models… | À propos des modèles… | À propos des modèles… |
 | hover text of the EN/FR switch | Language | Langue | Langue |
 
 ## Header / panel labels
 
 | Where | English | French | Example (French) |
 |---|---|---|---|
-|  | Models | Modèles | Modèles |
-|  | Model | Modèle | Modèle |
+| label before the Models menu | Models | Modèles | Modèles |
+| label before the map model selector | Model | Modèle | Modèle |
+| note in the panels and the map subtitle when no model is ticked | No model ticked: choose in Models | Aucun modèle coché : choisir dans Modèles | Aucun modèle coché : choisir dans Modèles |
+| the same note when the ticked models are not in the round shown | None of the ticked models submitted this round: choose in Models | Aucun des modèles cochés n’a soumis pour ce cycle : choisir dans Modèles | Aucun des modèles cochés n’a soumis pour ce cycle : choisir dans Modèles |
 
 ## Preview marks (preview copy)
 
@@ -94,26 +96,24 @@ Try it: the French interface is on the live dashboard, add `?lang=fr` to the add
 |---|---|---|---|
 | label of the hub-sourced ensemble wherever models are listed | Hub ensemble | Ensemble multimodèle | Ensemble multimodèle |
 | label of the ensemble computed by the dashboard wherever models are listed | Dashboard ensemble | Ensemble du tableau de bord | Ensemble du tableau de bord |
-| suffix after the ensemble name in the cumulative menu and tooltips *(one)* | (pools {n} model) | (regroupe {n} modèle) | (regroupe 1 modèle) |
-| suffix after the ensemble name in the cumulative menu and tooltips *(other)* | (pools {n} models) | (regroupe {n} modèles) | (regroupe 3 modèles) |
+| suffix after the ensemble name in the Models menu and tooltips *(one)* | (pools {n} model) | (regroupe {n} modèle) | (regroupe 1 modèle) |
+| suffix after the ensemble name in the Models menu and tooltips *(other)* | (pools {n} models) | (regroupe {n} modèles) | (regroupe 3 modèles) |
 
-## Model menus
+## Models menu (header)
 
 | Where | English | French | Example (French) |
 |---|---|---|---|
-| top of the weekly-chart model menu | Ensemble median always shown | La médiane de l’ensemble multimodèle est toujours affichée | La médiane de l’ensemble multimodèle est toujours affichée |
-| second hint line of the weekly-chart model menu (ensemble size) | pools {n} models for {loc} | regroupe {n} modèles pour {loc} | regroupe 3 modèles pour Ituri |
-| ensemble entry in the weekly-chart model menu | Ensemble 50% and 95% intervals | Intervalles à 50 % et 95 % de l’ensemble multimodèle | Intervalles à 50 % et 95 % de l’ensemble multimodèle |
+| top of the Models menu | Weekly chart always shows the ensemble median | Le graphique hebdomadaire affiche toujours la médiane de l’ensemble multimodèle | Le graphique hebdomadaire affiche toujours la médiane de l’ensemble multimodèle |
+| continues that hint line (ensemble size) | pools {n} models for {loc} | regroupe {n} modèles pour {loc} | regroupe 3 modèles pour Ituri |
 | hover text of a greyed-out model | No submission for {loc} | Pas de soumission pour {loc} | Pas de soumission pour Ituri |
-| model menu when the round has no submission | No submissions in this round | Aucune soumission dans ce cycle de projection | Aucune soumission dans ce cycle de projection |
-| model menu button *(one)* | Ensemble + {n} model | Ensemble + {n} modèle | Ensemble + 1 modèle |
-| model menu button *(other)* | Ensemble + {n} models | Ensemble + {n} modèles | Ensemble + 3 modèles |
-| model menu button | Ensemble + interval | Ensemble + intervalle | Ensemble + intervalle |
-| model menu button | Ensemble | Ensemble | Ensemble |
-| model menu button | none | aucun | aucun |
-| model menu button | All models | Tous les modèles | Tous les modèles |
-| model menu button *(one)* | {n} model | {n} modèle | 1 modèle |
-| model menu button *(other)* | {n} models | {n} modèles | 3 modèles |
+| Models menu when the round has no submission | No submissions in this round | Aucune soumission dans ce cycle de projection | Aucune soumission dans ce cycle de projection |
+| Models menu button *(one)* | Ensemble + {n} model | Ensemble + {n} modèle | Ensemble + 1 modèle |
+| Models menu button *(other)* | Ensemble + {n} models | Ensemble + {n} modèles | Ensemble + 3 modèles |
+| Models menu button | Ensemble | Ensemble | Ensemble |
+| Models menu button and map model selector | none | aucun | aucun |
+| Models menu button | All models | Tous les modèles | Tous les modèles |
+| Models menu button *(one)* | {n} model | {n} modèle | 1 modèle |
+| Models menu button *(other)* | {n} models | {n} modèles | 3 modèles |
 
 ## Weekly chart
 
@@ -131,6 +131,8 @@ Try it: the French interface is on the live dashboard, add `?lang=fr` to the add
 | legend (dashboard-computed ensemble) | Dashboard ensemble median | Médiane de l’ensemble du tableau de bord | Médiane de l’ensemble du tableau de bord |
 | legend (dashboard-computed ensemble) | Dashboard ensemble median + 50% and 95% intervals | Médiane de l’ensemble du tableau de bord + intervalles à 50 % et 95 % | Médiane de l’ensemble du tableau de bord + intervalles à 50 % et 95 % |
 | legend | week on map | semaine sur la carte | semaine sur la carte |
+| hover text of a model in the weekly legend and of a model name in the Trend tab | Click to show this model on the map | Cliquer pour afficher ce modèle sur la carte | Cliquer pour afficher ce modèle sur la carte |
+| the same hover text for the model shown on the map | Shown on the map | Affiché sur la carte | Affiché sur la carte |
 | message over the chart when the ticked models lack the location *(one)* | None of the selected models covers {loc} — One model submitted it in this round: {list}. Tick it in the Models menu. | Aucun des modèles sélectionnés ne couvre {loc} — Un modèle l’a soumise dans ce cycle de projection : {list}. Cochez-le dans le menu Modèles. | Aucun des modèles sélectionnés ne couvre Ituri — Un modèle l’a soumise dans ce cycle de projection : OHTJHU-BM, CEPH-Rtrend_BDBV. Cochez-le dans le menu Modèles. |
 | message over the chart when the ticked models lack the location *(other)* | None of the selected models covers {loc} — {n} models submitted it in this round: {list}. Tick them in the Models menu. | Aucun des modèles sélectionnés ne couvre {loc} — {n} modèles l’ont soumise dans ce cycle de projection : {list}. Cochez-les dans le menu Modèles. | Aucun des modèles sélectionnés ne couvre Ituri — 3 modèles l’ont soumise dans ce cycle de projection : OHTJHU-BM, CEPH-Rtrend_BDBV. Cochez-les dans le menu Modèles. |
 | message over the chart when no model covers the country | No model output for {loc} — No model submitted a national (CD) series in this round; reported national counts are shown. | Aucun résultat de modèle pour {loc} — Aucun modèle n’a soumis de série nationale (CD) dans ce cycle de projection ; les cas déclarés au niveau national sont affichés. | Aucun résultat de modèle pour Ituri — Aucun modèle n’a soumis de série nationale (CD) dans ce cycle de projection ; les cas déclarés au niveau national sont affichés. |
@@ -160,6 +162,7 @@ Try it: the French interface is on the live dashboard, add `?lang=fr` to the add
 | after each model median in the tooltip: the 50% and 95% ranges | (50%: {r50} · 95%: {r95}) | (50 % : {r50} · 95 % : {r95}) | (50 % : 286–433 · 95 % : 150–720) |
 | tooltip last line | shown on map | affichée sur la carte | affichée sur la carte |
 | tooltip last line | click to show this week on the map | cliquer pour afficher cette semaine sur la carte | cliquer pour afficher cette semaine sur la carte |
+| last line of a cumulative-box tooltip | click to show this model on the map | cliquer pour afficher ce modèle sur la carte | cliquer pour afficher ce modèle sur la carte |
 
 ## Lower-left panel tabs
 
@@ -220,7 +223,7 @@ Try it: the French interface is on the live dashboard, add `?lang=fr` to the add
 |  | Earlier week | Semaine précédente | Semaine précédente |
 |  | Later week | Semaine suivante | Semaine suivante |
 | hover text of the week selector | Week whose cases are mapped (week ending Saturday), with its offset from the projections-from date. Click to pick, or step with the arrows. | Semaine dont les cas sont cartographiés (semaine se terminant le samedi), avec son décalage par rapport à la date des projections. Cliquez pour choisir, ou utilisez les flèches. | Semaine dont les cas sont cartographiés (semaine se terminant le samedi), avec son décalage par rapport à la date des projections. Cliquez pour choisir, ou utilisez les flèches. |
-|  | no models | aucun modèle | aucun modèle |
+| map model selector when the round has no model | no models | aucun modèle | aucun modèle |
 | group heading in the week selector | Nowcast weeks (ending) | Semaines d’estimation en temps réel (fin de semaine) | Semaines d’estimation en temps réel (fin de semaine) |
 | group heading in the week selector | Forecast weeks (ending) | Semaines de prévision (fin de semaine) | Semaines de prévision (fin de semaine) |
 |  | no weeks | aucune semaine | aucune semaine |
@@ -230,7 +233,8 @@ Try it: the French interface is on the live dashboard, add `?lang=fr` to the add
 |  | no week | aucune semaine | aucune semaine |
 | map subtitle | Median cases | Cas (médiane) | Cas (médiane) |
 | map subtitle | P(≥1 case) | P(≥1 cas) | P(≥1 cas) |
-|  | no model | aucun modèle | aucun modèle |
+| map subtitle when the round has no model | no model | aucun modèle | aucun modèle |
+| map subtitle when the mapped model has no output for the mapped week | no output for this week | pas de résultat pour cette semaine | pas de résultat pour cette semaine |
 | map subtitle *(one)* | {n} province without output (dashed) | {n} province sans prévision (hachurée) | 1 province sans prévision (hachurée) |
 | map subtitle *(other)* | {n} provinces without output (dashed) | {n} provinces sans prévision (hachurées) | 3 provinces sans prévision (hachurées) |
 | map subtitle *(one)* | {n} zone without output (dashed) | {n} zone sans prévision (hachurée) | 1 zone sans prévision (hachurée) |
@@ -298,7 +302,7 @@ Try it: the French interface is on the live dashboard, add `?lang=fr` to the add
 | panel name in the menu and button labels | Trend / cumulative cases | Tendance / cas cumulés | Tendance / cas cumulés |
 | panel name in the menu and button labels | Map | Carte | Carte |
 | entry of the panel menu | Reset layout | Réinitialiser la disposition | Réinitialiser la disposition |
-| entry of the panel menu | Copy link to this layout | Copier le lien vers cette disposition | Copier le lien vers cette disposition |
+| entry of the panel menu | Copy link to this view | Copier le lien vers cette vue | Copier le lien vers cette vue |
 | confirmation after copying | Link copied | Lien copié | Lien copié |
 | hover text of the × button in a panel header | Hide: {name} | Masquer : {name} | Masquer : Carte |
 | note shown when every panel is hidden | All panels are hidden. | Tous les panneaux sont masqués. | Tous les panneaux sont masqués. |
