@@ -47,6 +47,9 @@ ENSEMBLE_EXCLUDE = [m.strip() for m in os.environ.get("ENSEMBLE_EXCLUDE", "").sp
 ROUND_NAME = "BDBV 2026 nowcasting and forecasting"
 TARGET = "wk inc confirmed cases"
 QUANTILE_LEVELS = [0.025, 0.1, 0.25, 0.5, 0.75, 0.9, 0.975]
+# Trend classes: a trajectory's week-h value against its own value for the last closed week (R-7)
+# is an increase above (1 + T) x, a decrease below (1 - T) x, stable otherwise.
+TREND_THRESHOLD = 0.10
 HORIZONS = [0, 1, 2, 3]   # horizon 0 = the reference week itself; windows run from week R through R+h
 # A round's data version is the latest as_of on or before reference_date minus this many days
 # (the Tuesday closing the submission window; the Monday 5 pm ET release qualifies).

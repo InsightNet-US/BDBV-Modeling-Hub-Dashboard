@@ -78,6 +78,9 @@ Conventions adoptées, à confirmer :
 | linear pool | regroupement linéaire | mélange linéaire ; combinaison linéaire | **à vérifier**. Méthode de l'ensemble (toutes les trajectoires mises en commun). |
 | · 3 models (tooltip) | · 3 modèles | — | Nombre de modèles ayant soumis la semaine survolée, après le nom de l'ensemble. |
 | models pooled (map tooltip) | modèles regroupés | nombre de modèles | **à vérifier** (sur la branche d’aperçu depuis le 2026-11-05). |
+| Trend (tab) | Tendance | Évolution | **à vérifier** (onglet ajouté le 2026-11-07). Probabilité d'une hausse, d'une stabilité ou d'une baisse des cas hebdomadaires. |
+| Increase (up more than 10%) / Stable (within ±10%) / Decrease (down more than 10%) | Hausse (plus de 10 %) / Stable (à ±10 % près) / Baisse (plus de 10 %) | Augmentation / Stabilité / Diminution | **à vérifier**. Légende de l'onglet Tendance : variation par rapport à la semaine −1, trajectoire par trajectoire. |
+| change from week −1 (±10%) | variation par rapport à la semaine −1 (±10 %) | évolution depuis la semaine −1 | « sem. −1 » dans les étiquettes courtes. |
 | (pools 9 models) | (regroupe 9 modèles) | — | Après le nom de l’ensemble ; « regroupe » comme « regroupement linéaire ». |
 | model / team / submission | modèle / équipe / soumission | — | |
 | submitted (location) | soumis | — | « 7 lieux soumis ». |

@@ -18,7 +18,7 @@ const I18N = ctx.I18N, EN = I18N.en, FR = I18N.fr;
 /* where each key appears, for the reviewer; prefixes give the panel, specific keys refine it */
 const PANEL = { page: 'Page', hdr: 'Header', common: 'Header / panel labels', badge: 'Preview marks (preview copy)', banner: 'Preview marks (preview copy)',
   gate: 'Test-phrase gate (preview copy)', loc: 'Locations', model: 'Models', week: 'Week labels', dd: 'Model menus',
-  ts: 'Weekly chart', tip: 'Weekly chart tooltip', cum: 'Cumulative panel', map: 'Map', drawer: 'Models drawer', foot: 'Footer', panels: 'Panel layout', err: 'Errors' };
+  ts: 'Weekly chart', tip: 'Weekly chart tooltip', lower: 'Lower-left panel tabs', trend: 'Trend tab', cum: 'Cumulative panel', map: 'Map', drawer: 'Models drawer', foot: 'Footer', panels: 'Panel layout', err: 'Errors' };
 const WHERE = {
   months: 'month abbreviations used in every date', 'page.title': 'browser tab title', 'page.desc': 'search-engine description',
   'hdr.subtitle': 'after the title "BDBV Modeling Hub"', 'hdr.roundTitle': 'hover text of the round selector', 'hdr.roundInfo': 'next to the round selector',
@@ -38,6 +38,7 @@ const WHERE = {
   'tip.ensemble': 'tooltip row of the hub-sourced ensemble', 'tip.ensembleDash': 'tooltip row of the dashboard-computed ensemble', 'tip.ensModels': 'after the ensemble label in the tooltip: how many models submitted that week', 'tip.ranges': 'after each model median in the tooltip: the 50% and 95% ranges',
   'tip.shownOnMap': 'tooltip last line', 'tip.clickMap': 'tooltip last line',
   'drawer.tagDash': 'tag after the dashboard-computed ensemble in the Models drawer', 'drawer.dashEnsMethods': 'method paragraph of the dashboard-computed ensemble', 'drawer.dashEnsMembers': 'line under that paragraph listing the pooled models',
+  'lower.title': 'heading of the lower-left panel (read by screen readers only)', 'trend.tab': 'tab button', 'cum.tab': 'tab button', 'trend.sub': 'Trend tab subtitle', 'trend.vs': 'tooltip line under the week', 'trend.inc': 'legend (arrow up)', 'trend.st': 'legend (level arrow)', 'trend.dec': 'legend (arrow down)', 'trend.wk0': 'column heading', 'trend.wkPos': 'column heading', 'trend.ending': 'second line of the column heading and tooltip title', 'trend.ensShort': 'short ensemble label when the panel is narrow', 'trend.empty': 'italic note',
   'cum.sub': 'cumulative panel subtitle', 'cum.toDate': 'section heading (shown in capitals)', 'cum.eventual': 'section heading (shown in capitals)', 'cum.nowcastCat': 'row label', 'cum.fcCat0': 'row label', 'cum.fcCat': 'row label',
   'cum.noNowcast': 'italic note next to a hollow dot', 'cum.noNowcastShort': 'short form of the same note when the panel is narrow', 'cum.colHead': 'small header above the number column of the cumulative panel', 'cum.notSubmitted': 'italic note', 'cum.noOutput': 'italic note', 'cum.noSub': 'italic note', 'cum.nowcastTip': 'tooltip of a nowcast box', 'cum.fcTip0': 'tooltip of a forecast box', 'cum.fcTip': 'tooltip of a forecast box',
   'map.levelTitle': 'hover text of the Provinces / Health zones switch', 'map.weekTitle': 'hover text of the week selector', 'map.nowcastWeeks': 'group heading in the week selector', 'map.forecastWeeks': 'group heading in the week selector',
