@@ -39,16 +39,14 @@ function colorForP(p) {
   return mix(P_STOPS[i], P_STOPS[i + 1], x - i);
 }
 const P_GRADIENT = `linear-gradient(90deg,${P_STOPS.join(',')})`;
-const N_GRADIENT = 'linear-gradient(90deg,#12324a,#1e5f86,#2f9e5e,#f2c14e,#e8683f,#c0392b)';
-
-/* 0..1 -> multi-hue ramp for case counts (log-scaled by the caller) */
+/* 0..1 -> light-to-dark red sequential ramp for case counts (log-scaled by the caller); the stops are
+   sampled from the legend of the INRB epidemic dashboard (inrb-umie.github.io/BDBV2026-Epidemic_Dashboard)
+   so that the two maps read alike. A median of 0 gets ZERO_FILL, also as there. */
+const N_STOPS = ['#fff5eb', '#fee0c2', '#fdc395', '#fda16a', '#fc7e4a', '#f2593c', '#de372c', '#bc1d1d', '#8c1111'];
+const N_GRADIENT = `linear-gradient(90deg,${N_STOPS.join(',')})`;
+const ZERO_FILL = '#c4bfb6';
 function colorFor(p) {
-  const stops = [[0.0, [18, 50, 74]], [0.25, [30, 95, 134]], [0.5, [47, 158, 94]], [0.7, [242, 193, 78]], [0.85, [232, 104, 63]], [1.0, [192, 57, 43]]];
   p = Math.max(0, Math.min(1, p));
-  for (let i = 1; i < stops.length; i++) if (p <= stops[i][0]) {
-    const a = stops[i - 1], b = stops[i], t = (p - a[0]) / (b[0] - a[0]);
-    const c = a[1].map((v, k) => Math.round(v + (b[1][k] - v) * t));
-    return `rgb(${c[0]},${c[1]},${c[2]})`;
-  }
-  return 'rgb(192,57,43)';
+  const x = p * (N_STOPS.length - 1), i = Math.min(N_STOPS.length - 2, Math.floor(x));
+  return mix(N_STOPS[i], N_STOPS[i + 1], x - i);
 }

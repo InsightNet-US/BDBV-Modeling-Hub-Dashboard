@@ -44,6 +44,11 @@ ENSEMBLE_MIN_MODELS = int(os.environ.get("ENSEMBLE_MIN_MODELS", "2"))
 # Model ids never pooled into the dashboard ensemble (comma-separated), on top of any hub ensemble.
 ENSEMBLE_EXCLUDE = [m.strip() for m in os.environ.get("ENSEMBLE_EXCLUDE", "").split(",") if m.strip()]
 
+# Corrections to the province (parent) of hub health zones, applied when locations.csv is read; an entry is a
+# no-op once the hub's own file agrees. Manika (CD-HK-19) is a Kolwezi zone in Lualaba (GRID3, INRB, INSP);
+# the hub lists it under Haut Katanga, a leftover of the former Katanga province. The code is unchanged.
+PARENT_OVERRIDES = {"CD-HK-19": "Lualaba"}
+
 ROUND_NAME = "BDBV 2026 nowcasting and forecasting"
 TARGET = "wk inc confirmed cases"
 QUANTILE_LEVELS = [0.025, 0.1, 0.25, 0.5, 0.75, 0.9, 0.975]

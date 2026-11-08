@@ -100,7 +100,7 @@ function locValue(code) {
 /** subtitle key, legend ends and gradient per metric (kept together so they cannot drift apart) */
 function metricInfo() {
   if (S.mapMetric === 'presence') return { sub: 'map.subPresence', lo: fmtPct(0), hi: fmtPct(1), gradient: P_GRADIENT };
-  return { sub: 'map.subMedian', lo: '0', hi: fmtN(scale.vmax), gradient: N_GRADIENT };
+  return { sub: 'map.subMedian', lo: '1', hi: fmtN(scale.vmax), gradient: N_GRADIENT, zero: true };
 }
 let scale = { vmax: 1 };
 function featStyle(f, level) {
@@ -109,7 +109,8 @@ function featStyle(f, level) {
   const w = selected ? SEL_W[level] : level === 'hz' ? 0.6 : 1;
   if (!code) return { color: '#9aa3ad', weight: 0.5, dashArray: '2 3', fillColor: '#eceff3', fillOpacity: 0.3 };
   if (v == null) return { color: selected ? '#0b0f14' : '#6b7684', weight: w, dashArray: selected ? null : '3 3', fillColor: '#e6e9ee', fillOpacity: 0.5 };
-  const fill = S.mapMetric === 'presence' ? colorForP(v) : colorFor(Math.log1p(v) / Math.log1p(scale.vmax));
+  // cases: log scale from 1 (lightest; medians below 1 too) to the layer's maximum; a median of 0 is grey
+  const fill = S.mapMetric === 'presence' ? colorForP(v) : v === 0 ? ZERO_FILL : colorFor(scale.vmax > 1 ? Math.log(Math.max(1, v)) / Math.log(scale.vmax) : 0);
   return { color: '#0b0f14', weight: w, dashArray: null, fillColor: fill, fillOpacity: 0.8 };
 }
 /* dissolved province outline on the zone layer: heavier for the province in focus */
@@ -164,5 +165,6 @@ function drawMap() {
   document.getElementById('legLo').textContent = mi.lo;
   document.getElementById('legHi').textContent = mi.hi;
   document.querySelector('.map .legend .bar').style.background = mi.gradient;
+  document.getElementById('legZero').style.display = mi.zero ? '' : 'none';
   if (!mapFitted) { fitProvince(null); mapFitted = true; }
 }

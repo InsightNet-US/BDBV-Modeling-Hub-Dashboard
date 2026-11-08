@@ -1,3 +1,2 @@
-pyshp>=2.3
 shapely>=2
 requests>=2.31

@@ -281,7 +281,7 @@ Try it: the French interface is on the live dashboard, add `?lang=fr` to the add
 | footer provenance (ISO date kept) | latest target data as of {d} | dernières données observées au {d} | dernières données observées au 24 oct. |
 | footer provenance | built {d} | mis à jour le {d} | mis à jour le 24 oct. |
 |  | Boundaries:  | Limites administratives :  | Limites administratives :  |
-|  |  (ODbL) ·  |  (ODbL) ·  |  (ODbL) ·  |
+|  |  (DRC Ministry of Health zones, as on the INRB dashboard) ·  |  (zones de santé du ministère de la Santé, comme sur le tableau de bord de l’INRB) ·  |  (zones de santé du ministère de la Santé, comme sur le tableau de bord de l’INRB) ·  |
 |  | Hub repository | Dépôt du hub | Dépôt du hub |
 |  | Partners | Partenaires | Partenaires |
 | hover text of the INSP + KSPH logos | Institut National de Santé Publique (DRC), the Kinshasa School of Public Health and ANICNS | Institut National de Santé Publique (RDC), École de Santé Publique de Kinshasa et ANICNS | Institut National de Santé Publique (RDC), École de Santé Publique de Kinshasa et ANICNS |

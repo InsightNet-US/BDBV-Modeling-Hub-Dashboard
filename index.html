@@ -110,7 +110,7 @@
       <span class="stepper" id="mapWeekSelStep"><button type="button" class="step" data-dir="-1" aria-label="Earlier week" title="Earlier week" data-i18n-aria="map.earlierWeek" data-i18n-title="map.earlierWeek"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 5 8 12 15 19"/></svg></button><select id="mapWeekSel" class="stepsel" title="Week whose cases are mapped (week ending Saturday), with its offset from the projections-from date. Click to pick, or step with the arrows." data-i18n-title="map.weekTitle"></select><button type="button" class="step" data-dir="1" aria-label="Later week" title="Later week" data-i18n-aria="map.laterWeek" data-i18n-title="map.laterWeek"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 5 16 12 9 19"/></svg></button></span>
       <span class="sub" id="mapSub"></span>
       <div class="spacer"></div>
-      <div class="legend"><span id="legLo">0</span><span class="bar"></span><span id="legHi">1</span></div>
+      <div class="legend"><span id="legLo">0</span><span class="bar"></span><span id="legHi">1</span><span class="chip" id="legZero"><i style="background:#c4bfb6"></i>0</span></div>
     </div>
     <div id="mapWrap" style="position:relative;flex:1;min-height:0;display:flex"><div id="map"></div></div>
   </section>
@@ -120,7 +120,7 @@
 <footer>
   <div class="footinfo">
     <span id="footProv"></span>
-    <span><span data-i18n="foot.boundaries">Boundaries: </span><a href="https://www.geoboundaries.org/" target="_blank" rel="noopener">geoBoundaries</a><span data-i18n="foot.odbl"> (ODbL) · </span><a href="https://github.com/InsightNet-US/BDBV-Modeling-Hub" target="_blank" rel="noopener" data-i18n="foot.hubRepo">Hub repository</a></span>
+    <span><span data-i18n="foot.boundaries">Boundaries: </span><a href="https://data.grid3.org/datasets/GRID3::grid3-cod-health-zones-v8-0" target="_blank" rel="noopener">GRID3 COD Health Zones v8.0</a><span data-i18n="foot.grid3"> (DRC Ministry of Health zones, as on the INRB dashboard) · </span><a href="https://github.com/InsightNet-US/BDBV-Modeling-Hub" target="_blank" rel="noopener" data-i18n="foot.hubRepo">Hub repository</a></span>
   </div>
   <span class="partners" aria-label="Partners" data-i18n-aria="foot.partners">
     <span class="partner-group" title="Institut National de Santé Publique (DRC), the Kinshasa School of Public Health and ANICNS" data-i18n-title="foot.pgInsp">
