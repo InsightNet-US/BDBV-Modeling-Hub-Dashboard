@@ -142,6 +142,16 @@ body.brushing[data-brush=pan],body.brushing[data-brush=pan] *{cursor:grabbing!im
 .legend .bar{height:10px;width:120px;border-radius:3px;background:linear-gradient(90deg,#12324a,#1e5f86,#2f9e5e,#f2c14e,#e8683f,#c0392b)}
 .chip{display:inline-flex;align-items:center;gap:5px;font-size:11px;color:var(--muted);white-space:nowrap}
 .chip i{width:10px;height:10px;border-radius:3px;display:inline-block;flex-shrink:0}
+/* legend chips of ticked models: click to show that model on the map; the mapped one is bold with a pin */
+.chip.pick{cursor:pointer;border-radius:4px;padding:1px 3px;margin:-1px -3px}
+.chip.pick:hover{background:var(--panel-2);color:var(--ink)}
+.chip.pick:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.chip.onmap{color:var(--ink);font-weight:600}
+.chip .pin{color:var(--accent);flex-shrink:0}
+#cumChart .mhit,#cumChart .cbox{cursor:pointer}
+#modelPanel{width:max-content;max-width:min(360px,calc(100vw - 24px));max-height:60vh;overflow:auto}
+#modelPanel label,#modelPanel .hint{white-space:normal}
+.msel:disabled{color:var(--muted)}
 .horizonval{color:var(--ink);font-weight:600}
 .empty{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;color:var(--muted);font-size:12px;padding:20px;pointer-events:none}
 .empty b{font-size:14px;color:#3b4654;margin-bottom:4px}
@@ -159,6 +169,12 @@ svg text{fill:var(--muted);font-size:10px}
 .leaflet-container{font-family:var(--font)}
 .leaflet-container a{color:var(--accent)}
 
+.ribbon{display:flex;align-items:baseline;gap:10px;padding:4px 20px;flex-shrink:0;border-top:1px solid var(--line);background:var(--panel);font-size:11px}
+.ribbon .rlabel{font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);flex-shrink:0}
+.ribbon .chips{display:flex;flex-wrap:wrap;align-items:center;gap:3px 14px;min-width:0}
+.ribbon .chip{user-select:none;-webkit-user-select:none}
+.chip.off{opacity:.4}.chip.off i{filter:grayscale(1)}
+.chip.nodata{font-style:italic}
 footer{display:flex;align-items:center;gap:24px;padding:4px 20px;min-height:var(--footer-h);flex-shrink:0;font-size:11px;color:var(--muted);border-top:1px solid var(--line);background:#f7f9fb;overflow:hidden}
 @media (max-width:1000px){ footer{flex-wrap:wrap;gap:6px 24px} }
 footer .spacer{flex:1}
@@ -198,6 +214,7 @@ footer .spacer{flex:1}
 
 @media (max-width:1000px){
   body{height:auto}
+  .ribbon{position:sticky;bottom:0;z-index:1100}
   .grid{grid-template-columns:1fr;grid-template-rows:auto 520px;flex:none;gap:14px}
   .left{gap:14px}.ts{flex:none;height:400px}.cum{max-height:none}
   .split{display:none}

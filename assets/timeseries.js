@@ -1,7 +1,8 @@
 /* Weekly confirmed cases by week of symptom onset: reported counts from the latest release (the part
    known at round time in blue, cases reported since the round stacked on top in a lighter blue),
    nowcast/forecast from the ensemble (hub or dashboard; dotted outline + optional interval) and
-   selected team models (points + 50% and 95% intervals). */
+   selected team models (points + 50% and 95% intervals). The legend keys the chart only; the models'
+   colours are in the ribbon above the footer (app.js drawRibbon). */
 function drawTS() {
   const svg = document.getElementById('tsChart'), empty = document.getElementById('tsEmpty');
   const R = S.roundRef, loc = S.location, maxH = Math.max(0, ...(S.manifest.horizons || [3]));
@@ -30,8 +31,8 @@ function drawTS() {
 
   // models
   const ens = S.ensembleId ? modelLoc(S.ensembleId, loc) : null;
-  const showEnsCI = !!(ens && S.tsSelected.has(S.ensembleId)), dash = S.ensembleSource === 'dashboard';
-  const teams = roundModels().filter(id => id !== S.ensembleId && S.tsSelected.has(id)).map(id => ({ id, name: modelLabel(id), color: modelColor(id), m: modelLoc(id, loc) })).filter(tm => tm.m);
+  const showEnsCI = !!(ens && isTicked(S.ensembleId)), dash = S.ensembleSource === 'dashboard';
+  const teams = selectedModels().filter(id => id !== S.ensembleId).map(id => ({ id, name: modelLabel(id), color: modelColor(id), m: modelLoc(id, loc) })).filter(tm => tm.m);
   const anyModel = ens || teams.length;
   const qAt = (m, w) => { const i = m.weeks.indexOf(w); return i < 0 ? null : m.q[i]; };
 
@@ -40,7 +41,6 @@ function drawTS() {
     + (older ? `<span class="chip"><i style="background:var(--since)"></i>${t('ts.leg.since', { d: fmtDate(latestAsOf) })}</span>` : '')
     + `<span class="chip"><i style="background:repeating-linear-gradient(135deg,var(--past) 0 2px,#fff 2px 4px)"></i>${t('ts.leg.inProgress')}</span>`
     + (ens ? `<span class="chip"><i style="border:1.5px dashed var(--median);background:transparent"></i>${dash ? t(showEnsCI ? 'ts.leg.ensMedianCIDash' : 'ts.leg.ensMedianDash') : t(showEnsCI ? 'ts.leg.ensMedianCI' : 'ts.leg.ensMedian')}</span>` : '')
-    + teams.map(tm => `<span class="chip"><i style="background:${tm.color}"></i>${tm.name}</span>`).join('')
     + (mapIdx >= 0 ? `<span class="chip"><i style="background:var(--accent);opacity:.35"></i>${t('ts.leg.weekOnMap')}</span>` : '');
 
   if (S.round && !anyModel && roundModels().length) {

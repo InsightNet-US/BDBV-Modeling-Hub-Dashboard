@@ -36,8 +36,11 @@
     <select id="locSel" title="Country or province" data-i18n-title="hdr.locTitle"></select>
     <select id="hzSel" class="hidden" title="Health zone within the selected province" data-i18n-title="hdr.hzTitle"></select>
   </div>
+  <div class="ctrl">
+    <span data-i18n="common.models">Models</span>
+    <div class="dd" id="modelDD"><button class="linkbtn ddarrow" id="modelBtn" type="button" aria-haspopup="true" aria-expanded="false">Models ▾</button><div class="ddpanel" id="modelPanel"></div></div>
+  </div>
   <div class="toggle small hidden" id="langToggle" title="Language" data-i18n-title="hdr.langTitle"><button type="button" data-lang="en" class="active" lang="en">EN</button><button type="button" data-lang="fr" lang="fr">FR</button></div>
-  <button class="linkbtn" id="modelsBtn" type="button" data-i18n="hdr.models">Models</button>
   <div class="dd" id="panelsDD"><button class="linkbtn ddarrow" id="panelsBtn" type="button" aria-haspopup="true" aria-expanded="false"><span data-i18n="panels.btn">Panels</span> ▾</button><div class="ddpanel right" id="panelsPanel"></div></div>
   </div>
 </header>
@@ -50,11 +53,6 @@
     <div class="hd">
       <span class="pbtns"><button type="button" class="pbtn hide" data-panel="weekly">×</button></span>
       <h2 data-i18n="ts.title">Weekly confirmed cases</h2>
-      <span class="tlabel" data-i18n="common.models">Models</span>
-      <div class="dd" id="tsModelDD">
-        <button class="ddbtn" id="tsModelBtn" type="button">Models ▾</button>
-        <div class="ddpanel" id="tsModelPanel"></div>
-      </div>
       <span class="sub" id="tsSub"></span>
       <div class="spacer"></div>
       <span class="legend" id="tsLegend"></span>
@@ -78,11 +76,6 @@
       </div>
       <span class="sub" id="cumSub"></span>
       <div class="spacer"></div>
-      <span class="tlabel" data-i18n="common.models">Models</span>
-      <div class="dd" id="cumModelDD">
-        <button class="ddbtn" id="cumModelBtn" type="button">Models ▾</button>
-        <div class="ddpanel" id="cumModelPanel"></div>
-      </div>
     </div>
     <div class="bd" style="padding-top:6px">
       <div class="legend" id="trendLegend"></div>
@@ -116,6 +109,8 @@
   </section>
   <div id="allHidden"><span data-i18n="panels.allHidden">All panels are hidden.</span><button type="button" class="linkbtn" id="showPanels" data-i18n="panels.show">Show panels</button></div>
 </div>
+
+<div class="ribbon hidden" id="modelRibbon" role="group" aria-label="Models" data-i18n-aria="common.models"><span class="rlabel" data-i18n="common.models">Models</span><span class="chips" id="ribbonChips"></span></div>
 
 <footer>
   <div class="footinfo">

@@ -18,7 +18,7 @@ function drawCum() {
   const reportedRound = older && Object.keys(obs).length ? sumTo(obs) : null;   // known at round time (null: same release)
   sub.textContent = t('cum.sub', { loc: locName(loc), d: fmtDate(upTo, true) });
 
-  const sel = roundModels().filter(id => S.cumSelected.has(id)).map(id => ({ id, name: id === S.ensembleId ? ensLabelN(loc) : modelLabel(id), color: modelColor(id), m: modelLoc(id, loc) })).filter(tm => tm.m);
+  const sel = selectedModels().map(id => ({ id, name: id === S.ensembleId ? ensLabelN(loc) : modelLabel(id), color: modelColor(id), m: modelLoc(id, loc) })).filter(tm => tm.m);
   const H_LIST = S.manifest.horizons;
   const n = Math.max(1, sel.length);
   const mLc = LANG === 'fr' ? 190 : 162, mT = 8, mB = 18, gp = 13, ggap = 6;   // wider label gutter for French
@@ -65,8 +65,8 @@ function drawCum() {
       : `<text x="${mLc - 6}" y="${cy - 2}" text-anchor="end" style="${st}">${lines[0]}<tspan x="${mLc - 6}" dy="9.5"${col2 ? ` style="fill:${col2}"` : ''}>${lines[1]}</tspan></text>`; };
   const valTxt = (r, cy) => `<text x="${xM}" y="${cy + 3}" text-anchor="end" style="fill:var(--muted);font-size:8.5px">${r.med}</text>`
     + (showIv && r.iv ? `<text x="${xI}" y="${cy + 3}" text-anchor="end" style="fill:var(--muted);font-size:8px">${r.iv}</text>` : '');
-  const box = (q, r, color, cy, bh, tip) => { bh = bh || 9;
-    return `<g class="cbox" data-tip="${esc(tip)}"><line x1="${px(q[QI.lo95])}" y1="${cy}" x2="${px(q[QI.hi95])}" y2="${cy}" stroke="${color}" stroke-width="1.5" opacity="0.7"/>`
+  const box = (q, r, color, cy, bh, tip, id) => { bh = bh || 9;
+    return `<g class="cbox" data-tip="${esc(tip)}" data-model="${id}"><line x1="${px(q[QI.lo95])}" y1="${cy}" x2="${px(q[QI.hi95])}" y2="${cy}" stroke="${color}" stroke-width="1.5" opacity="0.7"/>`
       + `<line x1="${px(q[QI.lo95])}" y1="${cy - 4}" x2="${px(q[QI.lo95])}" y2="${cy + 4}" stroke="${color}" stroke-width="1.5" opacity="0.7"/>`
       + `<line x1="${px(q[QI.hi95])}" y1="${cy - 4}" x2="${px(q[QI.hi95])}" y2="${cy + 4}" stroke="${color}" stroke-width="1.5" opacity="0.7"/>`
       + `<rect x="${px(q[QI.lo50])}" y="${cy - bh / 2}" width="${Math.max(1, px(q[QI.hi50]) - px(q[QI.lo50]))}" height="${bh}" fill="${color}" fill-opacity="0.35" stroke="${color}" stroke-width="1.2"/>`
@@ -93,14 +93,14 @@ function drawCum() {
   s += section(t('cum.eventual'), yy);
   if (showIv && sel.some(tm => tm.now.iv || tm.fc.some(Boolean))) s += `<text x="${xI}" y="${yy}" text-anchor="end" style="fill:#8a94a3;font-size:8px">${t('cum.colHead')}</text>`;
   yy += 15;
-  if (!sel.length) s += note(t(S.round && roundModels().length ? 'cum.noOutput' : 'cum.noSub'), yy + gp / 2);
+  if (!sel.length) s += note(!S.round || !roundModels().length ? t('cum.noSub') : selectedModels().length ? t('cum.noOutput') : noneTickedNote(), yy + gp / 2);
   // nowcast: closed weeks through the Saturday before the reference date
   { const gTop = yy, gH = n * gp, through = R ? fmtDate(addDays(R, -7)) : '';
     if (mapRel != null && mapRel < 0) s += hl(gTop, gH);
     s += cat(t('cum.nowcastCat', { d: through }), gTop + gH / 2 - 4, 'var(--median)');
     sel.forEach((tm, k) => { const cy = gTop + k * gp + gp / 2;
       if (tm.m.n_nowcast_weeks === 0) s += dot(tm.m.cum_nowcast[QI.med], tm.now, tm.color, cy, true) + note(noNowcastNote(), cy);
-      else s += box(tm.m.cum_nowcast, tm.now, tm.color, cy, 9, tn('cum.nowcastTip', tm.m.n_nowcast_weeks, { name: tm.name, d: through })); });
+      else s += box(tm.m.cum_nowcast, tm.now, tm.color, cy, 9, tn('cum.nowcastTip', tm.m.n_nowcast_weeks, { name: tm.name, d: through }), tm.id); });
     yy += gH + ggap + 6; }
   // forecast horizons: week 0 (reference week, still in progress) through +3
   H_LIST.forEach((h, hi) => { const gTop = yy, gH = n * gp;
@@ -108,12 +108,12 @@ function drawCum() {
     const when = R ? fmtDate(addDays(R, 7 * h)) : '';
     s += cat(h === 0 ? t('cum.fcCat0', { d: when }) : t('cum.fcCat', { n: h, d: when }), gTop + gH / 2 - 4);
     sel.forEach((tm, k) => { const q = tm.m.cum_through_h[h], cy = gTop + k * gp + gp / 2;
-      if (q) s += box(q, tm.fc[hi], tm.color, cy, 9, h === 0 ? t('cum.fcTip0', { name: tm.name, d: when }) : t('cum.fcTip', { name: tm.name, n: h, d: when }));
+      if (q) s += box(q, tm.fc[hi], tm.color, cy, 9, h === 0 ? t('cum.fcTip0', { name: tm.name, d: when }) : t('cum.fcTip', { name: tm.name, n: h, d: when }), tm.id);
       else s += note(t('cum.notSubmitted'), cy); });
     yy += gH + ggap; });
   svg.innerHTML = s;
   svg.querySelectorAll('.cbox').forEach(g => {
-    g.addEventListener('mousemove', e => showTip(`<b>${g.dataset.tip}</b>`, e.clientX, e.clientY));
+    g.addEventListener('mousemove', e => showTip(`<b>${g.dataset.tip}</b><div class="sm" style="margin-top:4px">${t(g.dataset.model === S.mapModel ? 'ts.leg.onMap' : 'tip.clickModelMap')}</div>`, e.clientX, e.clientY));
     g.addEventListener('mouseleave', hideTip);
   });
 }

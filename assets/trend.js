@@ -3,7 +3,8 @@
    to +3, each against the same trajectory's week −1 (±10%; pipeline/summarize.py trend_probs). Each
    cell is a fan: a dot with three arrows to the right, up at 45° (increase), level (stable) and down
    at 45° (decrease), each arrow's width and shading growing with its probability. Same #cumChart SVG and
-   model menu (S.cumSelected) as the cumulative tab. */
+   ticked models (selectedModels(), header Models menu) as the other panels; clicking a model's name puts
+   it on the map. */
 const TREND = ['inc', 'st', 'dec'], T_IDX = { dec: 0, st: 1, inc: 2 };   // trend arrays are [dec, stable, inc]
 const T_ARROW = { inc: { ang: -45, c: '#e07b39' }, st: { ang: 0, c: '#5f6b7a' }, dec: { ang: 45, c: '#2a9d8f' } };
 /** one arrow of length R from the centre; opacity reaches full at p = 0.75, width grows to 1 + wMax */
@@ -29,8 +30,8 @@ function drawTrend() {
   const W = svg.clientWidth || 360, loc = S.location, R0 = S.roundRef, mapRel = weekRel(S.mapWeek);
   document.getElementById('cumSub').textContent = t('trend.sub', { loc: locName(loc) });
   legend.innerHTML = TREND.map(k => `<span class="chip">${trendArrowSVG(k)}${t('trend.' + k)}</span>`).join('');
-  const sel = R0 ? roundModels().filter(id => S.cumSelected.has(id)).map(id => ({ id, m: modelLoc(id, loc) })).filter(x => x.m && x.m.trend) : [];
-  if (!sel.length) { svg.setAttribute('height', 30); svg.innerHTML = `<text x="8" y="20" style="font-size:11px;fill:#5f6b7a;font-style:italic">${t('trend.empty')}</text>`; return; }
+  const sel = R0 ? selectedModels().map(id => ({ id, m: modelLoc(id, loc) })).filter(x => x.m && x.m.trend) : [];
+  if (!sel.length) { svg.setAttribute('height', 30); svg.innerHTML = `<text x="8" y="20" style="font-size:11px;fill:#5f6b7a;font-style:italic">${R0 && !selectedModels().length && roundModels().length ? noneTickedNote() : t('trend.empty')}</text>`; return; }
   const HS = S.manifest.horizons, narrow = W < 520, fs = narrow ? 9.5 : 10, mR = 6, mT = 30;
   // label gutter sized to the longest label (canvas measureText, same font as the SVG), at most 30% of the width; longer labels are cut with an ellipsis
   const family = getComputedStyle(svg).fontFamily;
@@ -49,7 +50,10 @@ function drawTrend() {
     s += `<text x="${cx}" y="12" text-anchor="middle" style="font-size:10.5px;font-weight:600;fill:#1b2430">${trendWeek(h)}</text>`;
     s += `<text x="${cx}" y="24" text-anchor="middle" style="font-size:9px;fill:#5f6b7a">${narrow ? end : t('trend.ending', { d: end })}</text>`; });
   sel.forEach((x, i) => { const y = mT + i * rowH + rowH / 2;
-    s += `<text x="${mL - 8}" y="${y + 3.5}" text-anchor="end" style="font-size:${fs}px;${x.ens ? 'font-weight:600;fill:var(--median)' : `fill:${modelColor(x.id)}`}">${x.short ? `<title>${esc(x.name)}</title>` : ''}${esc(x.short || x.name)}</text>`;
+    const onMap = x.id === S.mapModel;
+    s += `<text x="${mL - 8}" y="${y + 3.5}" text-anchor="end" style="font-size:${fs}px;${x.ens ? 'font-weight:600;fill:var(--median)' : `fill:${modelColor(x.id)}`}${onMap ? ';text-decoration:underline' : ''}">${esc(x.short || x.name)}</text>`;
+    // the label gutter is the click target that puts the model on the map (app.js wireMapPick)
+    s += `<rect class="mhit" data-model="${x.id}" x="0" y="${y - rowH / 2}" width="${mL - 2}" height="${rowH}" fill="transparent"><title>${esc(x.name)} · ${t(onMap ? 'ts.leg.onMap' : 'ts.leg.mapTitle')}</title></rect>`;
     HS.forEach((h, j) => { const p = x.m.trend[h], cx = mL + (j + 0.5) * colW, fx = showPct ? cx - R * 0.75 : cx - R / 2;
       if (!p) { s += `<text x="${cx}" y="${y + 3}" text-anchor="middle" style="font-size:10px;fill:#8a94a3">—</text>`; return; }
       s += trendFan(fx, y, R, p);
