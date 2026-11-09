@@ -64,7 +64,7 @@ small JSON summaries under `data/`, and a GitHub Action rebuilds and deploys to 
   projections were made (reference date). Each round is paired with the latest target-data release on or before the Tuesday
   closing its submission window (`reference_date - 4 days`). Models are summarised against that version
   (nowcast cumulative fill, header "data as of"), while reported counts in the charts always come from the
-  latest release; the weekly-chart subtitle names both dates when they differ.
+  latest release; the weekly-chart legend names both dates when they differ (its subtitle is just the location).
 
 ## Live and preview copies
 

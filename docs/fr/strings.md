@@ -119,9 +119,6 @@ Try it: the French interface is on the live dashboard, add `?lang=fr` to the add
 | Where | English | French | Example (French) |
 |---|---|---|---|
 |  | Weekly confirmed cases | Cas confirmés hebdomadaires | Cas confirmés hebdomadaires |
-| weekly-chart subtitle | reference date {d} | date de référence {d} | date de référence 24 oct. |
-| weekly-chart subtitle (ISO date kept as a data-version identifier) | data as of {d} | données au {d} | données au 24 oct. |
-| weekly-chart subtitle when the round shown is older than the latest release (ISO date kept) | round data version {d} | version des données du cycle de projection {d} | version des données du cycle de projection 24 oct. |
 | legend | reported (as of {d}) | déclarés (au {d}) | déclarés (au 24 oct.) |
 | legend | week in progress | semaine en cours | semaine en cours |
 | legend when the round shown is older than the latest release | reported since (as of {d}) | déclarés depuis (au {d}) | déclarés depuis (au 24 oct.) |
