@@ -48,8 +48,8 @@ small JSON summaries under `data/`, and a GitHub Action rebuilds and deploys to 
   very narrow).
 - **Map** at province or health-zone level, coloured by a model's median cases in a chosen week, or by
   P(at least one case) in that week, or by P(increase): for weeks 0 to +3, the chance of an increase from
-  week −1 under the Trend tab's change threshold (the subtitle names it), on a 0–100% ColorBrewer Oranges
-  scale; choosing it from an earlier week moves the map to week 0, and the tooltip lists the increase,
+  week −1 under the Trend tab's change threshold (the subtitle names it), on a scale diverging at 50%
+  (teal below even odds, near white at 50%, orange above; the legend marks 50%); choosing it from an earlier week moves the map to week 0, and the tooltip lists the increase,
   stable and decrease chances. Cases use a continuous log scale from 0 to the largest median on the
   layer in ColorBrewer YlOrRd (pale yellow to dark red), close to the reds of the
   [INRB epidemic dashboard](https://inrb-umie.github.io/BDBV2026-Epidemic_Dashboard/); unlike there, 0 is

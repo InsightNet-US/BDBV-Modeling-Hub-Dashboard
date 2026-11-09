@@ -39,9 +39,11 @@ function colorForP(p) {
   return mix(P_STOPS[i], P_STOPS[i + 1], x - i);
 }
 const P_GRADIENT = `linear-gradient(90deg,${P_STOPS.join(',')})`;
-/* 0..1 -> ColorBrewer Oranges (the trend fans' "increase" orange) for the probability of an increase */
-const I_STOPS = ['#fff5eb', '#fee6ce', '#fdd0a2', '#fdae6b', '#fd8d3c', '#f16913', '#d94801', '#a63603', '#7f2704'];
-const I_GRADIENT = `linear-gradient(90deg,${I_STOPS.join(',')})`;
+/* 0..1 -> diverging at 0.5 for the probability of an increase: teal below even odds (as the trend fans'
+   "decrease" arrows; ColorBrewer BrBG), near white at 50%, orange above (ColorBrewer Oranges, the "increase"
+   arrows). The legend bar marks the 50% midpoint. */
+const I_STOPS = ['#01665e', '#35978f', '#80cdc1', '#c7eae5', '#f7f7f7', '#fdd0a2', '#fd8d3c', '#d94801', '#7f2704'];
+const I_GRADIENT = `linear-gradient(90deg,transparent calc(50% - 1px),#1b2430 calc(50% - 1px) calc(50% + 1px),transparent calc(50% + 1px)),linear-gradient(90deg,${I_STOPS.join(',')})`;
 function colorForInc(p) {
   p = Math.max(0, Math.min(1, p));
   const x = p * (I_STOPS.length - 1), i = Math.min(I_STOPS.length - 2, Math.floor(x));
