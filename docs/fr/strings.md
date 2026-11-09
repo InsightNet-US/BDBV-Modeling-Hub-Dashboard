@@ -185,7 +185,7 @@ Try it: the French interface is on the live dashboard, add `?lang=fr` to the add
 | legend (arrow up) | Increase (up more than {x}) | Hausse (plus de {x}) | Hausse (plus de {x}) |
 | legend (level arrow) | Stable (within ±{x}) | Stable (à ±{x} près) | Stable (à ±{x} près) |
 | legend (arrow down) | Decrease (down more than {x}) | Baisse (plus de {x}) | Baisse (plus de {x}) |
-| label before the Trend threshold menu (panel header) | Stable within | Stable à | Stable à |
+| label before the Trend threshold menu (panel header) | Change threshold | Seuil de variation | Seuil de variation |
 | group heading in the threshold menu | Percent | Pourcentage | Pourcentage |
 | group heading in the threshold menu | Cases | Cas | Cas |
 | a percent threshold, {x} in the legend and tooltip and in the menu after ± | {n}% | {n} % | 3 % |

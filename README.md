@@ -34,7 +34,7 @@ small JSON summaries under `data/`, and a GitHub Action rebuilds and deploys to 
   after the reference date), drag on empty strip for a new window, double-click to go back to the default.
 - **Trend** (first tab of the lower-left panel, shown by default): for weeks 0 to +3, the chance that
   weekly confirmed cases fall, stay stable or rise compared with week −1, for the ensemble and the ticked
-  team models. "Stable within" in the panel header sets the band: ±10% by default, or another percentage
+  team models. "Change threshold" in the panel header sets the stable band: ±10% by default, or another percentage
   (±5% to ±75%) or a number of cases (±1 to ±100 cases); it is remembered with the layout and in copied
   links (`?trend=p25`, `?trend=c5`). Each cell is a
   fan: a dot with three arrows, up (increase, orange), level (stable, grey) and down (decrease, teal),
