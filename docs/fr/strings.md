@@ -232,6 +232,7 @@ Try it: the French interface is on the live dashboard, add `?lang=fr` to the add
 |  | Health zones | Zones de santé | Zones de santé |
 |  | Median cases | Cas (médiane) | Cas (médiane) |
 |  | P(≥1 case) | P(≥1 cas) | P(≥1 cas) |
+| map metric button | P(increase) | P(hausse) | P(hausse) |
 |  | Week | Semaine | Semaine |
 |  | Earlier week | Semaine précédente | Semaine précédente |
 |  | Later week | Semaine suivante | Semaine suivante |
@@ -246,6 +247,10 @@ Try it: the French interface is on the live dashboard, add `?lang=fr` to the add
 |  | no week | aucune semaine | aucune semaine |
 | map subtitle | Median cases | Cas (médiane) | Cas (médiane) |
 | map subtitle | P(≥1 case) | P(≥1 cas) | P(≥1 cas) |
+| map subtitle for the P(increase) metric; {x} = the Trend tab threshold | P(increase of more than {x} from week −1) | P(hausse de plus de {x} par rapport à la semaine −1) | P(hausse de plus de {x} par rapport à la semaine −1) |
+| map subtitle when P(increase) is shown for a week outside 0 to +3 | P(increase) is only for weeks 0 to +3 | P(hausse) seulement pour les semaines 0 à +3 | P(hausse) seulement pour les semaines 0 à +3 |
+| map subtitle when the model has no trend estimate for the week | no trend estimate for this week | pas d’estimation de tendance pour cette semaine | pas d’estimation de tendance pour cette semaine |
+| map tooltip row with the three trend probabilities | vs wk −1 (±{x}) | par rapport à sem. −1 (±{x}) | par rapport à sem. −1 (±{x}) |
 | map subtitle when the round has no model | no model | aucun modèle | aucun modèle |
 | map subtitle when the mapped model has no output for the mapped week | no output for this week | pas de résultat pour cette semaine | pas de résultat pour cette semaine |
 | map subtitle *(one)* | {n} province without output (dashed) | {n} province sans prévision (hachurée) | 1 province sans prévision (hachurée) |

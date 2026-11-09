@@ -24,7 +24,7 @@ function trendGrid() {
     _trendGrids[R] = { pending: true };
     fetch(`data/trend/${R}.json`, { cache: 'no-cache' }).then(r => { if (!r.ok) throw new Error(r.status); return r.json(); })
       .then(d => { _trendGrids[R] = { data: d }; }, () => { _trendGrids[R] = { failed: true }; })
-      .then(() => { if (S.roundRef === R && S.layout.tab === 'trend') drawLower(); });
+      .then(() => { if (S.roundRef !== R) return; if (S.layout.tab === 'trend') drawLower(); if (S.mapMetric === 'increase') drawMap(); });
   }
   return _trendGrids[R];
 }

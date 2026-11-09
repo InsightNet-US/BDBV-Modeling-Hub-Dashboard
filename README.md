@@ -47,7 +47,10 @@ small JSON summaries under `data/`, and a GitHub Action rebuilds and deploys to 
   form a right-aligned column: median, then the 95% interval in parentheses (dropped when the panel is
   very narrow).
 - **Map** at province or health-zone level, coloured by a model's median cases in a chosen week, or by
-  P(at least one case) in that week. Cases use a continuous log scale from 0 to the largest median on the
+  P(at least one case) in that week, or by P(increase): for weeks 0 to +3, the chance of an increase from
+  week −1 under the Trend tab's change threshold (the subtitle names it), on a 0–100% ColorBrewer Oranges
+  scale; choosing it from an earlier week moves the map to week 0, and the tooltip lists the increase,
+  stable and decrease chances. Cases use a continuous log scale from 0 to the largest median on the
   layer in ColorBrewer YlOrRd (pale yellow to dark red), close to the reds of the
   [INRB epidemic dashboard](https://inrb-umie.github.io/BDBV2026-Epidemic_Dashboard/); unlike there, 0 is
   the start of the scale rather than a separate grey. Countries outside the DRC are veiled in grey. The week control (arrows, or click the date to pick) steps through

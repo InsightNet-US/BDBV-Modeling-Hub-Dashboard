@@ -179,6 +179,7 @@ function refreshStepper(selId) {
 function setMapWeek(w) {
   S.mapWeek = w; S.mapRel = weekRel(w) ?? 0;
   const sel = $('mapWeekSel'); if (sel.value !== w) sel.value = w;
+  refreshStepper('mapWeekSel');   // also when set from code (weekly chart click, P(increase) jump)
   sync();
 }
 
@@ -588,9 +589,12 @@ function wire() {
   $('hzSel').addEventListener('change', e => { S.location = e.target.value || locProvince(S.location) || NATIONAL; onLocationChange(); });
   document.querySelectorAll('#layerToggle button').forEach(b => b.addEventListener('click', () => setLayer(b.dataset.l, b.dataset.l === 'hz' ? locProvince(S.location) : null)));
   $('mapWeekSel').addEventListener('change', e => setMapWeek(e.target.value));
-  document.querySelectorAll('#metricToggle button').forEach(b => b.addEventListener('click', () => { S.mapMetric = b.dataset.m; setToggle('metricToggle', 'm', S.mapMetric); drawMap(); }));
+  document.querySelectorAll('#metricToggle button').forEach(b => b.addEventListener('click', () => { S.mapMetric = b.dataset.m; setToggle('metricToggle', 'm', S.mapMetric);
+    // P(increase) exists for weeks 0 to +3 only: from another week, go to week 0 (or the first week after it)
+    if (S.mapMetric === 'increase' && S.roundRef && !mapInTrendWeeks()) { const w = roundWeeks().find(x => x >= S.roundRef); if (w) return setMapWeek(w); }
+    drawMap(); }));
   $('mapModelSel').addEventListener('change', e => pickMapModel(e.target.value));
-  $('trendThr').addEventListener('change', e => { S.layout.trend = e.target.value; saveLayout(); drawLower(); });
+  $('trendThr').addEventListener('change', e => { S.layout.trend = e.target.value; saveLayout(); drawLower(); drawMap(); });
   { // header Models menu: opens under its button, shifted left when it would run off the window
     const btn = $('modelBtn'), panel = $('modelPanel');
     btn.addEventListener('click', e => { e.stopPropagation(); document.querySelectorAll('.ddpanel.open').forEach(p => { if (p !== panel) p.classList.remove('open'); });

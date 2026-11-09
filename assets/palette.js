@@ -39,6 +39,14 @@ function colorForP(p) {
   return mix(P_STOPS[i], P_STOPS[i + 1], x - i);
 }
 const P_GRADIENT = `linear-gradient(90deg,${P_STOPS.join(',')})`;
+/* 0..1 -> ColorBrewer Oranges (the trend fans' "increase" orange) for the probability of an increase */
+const I_STOPS = ['#fff5eb', '#fee6ce', '#fdd0a2', '#fdae6b', '#fd8d3c', '#f16913', '#d94801', '#a63603', '#7f2704'];
+const I_GRADIENT = `linear-gradient(90deg,${I_STOPS.join(',')})`;
+function colorForInc(p) {
+  p = Math.max(0, Math.min(1, p));
+  const x = p * (I_STOPS.length - 1), i = Math.min(I_STOPS.length - 2, Math.floor(x));
+  return mix(I_STOPS[i], I_STOPS[i + 1], x - i);
+}
 /* 0..1 -> ColorBrewer YlOrRd (9 classes, interpolated) for case counts, log-scaled by the caller; a median of
    0 is the pale-yellow start of the scale, not a separate grey, so it does not look like missing data. Close to
    the reds of the INRB epidemic dashboard (inrb-umie.github.io/BDBV2026-Epidemic_Dashboard) without its grey. */
