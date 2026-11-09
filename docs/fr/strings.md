@@ -35,8 +35,7 @@ Try it: the French interface is on the live dashboard, add `?lang=fr` to the add
 |  | Later round | Cycle de projection suivant | Cycle de projection suivant |
 | hover text of the round selector | Submission round: the week projections were made (reference date = Saturday ending that week). Click to pick, or step with the arrows. | Cycle de projection : la semaine où les projections ont été faites (date de référence = samedi clôturant cette semaine). Cliquez pour choisir, ou utilisez les flèches. | Cycle de projection : la semaine où les projections ont été faites (date de référence = samedi clôturant cette semaine). Cliquez pour choisir, ou utilisez les flèches. |
 | round selector when no round has a submission | no rounds yet | aucun cycle de projection pour l’instant | aucun cycle de projection pour l’instant |
-| next to the round selector *(one)* | {n} model · data as of {d} | {n} modèle · données au {d} | 1 modèle · données au 24 oct. |
-| next to the round selector *(other)* | {n} models · data as of {d} | {n} modèles · données au {d} | 3 modèles · données au 24 oct. |
+| next to the round selector | data as of {d} | données au {d} | données au 24 oct. |
 |  | Location | Zone géographique | Zone géographique |
 |  | Country or province | Pays ou province | Pays ou province |
 |  | Health zone within the selected province | Zone de santé de la province sélectionnée | Zone de santé de la province sélectionnée |
@@ -120,9 +119,6 @@ Try it: the French interface is on the live dashboard, add `?lang=fr` to the add
 | Where | English | French | Example (French) |
 |---|---|---|---|
 |  | Weekly confirmed cases | Cas confirmés hebdomadaires | Cas confirmés hebdomadaires |
-| weekly-chart subtitle | reference date {d} | date de référence {d} | date de référence 24 oct. |
-| weekly-chart subtitle (ISO date kept as a data-version identifier) | data as of {d} | données au {d} | données au 24 oct. |
-| weekly-chart subtitle when the round shown is older than the latest release (ISO date kept) | round data version {d} | version des données du cycle de projection {d} | version des données du cycle de projection 24 oct. |
 | legend | reported (as of {d}) | déclarés (au {d}) | déclarés (au 24 oct.) |
 | legend | week in progress | semaine en cours | semaine en cours |
 | legend when the round shown is older than the latest release | reported since (as of {d}) | déclarés depuis (au {d}) | déclarés depuis (au 24 oct.) |

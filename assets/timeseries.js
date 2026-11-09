@@ -36,7 +36,7 @@ function drawTS() {
   const anyModel = ens || teams.length;
   const qAt = (m, w) => { const i = m.weeks.indexOf(w); return i < 0 ? null : m.q[i]; };
 
-  document.getElementById('tsSub').textContent = [locName(loc), R ? t('ts.sub.ref', { d: fmtDate(R, true) }) : '', t('ts.sub.asOf', { d: latestAsOf }), older ? t('ts.sub.roundAsOf', { d: asOf }) : ''].filter(Boolean).join(' · ');
+  document.getElementById('tsSub').textContent = locName(loc);   // round and data dates are in the header strip and the legend
   legend.innerHTML = `<span class="chip"><i style="background:var(--past)"></i>${t('ts.leg.reported', { d: fmtDate(asOf) })}</span>`
     + (older ? `<span class="chip"><i style="background:var(--since)"></i>${t('ts.leg.since', { d: fmtDate(latestAsOf) })}</span>` : '')
     + `<span class="chip"><i style="background:repeating-linear-gradient(135deg,var(--past) 0 2px,#fff 2px 4px)"></i>${t('ts.leg.inProgress')}</span>`

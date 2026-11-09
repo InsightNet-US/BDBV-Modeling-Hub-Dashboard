@@ -64,7 +64,7 @@ small JSON summaries under `data/`, and a GitHub Action rebuilds and deploys to 
   projections were made (reference date). Each round is paired with the latest target-data release on or before the Tuesday
   closing its submission window (`reference_date - 4 days`). Models are summarised against that version
   (nowcast cumulative fill, header "data as of"), while reported counts in the charts always come from the
-  latest release; the weekly-chart subtitle names both dates when they differ.
+  latest release; the weekly-chart legend names both dates when they differ (its subtitle is just the location).
 
 ## Live and preview copies
 
@@ -261,8 +261,7 @@ and the forecast windows are computed trajectory by trajectory, as for a single 
 filling the closed weeks its own model did not submit with the round's reported counts, and a trajectory
 dropping out of a forecast window its model does not cover entirely. Only then are quantiles taken over
 the pool. Locations with fewer than `ENSEMBLE_MIN_MODELS` (2) members get no ensemble entry. The computed
-model is listed among the round's models (`n_models` in the manifest includes it; the header "n models"
-counts team models only, never the ensemble) and is described in the Models drawer with its member list; its metadata entry carries `computed_by: "dashboard"`. Setting the repository
+model is listed among the round's models (`n_models` in the manifest includes it) and is described in the Models drawer with its member list; its metadata entry carries `computed_by: "dashboard"`. Setting the repository
 variable `ENSEMBLE_SOURCE` to `hub` turns it off without a code change.
 
 ## Boundaries (one-off)
