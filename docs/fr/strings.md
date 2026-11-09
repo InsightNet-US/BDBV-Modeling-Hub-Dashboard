@@ -35,8 +35,7 @@ Try it: the French interface is on the live dashboard, add `?lang=fr` to the add
 |  | Later round | Cycle de projection suivant | Cycle de projection suivant |
 | hover text of the round selector | Submission round: the week projections were made (reference date = Saturday ending that week). Click to pick, or step with the arrows. | Cycle de projection : la semaine où les projections ont été faites (date de référence = samedi clôturant cette semaine). Cliquez pour choisir, ou utilisez les flèches. | Cycle de projection : la semaine où les projections ont été faites (date de référence = samedi clôturant cette semaine). Cliquez pour choisir, ou utilisez les flèches. |
 | round selector when no round has a submission | no rounds yet | aucun cycle de projection pour l’instant | aucun cycle de projection pour l’instant |
-| next to the round selector *(one)* | {n} model · data as of {d} | {n} modèle · données au {d} | 1 modèle · données au 24 oct. |
-| next to the round selector *(other)* | {n} models · data as of {d} | {n} modèles · données au {d} | 3 modèles · données au 24 oct. |
+| next to the round selector | data as of {d} | données au {d} | données au 24 oct. |
 |  | Location | Zone géographique | Zone géographique |
 |  | Country or province | Pays ou province | Pays ou province |
 |  | Health zone within the selected province | Zone de santé de la province sélectionnée | Zone de santé de la province sélectionnée |
