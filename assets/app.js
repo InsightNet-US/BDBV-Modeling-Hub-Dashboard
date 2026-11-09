@@ -7,7 +7,7 @@ const S = {
   mapWeek: null, mapRel: 0,   // week shown on the map and its offset in weeks from the reference date
   selPref: null, mapPref: null,   // ticked models (ids, the ensemble as ENS_TOKEN) and the map's pick; null = defaults
   mapMetric: 'median', mapModel: null, mapLayer: 'prov', geoHZ: null,
-  layout: { col: 0.42, row: null, hidden: new Set(), weeks: null, tab: 'trend', fromURL: false },   // panel sizes, visibility, weekly-chart window, lower-left tab
+  layout: { col: 0.42, row: null, hidden: new Set(), weeks: null, tab: 'trend', trend: 'p10', fromURL: false },   // panel sizes, visibility, weekly-chart window, lower-left tab
   cache: {},
   preview: false, previewCopy: false, previewHash: null,   // see the preview block below
 };
@@ -200,11 +200,13 @@ function validWeeks(x) {
 function loadLayout() {
   const L = S.layout, q = new URLSearchParams(location.search);
   try { const st = JSON.parse(localStorage.getItem(LAYOUT_KEY) || 'null');
-    if (st) { if (st.col > 0 && st.col < 1) L.col = st.col; if (st.row > 0 && st.row < 1) L.row = st.row; (st.hidden || []).forEach(p => { if (PANELS.includes(p)) L.hidden.add(p); }); L.weeks = validWeeks(st.weeks); if (LOWER_TABS.includes(st.tab)) L.tab = st.tab; } } catch (e) { /* fine */ }
+    if (st) { if (st.col > 0 && st.col < 1) L.col = st.col; if (st.row > 0 && st.row < 1) L.row = st.row; (st.hidden || []).forEach(p => { if (PANELS.includes(p)) L.hidden.add(p); }); L.weeks = validWeeks(st.weeks); if (LOWER_TABS.includes(st.tab)) L.tab = st.tab; if (TREND_KEYS.includes(st.trend)) L.trend = st.trend; } } catch (e) { /* fine */ }
   const wk = q.get('weeks');
   if (wk != null) { const [a, b] = wk.split(','); const v = validWeeks({ start: (a || '').trim(), end: (b || '').trim() }); if (v) { L.weeks = v; L.fromURL = true; } }
   const tab = q.get('tab');
   if (LOWER_TABS.includes(tab)) { L.tab = tab; L.fromURL = true; }
+  const thr = q.get('trend');
+  if (TREND_KEYS.includes(thr)) { L.trend = thr; L.fromURL = true; }
   const panels = q.get('panels');
   if (panels != null) {
     const shown = panels === 'none' ? [] : panels.split(',').map(x => x.trim()).filter(p => PANELS.includes(p));
@@ -218,10 +220,10 @@ function loadLayout() {
   }
   loadModels(q);
 }
-const LAYOUT_PARAMS = ['panels', 'split', 'weeks', 'tab', 'models', 'mapmodel'];
+const LAYOUT_PARAMS = ['panels', 'split', 'weeks', 'tab', 'trend', 'models', 'mapmodel'];
 function saveLayout() {
   const L = S.layout; L.fromURL = false;
-  try { localStorage.setItem(LAYOUT_KEY, JSON.stringify({ col: L.col, row: L.row, hidden: [...L.hidden], weeks: L.weeks, tab: L.tab })); } catch (e) { /* fine */ }
+  try { localStorage.setItem(LAYOUT_KEY, JSON.stringify({ col: L.col, row: L.row, hidden: [...L.hidden], weeks: L.weeks, tab: L.tab, trend: L.trend })); } catch (e) { /* fine */ }
   saveModels();
   stripLayoutParams();   // the stored layout is now the truth; a reload must not re-seed from a shared link
 }
@@ -242,6 +244,7 @@ function applyLayoutCSS() {
   grid.classList.toggle('all-hidden', h.size === PANELS.length);
   setToggle('lowerTabs', 't', L.tab);
   document.querySelectorAll('#lowerTabs button').forEach(b => b.setAttribute('aria-selected', b.dataset.t === L.tab));
+  $('trendThrWrap').classList.toggle('hidden', L.tab !== 'trend'); $('trendThr').value = L.trend;
   $('vsplit').setAttribute('aria-valuenow', Math.round(L.col * 100));
   $('hsplit').setAttribute('aria-valuenow', Math.round((L.row == null ? rowFraction() : L.row) * 100));
 }
@@ -256,7 +259,7 @@ function applyLayout(user) {
 }
 function setHidden(panel, hidden) { if (hidden) S.layout.hidden.add(panel); else S.layout.hidden.delete(panel); applyLayout(true); }
 function resetLayout() {
-  S.layout.col = COL_DEFAULT; S.layout.row = null; S.layout.hidden = new Set(); S.layout.weeks = null; S.layout.tab = 'trend';
+  S.layout.col = COL_DEFAULT; S.layout.row = null; S.layout.hidden = new Set(); S.layout.weeks = null; S.layout.tab = 'trend'; S.layout.trend = TREND_DEFAULT;
   S.selPref = null; S.mapPref = null;
   if (S.manifest) { S.mapModel = resolveMapModel(); buildModelDropdown(); buildMapModelSel(); }
   applyLayout(true);
@@ -270,6 +273,7 @@ function layoutURL() {
   u.searchParams.delete('weeks');
   if (L.weeks) u.searchParams.set('weeks', `${L.weeks.start},${L.weeks.end}`);
   u.searchParams.set('tab', L.tab);   // always: the recipient's own stored tab must not win
+  u.searchParams.set('trend', L.trend);
   const ticked = [...tickedSet()];   // always too, for the same reason
   u.searchParams.set('models', ticked.length ? ticked.join(',') : 'none');
   u.searchParams.delete('mapmodel');
@@ -499,7 +503,7 @@ function setEnsemble(info) {
 function afterRound() {
   // ticked models carry over between rounds (see the model-selection block); the map follows them
   S.mapModel = resolveMapModel();
-  buildModelDropdown(); buildMapModelSel();
+  buildModelDropdown(); buildMapModelSel(); buildTrendThrSel();
   // mapped week: keep the same offset from the reference date across rounds, default week 0
   const ws = roundWeeks(), R = S.roundRef, want = R ? addDays(R, 7 * S.mapRel) : null;
   S.mapWeek = ws.includes(want) ? want : ws.includes(R) ? R : ws[ws.length - 1] || null;
@@ -586,6 +590,7 @@ function wire() {
   $('mapWeekSel').addEventListener('change', e => setMapWeek(e.target.value));
   document.querySelectorAll('#metricToggle button').forEach(b => b.addEventListener('click', () => { S.mapMetric = b.dataset.m; setToggle('metricToggle', 'm', S.mapMetric); drawMap(); }));
   $('mapModelSel').addEventListener('change', e => pickMapModel(e.target.value));
+  $('trendThr').addEventListener('change', e => { S.layout.trend = e.target.value; saveLayout(); drawLower(); });
   { // header Models menu: opens under its button, shifted left when it would run off the window
     const btn = $('modelBtn'), panel = $('modelPanel');
     btn.addEventListener('click', e => { e.stopPropagation(); document.querySelectorAll('.ddpanel.open').forEach(p => { if (p !== panel) p.classList.remove('open'); });

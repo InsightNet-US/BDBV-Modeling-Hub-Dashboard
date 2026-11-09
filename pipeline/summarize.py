@@ -143,6 +143,23 @@ def trend_probs(mat: np.ndarray, present: np.ndarray, weeks: list[str], referenc
     A row counts for horizon h only when its model submitted both R-7 and R+h (per-week masking, not the
     cumulative window mask). None when no row has R-7; a horizon without rows is None.
     """
+    pairs = _trend_pairs(mat, present, weeks, reference_date, horizons)
+    if pairs is None:
+        return None
+    out: dict = {}
+    for h, vb in pairs.items():
+        if vb is None:
+            out[h] = None
+            continue
+        p_dec, p_inc = _trend_pct(*vb, threshold)
+        out[h] = [round(p_dec, 3), round(1.0 - p_inc - p_dec, 3), round(p_inc, 3)]
+    return out
+
+
+def _trend_pairs(mat: np.ndarray, present: np.ndarray, weeks: list[str], reference_date: str,
+                 horizons) -> dict | None:
+    """Per horizon (str), the (week R+h values, week R-7 baselines) of the rows that have both, or None
+    for a horizon without such rows; None overall when no row has R-7 (see trend_probs)."""
     R = d(reference_date)
     widx = {w: i for i, w in enumerate(weeks)}
     base_w = iso(R - timedelta(days=7))
@@ -156,19 +173,36 @@ def trend_probs(mat: np.ndarray, present: np.ndarray, weeks: list[str], referenc
     out: dict = {}
     for h in sorted(horizons):
         w = iso(R + timedelta(days=7 * h))
-        if w not in widx:
-            out[str(h)] = None
-            continue
-        rows = has_base & present[:, widx[w]]
-        if not rows.any():
-            out[str(h)] = None
-            continue
-        v, bb = mat[rows, widx[w]], b[rows]
-        inc = np.where(bb > 0, v > (1 + threshold) * bb, v > 0)
-        dec = np.where(bb > 0, v < (1 - threshold) * bb, False)
-        p_inc, p_dec = float(inc.mean()), float(dec.mean())
-        out[str(h)] = [round(p_dec, 3), round(1.0 - p_inc - p_dec, 3), round(p_inc, 3)]
+        rows = has_base & present[:, widx[w]] if w in widx else None
+        out[str(h)] = (mat[rows, widx[w]], b[rows]) if rows is not None and rows.any() else None
     return out
+
+
+def _trend_pct(v: np.ndarray, b: np.ndarray, threshold: float) -> tuple[float, float]:
+    """P(decrease), P(increase) for a +-threshold relative band (zero baseline: stable at 0, up above)."""
+    inc = np.where(b > 0, v > (1 + threshold) * b, v > 0)
+    dec = np.where(b > 0, v < (1 - threshold) * b, False)
+    return float(dec.mean()), float(inc.mean())
+
+
+def _trend_cases(v: np.ndarray, b: np.ndarray, n: float) -> tuple[float, float]:
+    """P(decrease), P(increase) for a +-n cases band."""
+    return float(np.mean(v < b - n)), float(np.mean(v > b + n))
+
+
+def trend_grid(mat: np.ndarray, present: np.ndarray, weeks: list[str], reference_date: str,
+               horizons=config.HORIZONS) -> dict | None:
+    """trend_probs for every viewer preset (config.TREND_PCT as "p<percent>", config.TREND_CASES as
+    "c<n>"): per preset, per horizon in order, [P(decrease), P(increase)] in thousandths (stable is the
+    rest) or None. Rounded through trend_probs' 3 decimals so "p10" matches it exactly."""
+    pairs = _trend_pairs(mat, present, weeks, reference_date, horizons)
+    if pairs is None:
+        return None
+    ms = lambda p: int(round(round(p, 3) * 1000))
+    presets = [(f"p{round(x * 100)}", _trend_pct, x) for x in config.TREND_PCT] \
+        + [(f"c{n}", _trend_cases, n) for n in config.TREND_CASES]
+    return {key: [None if vb is None else [ms(p) for p in fn(*vb, x)] for vb in pairs.values()]
+            for key, fn, x in presets}
 
 
 def summarize_location(mat: np.ndarray, weeks: list[str], reference_date: str,
@@ -185,6 +219,7 @@ def summarize_location(mat: np.ndarray, weeks: list[str], reference_date: str,
     out = _summaries(mat, weeks, reference_date, present, np.full(mat.shape[0], float(obs_fixed)),
                      horizons, observed_fixed=round(float(obs_fixed), 1))
     out["trend"] = trend_probs(mat, present, weeks, reference_date, horizons)
+    out["trend_grid"] = trend_grid(mat, present, weeks, reference_date, horizons)
     return out
 
 
@@ -218,6 +253,7 @@ def pool_members(members: dict[str, tuple[np.ndarray, list[str]]], reference_dat
     mat_all, pres_all = np.vstack(blocks), np.vstack(pres)
     out = _summaries(mat_all, weeks, reference_date, pres_all, np.concatenate(fixed), horizons)
     out["trend"] = trend_probs(mat_all, pres_all, weeks, reference_date, horizons)
+    out["trend_grid"] = trend_grid(mat_all, pres_all, weeks, reference_date, horizons)
     out["n_models"] = len(members)
     out["members"] = sorted(members)
     out["n_models_wk"] = [int(x) for x in n_models_wk]

@@ -181,10 +181,18 @@ Try it: the French interface is on the live dashboard, add `?lang=fr` to the add
 |---|---|---|---|
 | tab button | Trend | Tendance | Tendance |
 | Trend tab subtitle | {loc} · change from week −1 | {loc} · variation par rapport à la semaine −1 | Ituri · variation par rapport à la semaine −1 |
-| tooltip line under the week | change from wk −1 (±10%) | variation par rapport à sem. −1 (±10 %) | variation par rapport à sem. −1 (±10 %) |
-| legend (arrow up) | Increase (up more than 10%) | Hausse (plus de 10 %) | Hausse (plus de 10 %) |
-| legend (level arrow) | Stable (within ±10%) | Stable (à ±10 % près) | Stable (à ±10 % près) |
-| legend (arrow down) | Decrease (down more than 10%) | Baisse (plus de 10 %) | Baisse (plus de 10 %) |
+| tooltip line under the week | change from wk −1 (±{x}) | variation par rapport à sem. −1 (±{x}) | variation par rapport à sem. −1 (±{x}) |
+| legend (arrow up) | Increase (up more than {x}) | Hausse (plus de {x}) | Hausse (plus de {x}) |
+| legend (level arrow) | Stable (within ±{x}) | Stable (à ±{x} près) | Stable (à ±{x} près) |
+| legend (arrow down) | Decrease (down more than {x}) | Baisse (plus de {x}) | Baisse (plus de {x}) |
+| label before the Trend threshold menu (panel header) | Stable within | Stable à | Stable à |
+| group heading in the threshold menu | Percent | Pourcentage | Pourcentage |
+| group heading in the threshold menu | Cases | Cas | Cas |
+| a percent threshold, {x} in the legend and tooltip and in the menu after ± | {n}% | {n} % | 3 % |
+| a case-count threshold, {x} in the legend and tooltip and in the menu after ± *(one)* | {n} case | {n} cas | 1 cas |
+| a case-count threshold, {x} in the legend and tooltip and in the menu after ± *(other)* | {n} cases | {n} cas | 3 cas |
+| legend note while the threshold file loads | loading ±{x}… | chargement de ±{x}… | chargement de ±{x}… |
+| legend note when the round has no threshold file | ±{x} is not available for this round; showing ±{d} | ±{x} n’est pas disponible pour ce cycle ; affichage à ±{d} | ±{x} n’est pas disponible pour ce cycle ; affichage à ±24 oct. |
 | column heading | Week 0 | Semaine 0 | Semaine 0 |
 | column heading | Week +{n} | Semaine +{n} | Semaine +3 |
 | second line of the column heading and tooltip title | ending {d} | fin {d} | fin 24 oct. |

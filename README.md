@@ -33,8 +33,10 @@ small JSON summaries under `data/`, and a GitHub Action rebuilds and deploys to 
   output; drag its window or handles to choose the weeks shown (default: the 24 weeks ending three weeks
   after the reference date), drag on empty strip for a new window, double-click to go back to the default.
 - **Trend** (first tab of the lower-left panel, shown by default): for weeks 0 to +3, the chance that
-  weekly confirmed cases fall (by more than 10%), stay within ±10% or rise (by more than 10%) compared
-  with week −1, for the ensemble and the ticked team models. Each cell is a
+  weekly confirmed cases fall, stay stable or rise compared with week −1, for the ensemble and the ticked
+  team models. "Stable within" in the panel header sets the band: ±10% by default, or another percentage
+  (±5% to ±75%) or a number of cases (±1 to ±100 cases); it is remembered with the layout and in copied
+  links (`?trend=p25`, `?trend=c5`). Each cell is a
   fan: a dot with three arrows, up (increase, orange), level (stable, grey) and down (decrease, teal),
   each arrow's width and shading growing with its probability; the percentages sit beside the arrows
   when there is room, and in the tooltip. The legend gives each class's threshold. The map's week is highlighted.
@@ -135,7 +137,7 @@ panels, resets the layout and copies a link that reproduces it (`?panels=weekly,
 to show, `none` hides all, `cum` being the lower-left Trend / cumulative panel; `?split=0.55` or
 `?split=0.55,0.7` sets the column share and the weekly chart's share of the column; `?tab=trend` or
 `?tab=cum` picks the lower-left tab, which is remembered with the layout and set back to Trend by Reset
-layout; `?models=ensemble,TEAM-model` (or `none`) gives the ticked models, `ensemble` standing for the
+layout; `?trend=p10` (percent) or `?trend=c5` (cases) the Trend threshold, back to ±10% on Reset; `?models=ensemble,TEAM-model` (or `none`) gives the ticked models, `ensemble` standing for the
 round's ensemble, and `?mapmodel=` the model on the map; Reset layout also returns the models to the
 defaults). Sizes, hidden panels and ticked models are remembered per browser (the models under their own
 key, `bdbv-models`, together with the newest round at the time, so a new round starts from the default
@@ -231,7 +233,11 @@ ensemble model; optional, otherwise the single model with `ensemble_of_hub_model
   closed week; the reported count for that week is still far from complete at round time): increase
   above 1.1 × baseline, decrease below 0.9 × baseline (`TREND_THRESHOLD` = 0.10 in `pipeline/config.py`),
   stable otherwise; a zero baseline counts as stable when the week is also 0 and as an increase
-  otherwise. No case minimum, so in places with very few cases a change of one case is a trend. A
+  otherwise. No case minimum, so in places with very few cases a change of one case is a trend (unless the
+  viewer picks a case threshold). The viewer's other thresholds (`TREND_PCT`, `TREND_CASES` in
+  `pipeline/config.py`; for cases, increase above baseline + N and decrease below baseline − N) are
+  precomputed by `trend_grid` into `data/trend/<ref>.json` (`[P(decrease), P(increase)]` in thousandths
+  per preset and horizon), which the page fetches only when one is chosen. A
   trajectory counts for horizon h only when its model submitted both weeks; a model without week R−7
   gets `null`. The dashboard ensemble pools the trajectories of its members, each against its own
   baseline.

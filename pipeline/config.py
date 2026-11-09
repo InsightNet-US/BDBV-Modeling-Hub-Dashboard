@@ -50,6 +50,10 @@ QUANTILE_LEVELS = [0.025, 0.1, 0.25, 0.5, 0.75, 0.9, 0.975]
 # Trend classes: a trajectory's week-h value against its own value for the last closed week (R-7)
 # is an increase above (1 + T) x, a decrease below (1 - T) x, stable otherwise.
 TREND_THRESHOLD = 0.10
+# Presets the viewer can pick instead (data/trend/<ref>.json): stable within +-X (percent, as above) or
+# within +-N cases (increase above baseline + N, decrease below baseline - N).
+TREND_PCT = [0.05, 0.10, 0.15, 0.20, 0.25, 0.30, 0.40, 0.50, 0.75]
+TREND_CASES = [1, 2, 5, 10, 20, 50, 100]
 HORIZONS = [0, 1, 2, 3]   # horizon 0 = the reference week itself; windows run from week R through R+h
 # A round's data version is the latest as_of on or before reference_date minus this many days
 # (the Tuesday closing the submission window; the Monday 5 pm ET release qualifies).
