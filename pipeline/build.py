@@ -230,7 +230,7 @@ def main() -> int:
     if out_dir != config.GEO_SRC.parent.resolve():   # building outside the repo's data/: bring the boundaries along
         out_dir.mkdir(parents=True, exist_ok=True)
         shutil.copytree(config.GEO_SRC, out_dir / "geo", dirs_exist_ok=True)
-    for sub in ("observed", "rounds"):
+    for sub in ("observed", "rounds", "trend"):
         shutil.rmtree(out_dir / sub, ignore_errors=True)
     obs_info = build_observed(target, out_dir)
     stamp_geo_codes(locs, out_dir, hub_io.read_hz_dhis2(hub))
@@ -302,13 +302,18 @@ def main() -> int:
                 print(f"WARN round {ref}: no location with >= {config.ENSEMBLE_MIN_MODELS} models; no ensemble")
                 ens_source, ens_id = None, None
         weeks_all = saturdays(min(week_union), max(week_union))
+        # the trend presets go to their own file, fetched only when the viewer picks a non-default threshold
+        grids = {mid: {loc: s.pop("trend_grid", None) for loc, s in m["locations"].items()} for mid, m in models_out.items()}
+        write_json(out_dir / "trend" / f"{ref}.json", {
+            "pct": [round(x * 100) for x in config.TREND_PCT], "cases": config.TREND_CASES,
+            "models": {mid: {loc: g for loc, g in gs.items() if g} for mid, gs in grids.items()}})
         write_json(out_dir / "rounds" / f"{ref}.json", {
             "reference_date": ref, "as_of": as_of, "as_of_fallback": fallback,
             "weeks": weeks_all, "horizons": config.HORIZONS, "quantile_levels": config.QUANTILE_LEVELS,
             "models": models_out})
         rounds_out.append({"reference_date": ref, "as_of": as_of, "as_of_fallback": fallback,
                            "models": sorted(models_out), "n_models": len(models_out),
-                           "ensemble_model_id": ens_id, "ensemble_source": ens_source,
+                           "ensemble_model_id": ens_id, "ensemble_source": ens_source, "trend_grid": True,
                            "n_zone_models": sum(1 for m in models_out.values()
                                                 if any(type_of.get(l) == "health zone" for l in m["locations"]))})
         size_kb = (out_dir / "rounds" / f"{ref}.json").stat().st_size // 1024

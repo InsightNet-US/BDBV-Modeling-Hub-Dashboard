@@ -39,6 +39,16 @@ function colorForP(p) {
   return mix(P_STOPS[i], P_STOPS[i + 1], x - i);
 }
 const P_GRADIENT = `linear-gradient(90deg,${P_STOPS.join(',')})`;
+/* 0..1 -> diverging at 0.5 for the probability of an increase: teal below even odds (as the trend fans'
+   "decrease" arrows; ColorBrewer BrBG), near white at 50%, orange above (ColorBrewer Oranges, the "increase"
+   arrows). The legend bar marks the 50% midpoint. */
+const I_STOPS = ['#01665e', '#35978f', '#80cdc1', '#c7eae5', '#f7f7f7', '#fdd0a2', '#fd8d3c', '#d94801', '#7f2704'];
+const I_GRADIENT = `linear-gradient(90deg,transparent calc(50% - 1px),#1b2430 calc(50% - 1px) calc(50% + 1px),transparent calc(50% + 1px)),linear-gradient(90deg,${I_STOPS.join(',')})`;
+function colorForInc(p) {
+  p = Math.max(0, Math.min(1, p));
+  const x = p * (I_STOPS.length - 1), i = Math.min(I_STOPS.length - 2, Math.floor(x));
+  return mix(I_STOPS[i], I_STOPS[i + 1], x - i);
+}
 /* 0..1 -> ColorBrewer YlOrRd (9 classes, interpolated) for case counts, log-scaled by the caller; a median of
    0 is the pale-yellow start of the scale, not a separate grey, so it does not look like missing data. Close to
    the reds of the INRB epidemic dashboard (inrb-umie.github.io/BDBV2026-Epidemic_Dashboard) without its grey. */

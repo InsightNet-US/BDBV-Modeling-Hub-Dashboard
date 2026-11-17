@@ -123,7 +123,7 @@ def test_summarize_location_matches_fixture():
     fx = json.loads((Path(__file__).with_name("fixtures") / "summarize_location.json").read_text())
     for name, (mat, weeks, obs) in fixture_inputs().items():
         got = json.loads(json.dumps(summarize_location(mat, weeks, fx["reference_date"], obs)))
-        got.pop("trend")   # newer field, tested in test_trend_* (the fixture pins the pre-trend output)
+        got.pop("trend"); got.pop("trend_grid")   # newer fields, tested in test_trend_* (the fixture pins the pre-trend output)
         assert got == fx["cases"][name]["out"], name
         assert list(got) == list(fx["cases"][name]["out"]), f"{name}: key order"
 
@@ -213,6 +213,31 @@ def test_trend_probs_classes_zero_baseline_and_missing_weeks():
     present[:, 0] = False
     assert trend_probs(mat, present, weeks, R) is None
     assert trend_probs(mat[:, 1:], np.ones((10, 4), dtype=bool), weeks[1:], R) is None
+
+
+def test_trend_grid_presets_cases_rule_and_missing_weeks():
+    from summarize import trend_grid, trend_probs
+    R = "2026-10-31"
+    weeks = ["2026-10-24", "2026-10-31", "2026-11-07", "2026-11-14", "2026-11-21"]
+    mat = np.zeros((10, 5))
+    mat[:8, 0] = 100
+    mat[:8, 1] = [50, 89, 90, 100, 110, 111, 150, 200]
+    mat[8:, 1] = [0, 1]
+    present = np.ones(mat.shape, dtype=bool)
+    g = trend_grid(mat, present, weeks, R)
+    assert set(g) == {f"p{round(x * 100)}" for x in config.TREND_PCT} | {f"c{n}" for n in config.TREND_CASES}
+    p = trend_probs(mat, present, weeks, R)
+    assert g["p10"] == [[round(p[h][0] * 1000), round(p[h][2] * 1000)] for h in "0123"]
+    assert g["p50"][0] == [0, 200]                       # 50 is not below 50; above 150: 200 and the 0 -> 1 row
+    # cases: h=0 changes are -50, -11, -10, 0, +10, +11, +50, +100 and 0, +1
+    assert g["c10"][0] == [200, 300]                     # -50, -11 down; +11, +50, +100 up (not -10, +10, +1)
+    assert g["c1"][0] == [300, 400]                      # 0 -> +1 is not more than 1 case
+    assert g["c100"][0] == [0, 0]
+    assert g["c5"][1] == [800, 0]                        # h=1: all zero -> the 100s fall by 100, zeros stay
+    present[:, 4] = False
+    assert all(v[3] is None for v in trend_grid(mat, present, weeks, R).values())
+    present[:, 0] = False
+    assert trend_grid(mat, present, weeks, R) is None
 
 
 def test_trend_in_single_model_summary():

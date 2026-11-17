@@ -1,5 +1,6 @@
-/* Leaflet choropleth at province or health-zone level: a model's median cases in the mapped week,
-   or its probability of at least one case in that week. The zone boundaries (~1.7 MB) load on first
+/* Leaflet choropleth at province or health-zone level: a model's median cases in the mapped week, its
+   probability of at least one case in that week, or (weeks 0 to +3) its probability of an increase from
+   week −1 under the Trend tab's change threshold (trend.js trendFor). The zone boundaries (~1.7 MB) load on first
    use. Province outlines stay on top of the zone layer for orientation. The selected location is
    marked by a heavier border only; nothing else is dimmed. */
 const SEL_W = { prov: 3.5, hz: 3 }, OUTLINE_W = 1.6;
@@ -108,11 +109,20 @@ function locValue(code) {
   if (!m) return null;
   const i = m.weeks.indexOf(S.mapWeek);
   if (i < 0) return null;
+  if (S.mapMetric === 'increase') { const p = mapTrend(code); return p ? p[2] : null; }
   return S.mapMetric === 'presence' ? m.presence_wk[i] : m.q[i][QI.med];
+}
+/** the mapped model's [dec, stable, inc] for a location in the mapped week (weeks 0 to +3 only), or null */
+const mapInTrendWeeks = () => { const h = weekRel(S.mapWeek); return h != null && S.manifest.horizons.includes(h); };
+function mapTrend(code) {
+  if (!S.mapModel || !mapInTrendWeeks()) return null;
+  const tr = trendFor(S.mapModel, code);
+  return (tr && tr[weekRel(S.mapWeek)]) || null;
 }
 /** subtitle key, legend ends and gradient per metric (kept together so they cannot drift apart) */
 function metricInfo() {
   if (S.mapMetric === 'presence') return { sub: 'map.subPresence', lo: fmtPct(0), hi: fmtPct(1), gradient: P_GRADIENT };
+  if (S.mapMetric === 'increase') return { sub: 'map.subIncrease', lo: fmtPct(0), hi: fmtPct(1), gradient: I_GRADIENT };
   return { sub: 'map.subMedian', lo: '0', hi: fmtN(scale.vmax), gradient: N_GRADIENT };
 }
 let scale = { vmax: 1 };
@@ -123,7 +133,7 @@ function featStyle(f, level) {
   if (!code) return { color: '#9aa3ad', weight: 0.5, dashArray: '2 3', fillColor: '#eceff3', fillOpacity: 0.3 };
   if (v == null) return { color: selected ? '#0b0f14' : '#6b7684', weight: w, dashArray: selected ? null : '3 3', fillColor: '#e6e9ee', fillOpacity: 0.5 };
   // cases: log(1 + x) scale from 0 (white) to the layer's maximum
-  const fill = S.mapMetric === 'presence' ? colorForP(v) : colorFor(Math.log1p(v) / Math.log1p(scale.vmax));
+  const fill = S.mapMetric === 'presence' ? colorForP(v) : S.mapMetric === 'increase' ? colorForInc(v) : colorFor(Math.log1p(v) / Math.log1p(scale.vmax));
   return { color: '#0b0f14', weight: w, dashArray: null, fillColor: fill, fillOpacity: 0.8 };
 }
 /* dissolved province outline on the zone layer: heavier for the province in focus */
@@ -144,6 +154,8 @@ function featTip(f, level) {
     const q = m.q[i];
     rows += `<div class="row"><span>${t('map.tipMedian', { wk: wkLabel() })}</span><b>${fmtN(q[QI.med])} <span class="sm">(${fmtRange(q)})</span></b></div>`;
     rows += `<div class="row"><span>${t('map.tipPresence')}</span><b>${fmtPct(m.presence_wk[i])}</b></div>`;
+    const tr = mapTrend(code);
+    if (tr) rows += `<div class="row"><span>${t('map.tipTrend', { x: trendX(trendKey()) })}</span><b>${TREND.map(k => `${trendArrowSVG(k, 11)} ${fmtPct(tr[T_IDX[k]])}`).join('&nbsp; ')}</b></div>`;
     if (obs[S.mapWeek] != null) rows += `<div class="row"><span>${t('map.tipReportedSame')} <span class="sm">${t('map.tipAsOf', { d: fmtDate(S.obsRound.as_of) })}</span></span><b>${fmtN(obs[S.mapWeek])}</b></div>`;
   } else rows += S.mapModel ? `<div class="row"><span>${modelLabel(S.mapModel)}</span><b>${t(m ? 'map.tipWeekNotSub' : 'map.tipNoSub')}</b></div>`
     : `<div class="row"><span>${t('map.tipOutput')}</span><b>${noneTickedNote()}</b></div>`;
@@ -164,7 +176,7 @@ function drawMap() {
   // colour scale over every hub location on the active layer
   const feats = []; layer.eachLayer(l => { if (l.feature.properties.location) feats.push(l.feature); });
   const vals = feats.map(f => S.round ? locValue(f.properties.location) : null).filter(v => v != null);
-  scale = { vmax: S.mapMetric === 'presence' ? 1 : Math.max(1, ...vals) };
+  scale = { vmax: S.mapMetric !== 'median' ? 1 : Math.max(1, ...vals) };
   layer.eachLayer(l => { l.setStyle(featStyle(l.feature, level)); if (l.feature.properties.location === S.location) l.bringToFront(); });
   if (level === 'hz' && provOutline && map.hasLayer(provOutline)) {
     const sel = locProvince(S.location);
@@ -173,11 +185,15 @@ function drawMap() {
   }
   const missing = feats.length - vals.length;
   const mi = metricInfo();
-  const mt = `${t(mi.sub)}, <span class="horizonval">${wkLabel()}</span>`;
+  const inc = S.mapMetric === 'increase', key = inc && S.round ? trendKey() : null;
+  const mt = `${t(mi.sub, { x: key ? trendX(key) : '' })}, <span class="horizonval">${wkLabel()}</span>`;
+  // the viewer's threshold not available (yet): the map shows the default, and says so
+  const thrNote = key && key !== S.layout.trend ? ` · <i>${trendGrid().pending ? t('trend.loading', { x: trendX(S.layout.trend) }) : t('trend.noGrid', { x: trendX(S.layout.trend), d: trendX(key) })}</i>` : '';
+  const empty = inc ? t(mapInTrendWeeks() ? 'map.noTrend' : 'map.incWeeks') : t('map.noOutputWeek');
   // no ticked model: say so; a model with no output for the week anywhere: say that instead of counting areas
   document.getElementById('mapSub').innerHTML = !S.mapModel ? `${mt} · ${roundModels().length ? noneTickedNote() : t('map.noModel')}`
-    : `${mt} · ${modelLabel(S.mapModel)}` + (S.round && !vals.length ? ` · ${t('map.noOutputWeek')}`
-    : missing ? ` · ${tn(level === 'hz' ? 'map.missingZones' : 'map.missingProvinces', missing)}` : '');
+    : `${mt} · ${modelLabel(S.mapModel)}` + (S.round && !vals.length ? ` · ${empty}`
+    : missing ? ` · ${tn(level === 'hz' ? 'map.missingZones' : 'map.missingProvinces', missing)}` : '') + thrNote;
   document.getElementById('legLo').textContent = mi.lo;
   document.getElementById('legHi').textContent = mi.hi;
   document.querySelector('.map .legend .bar').style.background = mi.gradient;

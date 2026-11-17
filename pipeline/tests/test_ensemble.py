@@ -152,3 +152,6 @@ def test_pool_trend_uses_each_rows_own_baseline_and_week_mask():
     out = pool_members({"a": (a, W_A), "c": (c, W_C)}, R, OBS)
     assert out["trend"]["0"] == [0.0, 0.5, 0.5] and out["trend"]["1"] == [0.0, 0.5, 0.5]
     assert out["trend"]["2"] == [0.0, 0.0, 1.0] and out["trend"]["3"] == [0.0, 0.0, 1.0]
+    assert out["trend_grid"]["p10"] == [[0, 500], [0, 500], [0, 1000], [0, 1000]]
+    assert out["trend_grid"]["c5"] == [[0, 500], [0, 500], [0, 1000], [0, 1000]]
+    assert out["trend_grid"]["c10"] == [[0, 0]] * 4   # a: +10 is not more than 10 cases

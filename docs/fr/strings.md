@@ -181,10 +181,18 @@ Try it: the French interface is on the live dashboard, add `?lang=fr` to the add
 |---|---|---|---|
 | tab button | Trend | Tendance | Tendance |
 | Trend tab subtitle | {loc} · change from week −1 | {loc} · variation par rapport à la semaine −1 | Ituri · variation par rapport à la semaine −1 |
-| tooltip line under the week | change from wk −1 (±10%) | variation par rapport à sem. −1 (±10 %) | variation par rapport à sem. −1 (±10 %) |
-| legend (arrow up) | Increase (up more than 10%) | Hausse (plus de 10 %) | Hausse (plus de 10 %) |
-| legend (level arrow) | Stable (within ±10%) | Stable (à ±10 % près) | Stable (à ±10 % près) |
-| legend (arrow down) | Decrease (down more than 10%) | Baisse (plus de 10 %) | Baisse (plus de 10 %) |
+| tooltip line under the week | change from wk −1 (±{x}) | variation par rapport à sem. −1 (±{x}) | variation par rapport à sem. −1 (±{x}) |
+| legend (arrow up) | Increase (up more than {x}) | Hausse (plus de {x}) | Hausse (plus de {x}) |
+| legend (level arrow) | Stable (within ±{x}) | Stable (à ±{x} près) | Stable (à ±{x} près) |
+| legend (arrow down) | Decrease (down more than {x}) | Baisse (plus de {x}) | Baisse (plus de {x}) |
+| label before the Trend threshold menu (panel header) | Change threshold | Seuil de variation | Seuil de variation |
+| group heading in the threshold menu | Percent | Pourcentage | Pourcentage |
+| group heading in the threshold menu | Cases | Cas | Cas |
+| a percent threshold, {x} in the legend and tooltip and in the menu after ± | {n}% | {n} % | 3 % |
+| a case-count threshold, {x} in the legend and tooltip and in the menu after ± *(one)* | {n} case | {n} cas | 1 cas |
+| a case-count threshold, {x} in the legend and tooltip and in the menu after ± *(other)* | {n} cases | {n} cas | 3 cas |
+| legend note while the threshold file loads | loading ±{x}… | chargement de ±{x}… | chargement de ±{x}… |
+| legend note when the round has no threshold file | ±{x} is not available for this round; showing ±{d} | ±{x} n’est pas disponible pour ce cycle ; affichage à ±{d} | ±{x} n’est pas disponible pour ce cycle ; affichage à ±24 oct. |
 | column heading | Week 0 | Semaine 0 | Semaine 0 |
 | column heading | Week +{n} | Semaine +{n} | Semaine +3 |
 | second line of the column heading and tooltip title | ending {d} | fin {d} | fin 24 oct. |
@@ -224,6 +232,7 @@ Try it: the French interface is on the live dashboard, add `?lang=fr` to the add
 |  | Health zones | Zones de santé | Zones de santé |
 |  | Median cases | Cas (médiane) | Cas (médiane) |
 |  | P(≥1 case) | P(≥1 cas) | P(≥1 cas) |
+| map metric button | P(increase) | P(hausse) | P(hausse) |
 |  | Week | Semaine | Semaine |
 |  | Earlier week | Semaine précédente | Semaine précédente |
 |  | Later week | Semaine suivante | Semaine suivante |
@@ -238,6 +247,10 @@ Try it: the French interface is on the live dashboard, add `?lang=fr` to the add
 |  | no week | aucune semaine | aucune semaine |
 | map subtitle | Median cases | Cas (médiane) | Cas (médiane) |
 | map subtitle | P(≥1 case) | P(≥1 cas) | P(≥1 cas) |
+| map subtitle for the P(increase) metric; {x} = the Trend tab threshold | P(increase of more than {x} from week −1) | P(hausse de plus de {x} par rapport à la semaine −1) | P(hausse de plus de {x} par rapport à la semaine −1) |
+| map subtitle when P(increase) is shown for a week outside 0 to +3 | P(increase) is only for weeks 0 to +3 | P(hausse) seulement pour les semaines 0 à +3 | P(hausse) seulement pour les semaines 0 à +3 |
+| map subtitle when the model has no trend estimate for the week | no trend estimate for this week | pas d’estimation de tendance pour cette semaine | pas d’estimation de tendance pour cette semaine |
+| map tooltip row with the three trend probabilities | vs wk −1 (±{x}) | par rapport à sem. −1 (±{x}) | par rapport à sem. −1 (±{x}) |
 | map subtitle when the round has no model | no model | aucun modèle | aucun modèle |
 | map subtitle when the mapped model has no output for the mapped week | no output for this week | pas de résultat pour cette semaine | pas de résultat pour cette semaine |
 | map subtitle *(one)* | {n} province without output (dashed) | {n} province sans prévision (hachurée) | 1 province sans prévision (hachurée) |
