@@ -176,7 +176,7 @@ svg text{fill:var(--muted);font-size:10px}
 .ribbon .chips{display:flex;flex-wrap:wrap;align-items:center;gap:3px 14px;min-width:0}
 .ribbon .chip{user-select:none;-webkit-user-select:none}
 .chip.off{opacity:.4}.chip.off i{filter:grayscale(1)}
-.chip.nodata{font-style:italic}
+.chip.nodata{text-decoration:line-through;text-decoration-thickness:1px}
 footer{display:flex;align-items:center;gap:24px;padding:4px 20px;min-height:var(--footer-h);flex-shrink:0;font-size:11px;color:var(--muted);border-top:1px solid var(--line);background:#f7f9fb;overflow:hidden}
 @media (max-width:1000px){ footer{flex-wrap:wrap;gap:6px 24px} }
 footer .spacer{flex:1}

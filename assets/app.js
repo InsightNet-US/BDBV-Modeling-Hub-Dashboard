@@ -568,8 +568,8 @@ function drawRibbon() {
     const sw = ens ? '<i style="border:1.5px dashed var(--median);background:transparent"></i>' : `<i style="background:${modelColor(id)}"></i>`;
     const inner = sw + (ens ? ensLabelN(loc) : modelLabel(id));
     const on = isTicked(id), mapped = id === S.mapModel;
-    const tip = (on && none ? t('ribbon.noOutput', { loc: locName(loc) }) + ' ' : '') + t(mapped ? 'ribbon.tipMapped' : on ? 'ribbon.tipOn' : 'ribbon.tipOff');
-    return `<span class="chip pick${on ? '' : ' off'}${mapped ? ' onmap' : ''}${on && none ? ' nodata' : ''}" data-model="${id}" role="checkbox" aria-checked="${on}" tabindex="0" title="${tip}">${inner}${mapped ? MAP_PIN : ''}</span>`;
+    const tip = (none ? t('ribbon.noOutput', { loc: locName(loc) }) + ' ' : '') + t(mapped ? 'ribbon.tipMapped' : on ? 'ribbon.tipOn' : 'ribbon.tipOff');
+    return `<span class="chip pick${on ? '' : ' off'}${mapped ? ' onmap' : ''}${none ? ' nodata' : ''}" data-model="${id}" role="checkbox" aria-checked="${on}" tabindex="0" title="${tip}">${inner}${mapped ? MAP_PIN : ''}</span>`;
   }).join('');
 }
 function wireMapPick(el, keys) {
