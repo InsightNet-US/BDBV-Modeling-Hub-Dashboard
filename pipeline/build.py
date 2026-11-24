@@ -15,7 +15,7 @@ import pandas as pd
 
 import config
 import hub_io
-from summarize import d, iso, last_complete_week, pool_members, samples_matrix, select_as_of, \
+from summarize import d, iso, last_complete_week, pool_members, rt_summary, samples_matrix, select_as_of, \
     summarize_location, validate_submission
 
 
@@ -205,6 +205,26 @@ def pool_round(mats: dict[str, dict[str, tuple]], reference_date: str, observed_
     return {"locations": locs_out, "members": members_all}
 
 
+def attach_rt(models_out: dict, rt_by_model: dict[str, dict]) -> bool:
+    """Put each model's R_t summary (summarize.rt_summary) under models_out[mid]["rt"]. A model that sent
+    R_t only (no case samples this round) is added with no case locations, so it is listed and can be
+    ticked for the Rt tab. Returns whether any model in the round has R_t."""
+    any_rt = False
+    for mid, rt in sorted(rt_by_model.items()):
+        if rt:
+            models_out.setdefault(mid, {"locations": {}})["rt"] = rt
+            any_rt = True
+    return any_rt
+
+
+def default_metadata(mid: str) -> dict:
+    """Metadata for a model without a hub metadata file."""
+    return {"model_id": mid, "team_name": mid.split("-")[0], "team_abbr": mid.split("-")[0],
+            "model_name": mid, "model_abbr": mid, "methods": "", "data_inputs": "",
+            "website_url": "", "repo_url": "", "license": "",
+            "ensemble_of_hub_models": False, "designated_model": True}
+
+
 def dashboard_ensemble_metadata() -> dict:
     return {"model_id": config.DASHBOARD_ENSEMBLE_ID, "team_name": "BDBV Modeling Hub", "team_abbr": "BDBV",
             "model_name": "BDBV dashboard ensemble", "model_abbr": "dashboard-ensemble",
@@ -240,8 +260,13 @@ def main() -> int:
     subs: dict[tuple[str, str], pd.DataFrame] = {}
     real_files = hub_io.drop_non_designated(hub_io.list_model_output_files(hub), metadata)
     n_real = 0
+    rt_subs: dict[tuple[str, str], dict] = {}
     for model_id, ref, path in real_files:
-        df = hub_io.read_sample_submission(path, warn=lambda m: print(f"NOTE {m}"))
+        raw = hub_io.read_submission_file(path)
+        rt = hub_io.read_rt_submission(path, warn=lambda m: print(f"NOTE {m}"), raw=raw)
+        if rt is not None:
+            rt_subs[(model_id, ref)] = rt_summary(rt, allowed, name=path.name)
+        df = hub_io.read_sample_submission(path, warn=lambda m: print(f"NOTE {m}"), raw=raw)
         if df is None:
             continue
         n_real += 1
@@ -249,7 +274,7 @@ def main() -> int:
         if problems:
             print(f"WARN {path.name}: {'; '.join(problems[:5])}")
         subs[(model_id, ref)] = df
-    print(f"real round-2 submissions: {n_real}")
+    print(f"real round-2 submissions: {n_real}; with R_t: {len(rt_subs)}")
 
     # ---- hub ensemble id (used directly with ENSEMBLE_SOURCE=hub, or by auto when it submitted)
     flagged = [m for m, meta in metadata.items() if meta.get("ensemble_of_hub_models")]
@@ -265,7 +290,7 @@ def main() -> int:
     for (mid, ref), df in subs.items():
         by_round.setdefault(ref, {})[mid] = df
     obs_cache: dict[str, dict] = {}
-    for ref in sorted(by_round):
+    for ref in sorted(set(by_round) | {r for _, r in rt_subs}):
         as_of, fallback = select_as_of(ref, versions)
         if as_of not in obs_cache:
             obs_cache[as_of] = json.loads((out_dir / "observed" / f"{as_of}.json").read_text())
@@ -277,7 +302,7 @@ def main() -> int:
         type_of = {l["code"]: l["type"] for l in loc_table}
         observed_by_loc = {loc: dict(zip(obs_weeks, vals)) for loc, vals in ov["by_location"].items()}
         mats: dict[str, dict[str, tuple]] = {}
-        for mid, df in sorted(by_round[ref].items()):
+        for mid, df in sorted(by_round.get(ref, {}).items()):
             locs_out = {}
             for loc, g in df.groupby("location"):
                 mat, weeks = samples_matrix(g)
@@ -286,11 +311,6 @@ def main() -> int:
                 week_union.update(weeks)
                 n_loc_type[type_of.get(loc, "province")] += 1
             models_out[mid] = {"locations": locs_out}
-            if mid not in metadata:
-                metadata[mid] = {"model_id": mid, "team_name": mid.split("-")[0], "team_abbr": mid.split("-")[0],
-                                 "model_name": mid, "model_abbr": mid, "methods": "", "data_inputs": "",
-                                 "website_url": "", "repo_url": "", "license": "",
-                                 "ensemble_of_hub_models": False, "designated_model": True}
         ens_source, ens_id = resolve_ensemble(config.ENSEMBLE_SOURCE, hub_ensemble_id, models_out)
         if ens_source == "dashboard":
             pooled = pool_round(mats, ref, observed_by_loc, exclude=never_pool)
@@ -301,6 +321,9 @@ def main() -> int:
             else:
                 print(f"WARN round {ref}: no location with >= {config.ENSEMBLE_MIN_MODELS} models; no ensemble")
                 ens_source, ens_id = None, None
+        has_rt = attach_rt(models_out, {mid: rt for (mid, r), rt in rt_subs.items() if r == ref})
+        for mid in models_out:
+            metadata.setdefault(mid, default_metadata(mid))
         weeks_all = saturdays(min(week_union), max(week_union))
         # the trend presets go to their own file, fetched only when the viewer picks a non-default threshold
         grids = {mid: {loc: s.pop("trend_grid", None) for loc, s in m["locations"].items()} for mid, m in models_out.items()}
@@ -313,7 +336,7 @@ def main() -> int:
             "models": models_out})
         rounds_out.append({"reference_date": ref, "as_of": as_of, "as_of_fallback": fallback,
                            "models": sorted(models_out), "n_models": len(models_out),
-                           "ensemble_model_id": ens_id, "ensemble_source": ens_source, "trend_grid": True,
+                           "ensemble_model_id": ens_id, "ensemble_source": ens_source, "trend_grid": True, "rt": has_rt,
                            "n_zone_models": sum(1 for m in models_out.values()
                                                 if any(type_of.get(l) == "health zone" for l in m["locations"]))})
         size_kb = (out_dir / "rounds" / f"{ref}.json").stat().st_size // 1024

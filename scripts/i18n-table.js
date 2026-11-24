@@ -18,7 +18,7 @@ const I18N = ctx.I18N, EN = I18N.en, FR = I18N.fr;
 /* where each key appears, for the reviewer; prefixes give the panel, specific keys refine it */
 const PANEL = { page: 'Page', hdr: 'Header', common: 'Header / panel labels', badge: 'Preview marks (preview copy)', banner: 'Preview marks (preview copy)',
   gate: 'Test-phrase gate (preview copy)', loc: 'Locations', model: 'Models', week: 'Week labels', dd: 'Models menu (header)',
-  ts: 'Weekly chart', tip: 'Weekly chart tooltip', lower: 'Lower-left panel tabs', trend: 'Trend tab', cum: 'Cumulative panel', map: 'Map', drawer: 'Models drawer', foot: 'Footer', panels: 'Panel layout', err: 'Errors' };
+  ts: 'Weekly chart', tip: 'Weekly chart tooltip', lower: 'Lower-left panel tabs', trend: 'Trend tab', rt: 'Rt tab', cum: 'Cumulative panel', map: 'Map', drawer: 'Models drawer', foot: 'Footer', panels: 'Panel layout', err: 'Errors' };
 const WHERE = {
   months: 'month abbreviations used in every date', 'page.title': 'browser tab title', 'page.desc': 'search-engine description',
   'hdr.subtitle': 'after the title "BDBV Modeling Hub"', 'hdr.roundTitle': 'hover text of the round selector', 'hdr.roundInfo': 'next to the round selector',
@@ -57,8 +57,8 @@ const WHERE = {
 };
 /* sample values for the example column, per language */
 const SAMPLE = {
-  en: { n: 3, d: '24 Oct', loc: 'Ituri', r50: '286–433', r95: '150–720', list: 'OHTJHU-BM, CEPH-Rtrend_BDBV', name: 'OHTJHU-BM', rel: '−2 wk', kind: 'forecast +1 wk', wk: 'week ending 7 Nov (forecast +1 wk)', prov: 'Nord Kivu', s: 'Hub target data', repo: 'InsightNet-US/BDBV-Modeling-Hub', branch: 'main', commit: '07b9844', msg: 'data/manifest.json: 404' },
-  fr: { n: 3, d: '24 oct.', loc: 'Ituri', r50: '286–433', r95: '150–720', list: 'OHTJHU-BM, CEPH-Rtrend_BDBV', rel: '−2 sem.', kind: 'prévision +1 sem.', wk: 'semaine se terminant le 7 nov. (prévision +1 sem.)', prov: 'Nord Kivu', s: 'Données observées du hub', name: 'Carte', repo: 'InsightNet-US/BDBV-Modeling-Hub', branch: 'main', commit: '07b9844', msg: 'data/manifest.json: 404' },
+  en: { p: '57%', n: 3, d: '24 Oct', loc: 'Ituri', r50: '286–433', r95: '150–720', list: 'OHTJHU-BM, CEPH-Rtrend_BDBV', name: 'OHTJHU-BM', rel: '−2 wk', kind: 'forecast +1 wk', wk: 'week ending 7 Nov (forecast +1 wk)', prov: 'Nord Kivu', s: 'Hub target data', repo: 'InsightNet-US/BDBV-Modeling-Hub', branch: 'main', commit: '07b9844', msg: 'data/manifest.json: 404' },
+  fr: { p: '57 %', n: 3, d: '24 oct.', loc: 'Ituri', r50: '286–433', r95: '150–720', list: 'OHTJHU-BM, CEPH-Rtrend_BDBV', rel: '−2 sem.', kind: 'prévision +1 sem.', wk: 'semaine se terminant le 7 nov. (prévision +1 sem.)', prov: 'Nord Kivu', s: 'Données observées du hub', name: 'Carte', repo: 'InsightNet-US/BDBV-Modeling-Hub', branch: 'main', commit: '07b9844', msg: 'data/manifest.json: 404' },
 };
 const fill = (s, vars) => String(s).replace(/\{(\w+)\}/g, (m, k) => (k in vars ? vars[k] : m));
 const strip = s => String(s).replace(/<[^>]+>/g, (m) => (m === '</b>' ? ' — ' : ''));

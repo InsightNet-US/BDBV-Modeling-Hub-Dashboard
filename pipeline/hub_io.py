@@ -166,37 +166,70 @@ def list_model_output_files(hub: Path) -> list[tuple[str, str, Path]]:
     return out
 
 
-def read_sample_submission(path: Path, warn=None) -> pd.DataFrame | None:
-    """Read a model-output file and keep only round-2 sample rows. Returns None if none.
-
-    Since 2026-10-30 files carry a ``forecast_date`` column (the date the model was run) and a team
-    resubmits by appending a complete new forecast with a later date, keeping the old rows. Only the
-    latest forecast per location is kept here; superseded rows are dropped and reported via ``warn``.
-    """
+def read_submission_file(path: Path) -> pd.DataFrame | None:
+    """A model-output file as read from disk (csv as strings, or parquet); None if hub columns are missing."""
     if path.suffix == ".parquet":
         df = pd.read_parquet(path)
     else:
         df = pd.read_csv(path, dtype=str, keep_default_na=False)
     needed = {"reference_date", "target", "target_end_date", "location", "output_type",
               "output_type_id", "value"}
-    if not needed.issubset(df.columns):
-        return None
-    df = df[(df["target"] == config.TARGET) & (df["output_type"] == "sample")].copy()
+    return df if needed.issubset(df.columns) else None
+
+
+def _latest_forecast(df: pd.DataFrame, path: Path, warn=None, what: str = "") -> pd.DataFrame:
+    """Keep the latest forecast_date per location. Called on one target's rows only, so a resubmission
+    that adds a new forecast for one target leaves the other target's rows alone."""
+    if "forecast_date" not in df.columns:
+        return df
+    df["forecast_date"] = df["forecast_date"].astype(str).str.strip()
+    latest = df.groupby("location")["forecast_date"].transform("max")
+    stale = df["forecast_date"] != latest
+    if stale.any():
+        dropped = sorted(df.loc[stale, "forecast_date"].unique())
+        df = df[~stale].copy()
+        if warn:
+            warn(f"{path.name}: kept the latest forecast_date per location{what}; dropped "
+                 f"{int(stale.sum())} rows from earlier forecast(s) {dropped}")
+    return df
+
+
+def _target_rows(df: pd.DataFrame, target: str, output_type: str) -> pd.DataFrame | None:
+    df = df[(df["target"] == target) & (df["output_type"] == output_type)].copy()
     if df.empty:
         return None
-    df["value"] = pd.to_numeric(df["value"], errors="coerce")
-    df["reference_date"] = df["reference_date"].astype(str)
-    df["target_end_date"] = df["target_end_date"].astype(str)
-    df["location"] = df["location"].astype(str)
-    df["output_type_id"] = df["output_type_id"].astype(str)
-    if "forecast_date" in df.columns:
-        df["forecast_date"] = df["forecast_date"].astype(str).str.strip()
-        latest = df.groupby("location")["forecast_date"].transform("max")
-        stale = df["forecast_date"] != latest
-        if stale.any():
-            dropped = sorted(df.loc[stale, "forecast_date"].unique())
-            df = df[~stale].copy()
-            if warn:
-                warn(f"{path.name}: kept the latest forecast_date per location; dropped "
-                     f"{int(stale.sum())} rows from earlier forecast(s) {dropped}")
+    for c in ("reference_date", "target_end_date", "location", "output_type_id"):
+        df[c] = df[c].astype(str)
     return df
+
+
+def read_sample_submission(path: Path, warn=None, raw: pd.DataFrame | None = None) -> pd.DataFrame | None:
+    """Read a model-output file and keep only round-2 sample rows. Returns None if none.
+
+    Since 2026-10-30 files carry a ``forecast_date`` column (the date the model was run) and a team
+    resubmits by appending a complete new forecast with a later date, keeping the old rows. Only the
+    latest forecast per location is kept here; superseded rows are dropped and reported via ``warn``.
+    ``raw``: the file already read by read_submission_file (each file is parsed once).
+    """
+    df = read_submission_file(path) if raw is None else raw
+    if df is None:
+        return None
+    df = _target_rows(df, config.TARGET, "sample")
+    if df is None:
+        return None
+    df["value"] = pd.to_numeric(df["value"], errors="coerce")
+    return _latest_forecast(df, path, warn)
+
+
+def read_rt_submission(path: Path, warn=None, raw: pd.DataFrame | None = None) -> pd.DataFrame | None:
+    """The file's `wk R_t` quantile rows (latest forecast_date per location), with numeric `level` and
+    `value`; None if the file has none."""
+    df = read_submission_file(path) if raw is None else raw
+    if df is None:
+        return None
+    df = _target_rows(df, config.RT_TARGET, "quantile")
+    if df is None:
+        return None
+    df["value"] = pd.to_numeric(df["value"], errors="coerce")
+    df["level"] = pd.to_numeric(df["output_type_id"], errors="coerce").round(4)
+    return _latest_forecast(df, path, warn, " (R_t)")

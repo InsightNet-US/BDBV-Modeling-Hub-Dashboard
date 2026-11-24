@@ -304,3 +304,62 @@ def validate_submission(df: pd.DataFrame, reference_date: str, model_id: str,
         if g.duplicated(["output_type_id", "target_end_date"]).any():
             problems.append(f"{loc}: duplicate (sample, target_end_date) rows")
     return problems
+
+
+# ---------------------------------------------------------------- effective reproduction number
+def rt_quantiles(levels, values, at=config.RT_LEVELS) -> list[float]:
+    """Values at the levels `at`, by linear interpolation of the submitted quantile function (exact when
+    the level is submitted; clamped to the outermost submitted values beyond them)."""
+    return [float(np.interp(a, levels, values)) for a in at]
+
+
+def rt_p_above(levels, values, x: float = 1.0) -> float:
+    """P(R_t > x) from a quantile function: 1 - F(x), F linear between neighbouring levels. Ties at exactly
+    x take the midpoint of the tied levels; beyond the submitted tails P is clamped to 1 - max level and
+    1 - min level (the front end shows those as ">99%" / "<1%")."""
+    lv, vs = np.asarray(levels, float), np.asarray(values, float)
+    if x < vs[0]:
+        return float(1 - lv[0])
+    if x > vs[-1]:
+        return float(1 - lv[-1])
+    eq = lv[vs == x]
+    if eq.size:
+        return float(1 - (eq.min() + eq.max()) / 2)
+    i = int(np.searchsorted(vs, x))        # vs[i-1] < x < vs[i]
+    f = lv[i - 1] + (lv[i] - lv[i - 1]) * (x - vs[i - 1]) / (vs[i] - vs[i - 1])
+    return float(1 - f)
+
+
+def rt_summary(df: pd.DataFrame, allowed_locations: set[str] | None = None, warn=print,
+               name: str = "") -> dict:
+    """{location: {"dates": [target end dates], "q": [[RT_LEVELS values] per date], "p_gt1": [...]}} from
+    one file's `wk R_t` quantile rows (hub_io.read_rt_submission). Bad rows are dropped with a WARN, so
+    the output never holds NaN."""
+    df = df.copy()
+    bad = df["value"].isna() | (df["value"] < 0) | df["level"].isna() | (df["level"] <= 0) | (df["level"] >= 1)
+    if bad.any():
+        warn(f"WARN {name}: {int(bad.sum())} R_t row(s) with a missing or invalid value/level dropped")
+        df = df[~bad]
+    if allowed_locations is not None:
+        out_loc = ~df["location"].isin(allowed_locations)
+        if out_loc.any():
+            warn(f"WARN {name}: R_t locations not in tasks.json dropped: {sorted(df.loc[out_loc, 'location'].unique())}")
+            df = df[~out_loc]
+    dup = df.duplicated(["location", "target_end_date", "level"])
+    if dup.any():
+        warn(f"WARN {name}: {int(dup.sum())} duplicate R_t (location, date, level) row(s); kept the first")
+        df = df[~dup]
+    out: dict = {}
+    for loc, g in df.groupby("location"):
+        dates, qs, ps = [], [], []
+        for w, gw in g.groupby("target_end_date"):
+            gw = gw.sort_values("level")
+            lv, vs = gw["level"].to_numpy(float), gw["value"].to_numpy(float)
+            if np.any(np.diff(vs) < 0):
+                warn(f"WARN {name}: {loc} {w}: R_t quantiles not increasing; sorted")
+                vs = np.sort(vs)
+            dates.append(w)
+            qs.append([round(v, 3) for v in rt_quantiles(lv, vs)])
+            ps.append(round(rt_p_above(lv, vs), 3))
+        out[loc] = {"dates": dates, "q": qs, "p_gt1": ps}
+    return out

@@ -89,6 +89,8 @@ function modelLoc(mid, loc) {
 function roundModels() { return S.round ? Object.keys(S.round.models).sort(sortModels) : []; }
 function sortModels(a, b) { if (a === S.ensembleId) return -1; if (b === S.ensembleId) return 1; return a.localeCompare(b); }
 function modelsForLocation(loc) { return roundModels().filter(m => modelLoc(m, loc)); }
+/** case output or Rt estimates (rt.js) for the location: what the ribbon and the Models menu call "output" */
+const hasOutput = (mid, loc) => !!(modelLoc(mid, loc) || rtLoc(mid, loc));
 /** the model that submitted the most locations in the current round (ties: first in menu order) */
 function widestModel(ms) {
   let best = null, n = -1;
@@ -189,7 +191,7 @@ function setMapWeek(w) {
    and the no-… / custom-row classes; the ResizeObserver in wire() redraws whatever changes size. */
 const LAYOUT_KEY = 'bdbv-layout', PANELS = ['weekly', 'cum', 'map'], COL_DEFAULT = 0.42;
 const PANEL_KEY = { weekly: 'panels.weekly', cum: 'panels.cum', map: 'panels.map' };
-const LOWER_TABS = ['trend', 'cum'];
+const LOWER_TABS = ['trend', 'cum', 'rt'];
 const GUTTER = 14, MAP_MIN = 320, TS_MIN = 260, CUM_MIN = 110;
 /** weekly-chart window {start, end}: ISO dates or the sentinels 'first' / 'last'; null when invalid */
 function validWeeks(x) {
@@ -526,7 +528,7 @@ function afterRound() {
 /** header Models menu: ensemble first, then team models; rows greyed (still tickable) where a model did not submit the location */
 function buildModelDropdown() {
   const panel = $('modelPanel'), ms = roundModels();
-  const avail = new Set(modelsForLocation(S.location)), ec = ensCounts(S.location);
+  const avail = new Set(roundModels().filter(m => hasOutput(m, S.location))), ec = ensCounts(S.location);
   const hint = S.ensembleId && ms.includes(S.ensembleId) ? `<div class="hint">${t('dd.hintEns')}${ec && ec.n_models ? ` · ${t('dd.hintEnsN', { n: ec.n_models, loc: locName(S.location) })}` : ''}</div>` : '';
   panel.innerHTML = hint + ms.map(id => {
     const isEns = id === S.ensembleId, dis = !avail.has(id);
@@ -564,11 +566,11 @@ function drawRibbon() {
   const ms = roundModels(), loc = S.location;
   $('modelRibbon').classList.toggle('hidden', !ms.length);
   $('ribbonChips').innerHTML = ms.map(id => {
-    const ens = id === S.ensembleId, none = !modelLoc(id, loc);
+    const ens = id === S.ensembleId, none = !hasOutput(id, loc), rtOnly = !none && !modelLoc(id, loc);
     const sw = ens ? '<i style="border:1.5px dashed var(--median);background:transparent"></i>' : `<i style="background:${modelColor(id)}"></i>`;
     const inner = sw + (ens ? ensLabelN(loc) : modelLabel(id));
     const on = isTicked(id), mapped = id === S.mapModel;
-    const tip = (none ? t('ribbon.noOutput', { loc: locName(loc) }) + ' ' : '') + t(mapped ? 'ribbon.tipMapped' : on ? 'ribbon.tipOn' : 'ribbon.tipOff');
+    const tip = (none ? t('ribbon.noOutput', { loc: locName(loc) }) + ' ' : rtOnly ? t('ribbon.rtOnly', { loc: locName(loc) }) + ' ' : '') + t(mapped ? 'ribbon.tipMapped' : on ? 'ribbon.tipOn' : 'ribbon.tipOff');
     return `<span class="chip pick${on ? '' : ' off'}${mapped ? ' onmap' : ''}${none ? ' nodata' : ''}" data-model="${id}" role="checkbox" aria-checked="${on}" tabindex="0" title="${tip}">${inner}${mapped ? MAP_PIN : ''}</span>`;
   }).join('');
 }
@@ -618,6 +620,7 @@ function wire() {
       if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); act(c.dataset.model, e.key === 'Enter', true); } });
   }
   wireMapPick($('cumChart'), false);
+  wireMapPick($('trendLegend'), false);
   $('drawerClose').addEventListener('click', () => toggleDrawer(false));
   $('drawerBg').addEventListener('click', () => toggleDrawer(false));
   window.addEventListener('resize', () => { drawTS(); drawLower(); });
@@ -653,9 +656,11 @@ function onLocationChange() {
   sync();
 }
 function selectLocation(code) { S.location = code; onLocationChange(); }
-/** lower-left panel: the Trend tab (trend.js) or the cumulative tab (cumulative.js) */
+/** lower-left panel: the Trend tab (trend.js), the cumulative tab (cumulative.js) or the Rt tab (rt.js) */
 function drawLower() {
+  const svg = $('cumChart'); svg.onmousemove = svg.onmouseleave = null;   // set by the Rt tab only
   if (S.layout.tab === 'trend') return drawTrend();
+  if (S.layout.tab === 'rt') return drawRt();
   $('trendLegend').innerHTML = '';
   drawCum();
 }
@@ -668,7 +673,7 @@ function buildDrawer() {
   const note = t('drawer.englishNote');   // metadata texts come from the hub in English
   $('drawerSub').innerHTML = (S.roundRef ? tn('drawer.sub', ms.length, { d: fmtDate(S.roundRef, true) }) : t('drawer.noRound')) + (note && ms.length ? `<br><i>${note}</i>` : '');
   $('drawerBody').innerHTML = ms.map(id => {
-    const m = S.models[id] || {}, nloc = Object.keys((S.round.models[id] || {}).locations || {}).length;
+    const m = S.models[id] || {}, rm = S.round.models[id] || {}, nloc = new Set([...Object.keys(rm.locations || {}), ...Object.keys(rm.rt || {})]).size;
     const links = [m.website_url && `<a href="${m.website_url}" target="_blank" rel="noopener">${t('drawer.website')}</a>`, m.repo_url && `<a href="${m.repo_url}" target="_blank" rel="noopener">${t('drawer.code')}</a>`].filter(Boolean).join(' · ');
     const dash = m.computed_by === 'dashboard', members = dash ? ((S.round.models[id] || {}).members || []) : [];
     return `<div class="model"><h3><i style="background:${modelColor(id)}"></i>${m.model_name || id} <span class="tag">${id}</span>${dash ? `<span class="tag">${t('drawer.tagDash')}</span>` : m.ensemble_of_hub_models ? `<span class="tag">${t('drawer.tagEns')}</span>` : ''}</h3>

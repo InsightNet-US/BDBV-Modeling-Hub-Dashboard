@@ -150,7 +150,7 @@ body.brushing[data-brush=pan],body.brushing[data-brush=pan] *{cursor:grabbing!im
 .chip.pick:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
 .chip.onmap{color:var(--ink);font-weight:600}
 .chip .pin{color:var(--accent);flex-shrink:0}
-#cumChart .mhit,#cumChart .cbox{cursor:pointer}
+#cumChart .mhit,#cumChart .cbox,#cumChart .rtser{cursor:pointer}
 #modelPanel{width:max-content;max-width:min(360px,calc(100vw - 24px));max-height:60vh;overflow:auto}
 #modelPanel label,#modelPanel .hint{white-space:normal}
 .msel:disabled{color:var(--muted)}

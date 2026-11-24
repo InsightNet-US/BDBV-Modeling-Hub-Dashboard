@@ -142,6 +142,7 @@ Try it: the French interface is on the live dashboard, add `?lang=fr` to the add
 | Where | English | French | Example (French) |
 |---|---|---|---|
 | start of the hover text of a ticked model in the Models ribbon with no output for the location | No output for {loc}. | Pas de résultats pour {loc}. | Pas de résultats pour Ituri. |
+|  | Rt estimates only for {loc}. | Seulement des estimations de Rt pour {loc}. | Seulement des estimations de Rt pour Ituri. |
 | hover text of a greyed (unticked) model in the Models ribbon | Not ticked. Click to tick this model; double-click to tick it and show it on the map (keys: Space ticks, Enter maps) | Non coché. Cliquer pour cocher ce modèle ; double-cliquer pour le cocher et l’afficher sur la carte (touches : Espace coche, Entrée affiche sur la carte) | Non coché. Cliquer pour cocher ce modèle ; double-cliquer pour le cocher et l’afficher sur la carte (touches : Espace coche, Entrée affiche sur la carte) |
 | hover text of a ticked model in the Models ribbon | Ticked. Click to untick this model; double-click to show it on the map (keys: Space unticks, Enter maps) | Coché. Cliquer pour décocher ce modèle ; double-cliquer pour l’afficher sur la carte (touches : Espace décoche, Entrée affiche sur la carte) | Coché. Cliquer pour décocher ce modèle ; double-cliquer pour l’afficher sur la carte (touches : Espace décoche, Entrée affiche sur la carte) |
 | hover text of the model shown on the map, in the Models ribbon | Ticked and shown on the map. Click to untick this model (keys: Space) | Coché et affiché sur la carte. Cliquer pour décocher ce modèle (touche : Espace) | Coché et affiché sur la carte. Cliquer pour décocher ce modèle (touche : Espace) |
@@ -173,7 +174,7 @@ Try it: the French interface is on the live dashboard, add `?lang=fr` to the add
 
 | Where | English | French | Example (French) |
 |---|---|---|---|
-| heading of the lower-left panel (read by screen readers only) | Trend and cumulative confirmed cases | Tendance et cas confirmés cumulés | Tendance et cas confirmés cumulés |
+| heading of the lower-left panel (read by screen readers only) | Trend, cumulative confirmed cases and Rt | Tendance, cas confirmés cumulés et Rt | Tendance, cas confirmés cumulés et Rt |
 
 ## Trend tab
 
@@ -222,6 +223,25 @@ Try it: the French interface is on the live dashboard, add `?lang=fr` to the add
 | tooltip of a forecast box | {name}: cumulative confirmed through week 0 ({d}) | {name} : cas confirmés cumulés jusqu’à la semaine 0 ({d}) | Carte : cas confirmés cumulés jusqu’à la semaine 0 (24 oct.) |
 | tooltip of a forecast box | {name}: cumulative confirmed through week +{n} ({d}) | {name} : cas confirmés cumulés jusqu’à la semaine +{n} ({d}) | Carte : cas confirmés cumulés jusqu’à la semaine +3 (24 oct.) |
 | italic note | not submitted | non soumis | non soumis |
+
+## Rt tab
+
+| Where | English | French | Example (French) |
+|---|---|---|---|
+|  | Rt | Rt | Rt |
+|  | Effective reproduction number · {loc} | Nombre de reproduction effectif · {loc} | Nombre de reproduction effectif · Ituri |
+|  | Rt = 1 | Rt = 1 | Rt = 1 |
+|  | Growing (Rt > 1) | En croissance (Rt > 1) | En croissance (Rt > 1) |
+|  | Declining (Rt < 1) | En décroissance (Rt < 1) | En décroissance (Rt < 1) |
+|  | 50% interval | Intervalle à 50 % | Intervalle à 50 % |
+|  | 95% interval | Intervalle à 95 % | Intervalle à 95 % |
+|  | Week ending {d} | Semaine se terminant le {d} | Semaine se terminant le 24 oct. |
+|  | 50%: {r50} · 95%: {r95} | 50 % : {r50} · 95 % : {r95} | 50 % : 286–433 · 95 % : 150–720 |
+|  | P(Rt > 1) {p} | P(Rt > 1) {p} | P(Rt > 1) 57␣% |
+|  | No Rt estimates in this round. | Aucune estimation de Rt pour ce cycle. | Aucune estimation de Rt pour ce cycle. |
+|  | No Rt estimates for {loc} from the ticked models. | Aucune estimation de Rt pour {loc} parmi les modèles cochés. | Aucune estimation de Rt pour Ituri parmi les modèles cochés. |
+|  | The ensemble has no Rt: tick team models in Models to see their estimates. | L’ensemble n’a pas de Rt : cochez des modèles d’équipes dans Modèles pour voir leurs estimations. | L’ensemble n’a pas de Rt : cochez des modèles d’équipes dans Modèles pour voir leurs estimations. |
+|  | No Rt here from: {list} | Pas de Rt ici pour : {list} | Pas de Rt ici pour : OHTJHU-BM, CEPH-Rtrend_BDBV |
 
 ## Map
 
@@ -317,7 +337,7 @@ Try it: the French interface is on the live dashboard, add `?lang=fr` to the add
 |---|---|---|---|
 | toolbar button opening the panel menu | Panels | Panneaux | Panneaux |
 | panel name in the menu and button labels | Weekly chart | Graphique hebdomadaire | Graphique hebdomadaire |
-| panel name in the menu and button labels | Trend / cumulative cases | Tendance / cas cumulés | Tendance / cas cumulés |
+| panel name in the menu and button labels | Trend / cumulative cases / Rt | Tendance / cas cumulés / Rt | Tendance / cas cumulés / Rt |
 | panel name in the menu and button labels | Map | Carte | Carte |
 | entry of the panel menu | Reset layout | Réinitialiser la disposition | Réinitialiser la disposition |
 | entry of the panel menu | Copy link to this view | Copier le lien vers cette vue | Copier le lien vers cette vue |
