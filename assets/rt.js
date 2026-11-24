@@ -3,16 +3,18 @@
    v = 'rt'). Data: models[mid].rt[loc] = {dates, q: [[2.5, 25, 50, 75, 97.5%]], p_gt1} in the round file
    (pipeline/summarize.py rt_summary); models that sent only Rt are in the round with no case output.
    - Rt over time (upper left, drawRtTime): each ticked Rt model's estimates for the selected location at
-     every target end date it gave (week 0 and, for some teams, earlier weeks). Consecutive weeks are a median
-     line with shaded 50% and 95% bands; a week standing alone a vertical interval (thin 95% bar, 50% box,
-     median dot), side by side when several models give it. A dark line marks Rt = 1, the growing side
+     every target end date it gave (week 0 and, for some teams, earlier weeks). Each week is a box plot (thin 95%
+     bar, 50% box, median dot), the models side by side within the week; a model's medians in consecutive
+     weeks are joined by a line. A dark line marks Rt = 1, the growing side
      tinted orange and the declining side teal. The mapped week is highlighted; clicking a week maps it,
-     clicking a model's band or interval (or legend chip) puts that model on the map.
+     clicking a model's box plot or line (or legend chip) puts that model on the map.
    - Rt by location (lower left, drawRtLoc): the map model's estimates for the mapped week, one row per
      location (the country and provinces, or the zones of the selected province on the zone layer), sorted
      by median, with the same Rt = 1 line; a click selects the location. */
 const RI = { lo95: 0, lo50: 1, med: 2, hi50: 3, hi95: 4 };
 const RT_UP = '#e07b39', RT_DOWN = '#2a9d8f';   // trend tab's increase / decrease colours
+// intervals kept faint so the medians and their lines carry the chart: 95% bar, 50% box fill and edge opacity
+const RT_IV = { w95: 0.35, fill50: 0.15, edge50: 0.45 };
 /** {dates, q, p_gt1} for a model and location in the current round, or null */
 function rtLoc(id, loc) { const m = S.round && S.round.models[id]; return (m && m.rt && m.rt[loc]) || null; }
 /** models of the current round with Rt for some location */
@@ -57,9 +59,9 @@ function drawRtTime() {
   if (!sel.length) return empty(t('rt.noLoc', { loc: locName(loc) }));
 
   // legend: model chips (click: map), the band key, the Rt = 1 line, and ticked models without Rt here
-  const sw = (fill, op) => `<i style="background:${fill};opacity:${op}"></i>`;
   legend.innerHTML = sel.map(x => `<span class="chip pick${x.id === S.rtMapModel ? ' onmap' : ''}" data-model="${x.id}" title="${esc(t(x.id === S.rtMapModel ? 'ts.leg.onMap' : 'ts.leg.mapTitle'))}"><i style="background:${modelColor(x.id)}"></i>${esc(modelLabel(x.id))}</span>`).join('')
-    + `<span class="chip">${sw('#5f6b7a', 0.5)}${t('rt.i50')}</span><span class="chip">${sw('#5f6b7a', 0.2)}${t('rt.i95')}</span>`
+    + `<span class="chip"><svg width="10" height="12" style="vertical-align:middle"><rect x="1" y="2" width="8" height="8" fill="#5f6b7a" fill-opacity="${RT_IV.fill50}" stroke="#5f6b7a" stroke-opacity="${RT_IV.edge50}" stroke-width="1.2"/></svg>${t('rt.i50')}</span>`
+    + `<span class="chip"><svg width="6" height="14" style="vertical-align:middle"><line x1="3" y1="0" x2="3" y2="14" stroke="#5f6b7a" stroke-width="1.5" opacity="${RT_IV.w95}"/></svg>${t('rt.i95')}</span>`
     + `<span class="chip"><svg width="18" height="8" style="vertical-align:middle"><line x1="0" y1="4" x2="18" y2="4" stroke="#1b2430" stroke-width="1.5"/></svg>${t('rt.one')}</span>`
     + (missing.length ? `<span class="chip" style="font-style:italic">${esc(t('rt.missing', { list: missing.map(modelLabel).join(', ') }))}</span>` : '');
 
@@ -91,33 +93,19 @@ function drawRtTime() {
   s += `<text x="${mL + 5}" y="${mT + 11}" style="font-size:9px;font-style:italic;fill:${RT_UP}">${t('rt.growing')}</text>`;
   s += `<text x="${mL + 5}" y="${H - mB - 5}" style="font-size:9px;font-style:italic;fill:${RT_DOWN}">${t('rt.declining')}</text>`;
 
-  // each series: runs of consecutive weeks as bands + median line; lone weeks as dodged intervals
-  const lone = {};   // date -> series indices drawing a lone interval there (for the side-by-side offset)
-  sel.forEach((x, k) => { x.runs = []; let run = [];
-    x.d.dates.forEach((w, i) => { if (run.length && addDays(x.d.dates[run[run.length - 1]], 7) !== w) { x.runs.push(run); run = []; } run.push(i); });
-    if (run.length) x.runs.push(run);
-    x.runs.filter(r => r.length === 1).forEach(r => (lone[x.d.dates[r[0]]] = lone[x.d.dates[r[0]]] || []).push(k)); });
-  const inRun = new Set(sel.flatMap(x => x.runs.filter(r => r.length > 1).flatMap(r => r.map(i => x.d.dates[i]))));
-  const bw = Math.max(6, Math.min(16, slot * 0.7 / Math.max(1, ...Object.values(lone).map(a => a.length))));
+  // each series: a box plot per week (thin 95% bar, 50% box, median dot), every model at its own offset in
+  // the week so the boxes sit side by side; medians of consecutive weeks joined by a line
+  const n = sel.length, bw = Math.max(6, Math.min(18, slot * 0.8 / n)), off = k => (k - (n - 1) / 2) * bw;
   const arrow = (xx, col) => `<path d="M${xx - 3.5} ${yOf(y1) + 5} L${xx} ${yOf(y1)} L${xx + 3.5} ${yOf(y1) + 5} Z" fill="${col}"/>`;
-  sel.forEach((x, k) => { const col = modelColor(x.id), q = x.d.q;
+  sel.forEach((x, k) => { const col = modelColor(x.id), q = x.d.q, ds = x.d.dates, xx = i => xOf(ds[i]) + off(k);
     let g = '';
-    x.runs.forEach(r => {
-      if (r.length > 1) {
-        const band = (a, b) => r.map(i => `${xOf(x.d.dates[i])},${yOf(q[i][a])}`).join(' ') + ' ' + r.slice().reverse().map(i => `${xOf(x.d.dates[i])},${yOf(q[i][b])}`).join(' ');
-        g += `<polygon points="${band(RI.hi95, RI.lo95)}" fill="${col}" opacity="0.15"/>`;
-        g += `<polygon points="${band(RI.hi50, RI.lo50)}" fill="${col}" opacity="0.3"/>`;
-        g += `<polyline points="${r.map(i => `${xOf(x.d.dates[i])},${yOf(q[i][RI.med])}`).join(' ')}" fill="none" stroke="${col}" stroke-width="2"/>`;
-        r.forEach(i => { g += `<circle cx="${xOf(x.d.dates[i])}" cy="${yOf(q[i][RI.med])}" r="2.8" fill="${col}" stroke="#fff" stroke-width="1"/>`;
-          if (q[i][RI.hi95] > y1) g += arrow(xOf(x.d.dates[i]), col); });
-      } else {
-        // a band's point at the same week: the lone intervals step aside to its right
-        const i = r[0], w = x.d.dates[i], grp = lone[w], j = grp.indexOf(k), xx = xOf(w) + (inRun.has(w) ? (j + 0.9) * bw : (j - (grp.length - 1) / 2) * bw);
-        g += `<line x1="${xx}" y1="${yOf(q[i][RI.lo95])}" x2="${xx}" y2="${yOf(q[i][RI.hi95])}" stroke="${col}" stroke-width="1.5" opacity="0.8"/>`;
-        g += `<rect x="${xx - bw * 0.3}" y="${yOf(q[i][RI.hi50])}" width="${bw * 0.6}" height="${Math.max(1, yOf(q[i][RI.lo50]) - yOf(q[i][RI.hi50]))}" fill="${col}" fill-opacity="0.35" stroke="${col}" stroke-width="1.2"/>`;
-        g += `<circle cx="${xx}" cy="${yOf(q[i][RI.med])}" r="3.2" fill="${col}" stroke="#fff" stroke-width="1"/>`;
-        if (q[i][RI.hi95] > y1) g += arrow(xx, col);
-      } });
+    ds.forEach((w, i) => { if (i && addDays(ds[i - 1], 7) === w)
+      g += `<line x1="${xx(i - 1)}" y1="${yOf(q[i - 1][RI.med])}" x2="${xx(i)}" y2="${yOf(q[i][RI.med])}" stroke="${col}" stroke-width="1.8"/>`; });
+    ds.forEach((w, i) => { const c = xx(i);
+      g += `<line x1="${c}" y1="${yOf(q[i][RI.lo95])}" x2="${c}" y2="${yOf(q[i][RI.hi95])}" stroke="${col}" stroke-width="1.5" opacity="${RT_IV.w95}"/>`;
+      g += `<rect x="${c - bw * 0.3}" y="${yOf(q[i][RI.hi50])}" width="${bw * 0.6}" height="${Math.max(1, yOf(q[i][RI.lo50]) - yOf(q[i][RI.hi50]))}" fill="${col}" fill-opacity="${RT_IV.fill50}" stroke="${col}" stroke-opacity="${RT_IV.edge50}" stroke-width="1.2"/>`;
+      g += `<circle cx="${c}" cy="${yOf(q[i][RI.med])}" r="4.5" fill="${col}" stroke="#fff" stroke-width="1.2"/>`;
+      if (q[i][RI.hi95] > y1) g += arrow(c, col); });
     s += `<g class="rtser" data-model="${x.id}">${g}</g>`; });
   // Rt = 1 on top of the series
   s += `<line x1="${mL}" y1="${y1line}" x2="${W - mR}" y2="${y1line}" stroke="#1b2430" stroke-width="1.5"/>`;
@@ -178,9 +166,9 @@ function drawRtLoc() {
     if (sel) s += `<rect x="0" y="${y - rowH / 2}" width="${W}" height="${rowH}" fill="var(--accent)" opacity="0.1"/>`;
     s += `<g class="rtrow" data-loc="${r.code}" style="cursor:pointer"><rect x="0" y="${y - rowH / 2}" width="${W}" height="${rowH}" fill="transparent"/>`;
     s += `<text x="${mL - 8}" y="${y + 3.5}" text-anchor="end" style="font-size:10px;${sel ? 'font-weight:600;fill:#1b2430' : 'fill:#5f6b7a'}">${esc(name(r.code))}</text>`;
-    s += `<line x1="${xOf(q[RI.lo95])}" y1="${y}" x2="${xOf(q[RI.hi95])}" y2="${y}" stroke="${col}" stroke-width="1.5" opacity="0.8"/>`;
-    s += `<rect x="${xOf(q[RI.lo50])}" y="${y - 4.5}" width="${Math.max(1, xOf(q[RI.hi50]) - xOf(q[RI.lo50]))}" height="9" fill="${col}" fill-opacity="0.35" stroke="${col}" stroke-width="1.2"/>`;
-    s += `<circle cx="${xOf(q[RI.med])}" cy="${y}" r="3.2" fill="${col}" stroke="#fff" stroke-width="1"/>`;
+    s += `<line x1="${xOf(q[RI.lo95])}" y1="${y}" x2="${xOf(q[RI.hi95])}" y2="${y}" stroke="${col}" stroke-width="1.5" opacity="${RT_IV.w95}"/>`;
+    s += `<rect x="${xOf(q[RI.lo50])}" y="${y - 4.5}" width="${Math.max(1, xOf(q[RI.hi50]) - xOf(q[RI.lo50]))}" height="9" fill="${col}" fill-opacity="${RT_IV.fill50}" stroke="${col}" stroke-opacity="${RT_IV.edge50}" stroke-width="1.2"/>`;
+    s += `<circle cx="${xOf(q[RI.med])}" cy="${y}" r="4.5" fill="${col}" stroke="#fff" stroke-width="1.2"/>`;
     if (q[RI.hi95] > rg.hi) s += `<path d="M${x1 - 5} ${y - 3.5} L${x1} ${y} L${x1 - 5} ${y + 3.5} Z" fill="${col}"/>`;
     s += `<text x="${x1 + 14}" y="${y + 3.5}" style="font-size:9.5px;fill:#1b2430">${fmtR(q[RI.med])}<tspan style="fill:#8a94a3"> · ${fmtRtP(r.p)}</tspan></text></g>`; });
   s += `<line x1="${xOf(1)}" y1="${mT - 4}" x2="${xOf(1)}" y2="${yEnd}" stroke="#1b2430" stroke-width="1.5"/>`;

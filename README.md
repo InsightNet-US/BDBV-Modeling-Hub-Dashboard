@@ -141,10 +141,10 @@ cases view; everything else is the Rt view's own:
   view does not list), all ticked by default, with their own ticks and map model in the Models menu and
   ribbon (a model without Rt for the location is struck through).
 - **Rt over time** (upper left): each ticked model's estimates for the selected location at every week it
-  gave (week 0 and, for some teams, earlier weeks): consecutive weeks as a median line with shaded 50% and
-  95% bands, a lone week as a vertical interval; a dark line at Rt = 1, the area above tinted orange
+  gave (week 0 and, for some teams, earlier weeks): a box plot per week (thin 95% bar, 50% box, median dot),
+  the models side by side, each model's medians in consecutive weeks joined by a line; a dark line at Rt = 1, the area above tinted orange
   (growing) and below teal (declining); very wide upper intervals are cut with an arrow. The tooltip gives
-  each model's median, intervals and P(Rt > 1). Clicking a week maps it; clicking a band, interval or
+  each model's median, intervals and P(Rt > 1). Clicking a week maps it; clicking a box plot, line or
   legend chip puts that model on the map.
 - **Rt by location** (lower left): the map model's estimates for the mapped week, the country and provinces
   (or, on the health-zone layer, the selected province and its zones) sorted by median, with median and
