@@ -14,7 +14,7 @@ small JSON summaries under `data/`, and a GitHub Action rebuilds and deploys to 
   draws the ensemble median; ticking the ensemble adds its intervals there and puts it in the other panels.
   A **Models ribbon** above the footer, always shown whatever panels are open, lists every model of the
   round with its colour: unticked models are greyed, a model (ticked or not) without output for the selected
-  location (neither case output nor Rt) is struck through. Click a model there to tick or untick it, double-click to put it on the map
+  location is struck through. Click a model there to tick or untick it, double-click to put it on the map
   (keys: Space ticks/unticks, Enter maps); the hover text says so. It wraps to more lines when needed and sticks to the bottom of
   the window on narrow screens.
   The map shows one of the ticked models: pick it in the map's model selector (ticked models only), double-click
@@ -46,14 +46,6 @@ small JSON summaries under `data/`, and a GitHub Action rebuilds and deploys to 
   name carries how many models it pools for the location shown. The figures
   form a right-aligned column: median, then the 95% interval in parentheses (dropped when the panel is
   very narrow).
-- **Rt** (third tab, same ticked models): estimates of the effective reproduction number (the hub's optional
-  `wk R_t` target, quantiles) for the selected round and location, at every week a model gave (week 0 and,
-  for some teams, earlier weeks). Consecutive weeks are a median line with shaded 50% and 95% bands; a week on
-  its own is a vertical interval (thin 95% bar, 50% box, median dot), side by side when several models give
-  it. A dark line marks Rt = 1, the area above it tinted orange (growing) and below teal (declining); very
-  wide upper intervals are cut with an arrow. The tooltip lists each model's median, intervals and
-  P(Rt > 1). Models that sent only Rt are listed in the round (ribbon, Models menu) with no case output;
-  the ensemble has no Rt.
 - **Map** at province or health-zone level, coloured by a model's median cases in a chosen week, or by
   P(at least one case) in that week, or by P(increase): for weeks 0 to +3, the chance of an increase from
   week −1 under the Trend tab's change threshold (the subtitle names it), on a scale diverging at 50%
@@ -139,15 +131,39 @@ increase over weeks 0 to +3, in a tab beside the cumulative panel. Synthetic ("m
 on 2026-11-05 once real submissions had been flowing for weeks; the generator (`pipeline/mock.py`) is in
 the git history up to commit `24d9cd5`.
 
+## Rt view
+
+A **Cases | Rt** switch in the header (shown once some round has Rt) swaps the panels for estimates of the
+effective reproduction number, the hub's optional `wk R_t` target (quantiles per location and week; the
+pipeline keeps the 2.5, 25, 50, 75 and 97.5% values and P(Rt > 1)). Round and location are shared with the
+cases view; everything else is the Rt view's own:
+- **Models**: only the models that sent Rt this round (including teams that sent only Rt, which the cases
+  view does not list), all ticked by default, with their own ticks and map model in the Models menu and
+  ribbon (a model without Rt for the location is struck through).
+- **Rt over time** (upper left): each ticked model's estimates for the selected location at every week it
+  gave (week 0 and, for some teams, earlier weeks): consecutive weeks as a median line with shaded 50% and
+  95% bands, a lone week as a vertical interval; a dark line at Rt = 1, the area above tinted orange
+  (growing) and below teal (declining); very wide upper intervals are cut with an arrow. The tooltip gives
+  each model's median, intervals and P(Rt > 1). Clicking a week maps it; clicking a band, interval or
+  legend chip puts that model on the map.
+- **Rt by location** (lower left): the map model's estimates for the mapped week, the country and provinces
+  (or, on the health-zone layer, the selected province and its zones) sorted by median, with median and
+  P(Rt > 1) at the right; clicking a row selects that location.
+- **Map**: the map model's median Rt (log scale diverging at 1, from ≤0.5 teal to ≥2 orange) or P(Rt > 1)
+  (diverging at 50%), for the week chosen in the map's week menu (the round's Rt weeks).
+
+The view and the Rt ticks are remembered per browser and in copied links (`?view=rt`,
+`?rtmodels=TEAM-model,…` or `none`, `?rtmapmodel=`).
+
 ## Panel layout
 
 Drag the gutter between the charts and the map, or between the two charts, to resize the panels
 (double-click a gutter, or press Home/End on it, to reset that axis; arrow keys nudge it). Each panel
 header has a × that hides it; the **Panels** menu in the toolbar lists the three
 panels, resets the layout and copies a link that reproduces it (`?panels=weekly,cum,map` lists the panels
-to show, `none` hides all, `cum` being the lower-left Trend / cumulative / Rt panel; `?split=0.55` or
-`?split=0.55,0.7` sets the column share and the weekly chart's share of the column; `?tab=trend`,
-`?tab=cum` or `?tab=rt` picks the lower-left tab, which is remembered with the layout and set back to Trend by Reset
+to show, `none` hides all, `cum` being the lower-left Trend / cumulative panel (Rt by location in the Rt view); `?split=0.55` or
+`?split=0.55,0.7` sets the column share and the weekly chart's share of the column; `?tab=trend` or
+`?tab=cum` picks the lower-left tab, which is remembered with the layout and set back to Trend by Reset
 layout; `?trend=p10` (percent) or `?trend=c5` (cases) the Trend threshold, back to ±10% on Reset; `?models=ensemble,TEAM-model` (or `none`) gives the ticked models, `ensemble` standing for the
 round's ensemble, and `?mapmodel=` the model on the map; Reset layout also returns the models to the
 defaults). Sizes, hidden panels and ticked models are remembered per browser (the models under their own

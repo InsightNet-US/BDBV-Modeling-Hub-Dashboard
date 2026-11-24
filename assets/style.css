@@ -104,6 +104,11 @@ body.resizing-row{cursor:row-resize}
 /* weekly panel: chart above a fixed-height brush strip that picks the weeks shown */
 .ts .bd{display:flex;flex-direction:column}
 #tsChart{flex:1 1 0;min-height:0}
+/* views (app.js setView): the cases sections (.casev) or the Rt ones (.rtv) occupy the same grid slots */
+body.view-rt .casev,body:not(.view-rt) .rtv{display:none!important}
+#rtChart{flex:1 1 0;min-height:0;display:block}
+#rtLegend{flex:none;padding:0 0 4px}#rtLegend:empty{display:none}
+#viewToggle button{font-weight:600}
 #tsBrush{flex:none;height:38px;width:100%;display:block;touch-action:none;cursor:crosshair;margin-top:2px}
 #tsBrush text{font-size:9px}
 .brush-win{fill:var(--accent);fill-opacity:.12;stroke:var(--accent);stroke-width:1;cursor:grab}
@@ -150,7 +155,7 @@ body.brushing[data-brush=pan],body.brushing[data-brush=pan] *{cursor:grabbing!im
 .chip.pick:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
 .chip.onmap{color:var(--ink);font-weight:600}
 .chip .pin{color:var(--accent);flex-shrink:0}
-#cumChart .mhit,#cumChart .cbox,#cumChart .rtser{cursor:pointer}
+#cumChart .mhit,#cumChart .cbox,#rtChart .rtser{cursor:pointer}
 #modelPanel{width:max-content;max-width:min(360px,calc(100vw - 24px));max-height:60vh;overflow:auto}
 #modelPanel label,#modelPanel .hint{white-space:normal}
 .msel:disabled{color:var(--muted)}

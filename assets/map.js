@@ -1,6 +1,7 @@
 /* Leaflet choropleth at province or health-zone level: a model's median cases in the mapped week, its
    probability of at least one case in that week, or (weeks 0 to +3) its probability of an increase from
-   week −1 under the Trend tab's change threshold (trend.js trendFor). The zone boundaries (~1.7 MB) load on first
+   week −1 under the Trend tab's change threshold (trend.js trendFor); in the Rt view, the Rt map model's
+   median Rt (diverging at 1) or P(Rt > 1) (diverging at 50%) in the Rt week (rt.js). The zone boundaries (~1.7 MB) load on first
    use. Province outlines stay on top of the zone layer for orientation. The selected location is
    marked by a heavier border only; nothing else is dimmed. */
 const SEL_W = { prov: 3.5, hz: 3 }, OUTLINE_W = 1.6;
@@ -105,6 +106,7 @@ const wkLabel = () => S.mapWeek ? t('map.wkLabel', { d: fmtDate(S.mapWeek), kind
 
 /* ---- values and styles ---- */
 function locValue(code) {
+  if (isRt()) { const r = mapRt(code); return r ? (S.rtMetric === 'p' ? r.p : r.q[RI.med]) : null; }
   const m = S.mapModel && S.mapWeek && code ? modelLoc(S.mapModel, code) : null;
   if (!m) return null;
   const i = m.weeks.indexOf(S.mapWeek);
@@ -119,8 +121,15 @@ function mapTrend(code) {
   const tr = trendFor(S.mapModel, code);
   return (tr && tr[weekRel(S.mapWeek)]) || null;
 }
+/** the Rt map model's {q, p} for a location in the Rt week, or null */
+function mapRt(code) {
+  const d = S.rtMapModel && S.rtWeek && code ? rtLoc(S.rtMapModel, code) : null, i = d ? d.dates.indexOf(S.rtWeek) : -1;
+  return i < 0 ? null : { q: d.q[i], p: d.p_gt1[i] };
+}
 /** subtitle key, legend ends and gradient per metric (kept together so they cannot drift apart) */
 function metricInfo() {
+  if (isRt()) return S.rtMetric === 'p' ? { sub: 'map.subRtP', lo: fmtPct(0), hi: fmtPct(1), gradient: I_GRADIENT }
+    : { sub: 'map.subRtMedian', lo: `≤${fmtR(RT_MAP_MIN).replace(/[.,]?0+$/, '')}`, hi: `≥${fmtR(RT_MAP_MAX).replace(/[.,]?0+$/, '')}`, gradient: I_GRADIENT };
   if (S.mapMetric === 'presence') return { sub: 'map.subPresence', lo: fmtPct(0), hi: fmtPct(1), gradient: P_GRADIENT };
   if (S.mapMetric === 'increase') return { sub: 'map.subIncrease', lo: fmtPct(0), hi: fmtPct(1), gradient: I_GRADIENT };
   return { sub: 'map.subMedian', lo: '0', hi: fmtN(scale.vmax), gradient: N_GRADIENT };
@@ -133,7 +142,7 @@ function featStyle(f, level) {
   if (!code) return { color: '#9aa3ad', weight: 0.5, dashArray: '2 3', fillColor: '#eceff3', fillOpacity: 0.3 };
   if (v == null) return { color: selected ? '#0b0f14' : '#6b7684', weight: w, dashArray: selected ? null : '3 3', fillColor: '#e6e9ee', fillOpacity: 0.5 };
   // cases: log(1 + x) scale from 0 (white) to the layer's maximum
-  const fill = S.mapMetric === 'presence' ? colorForP(v) : S.mapMetric === 'increase' ? colorForInc(v) : colorFor(Math.log1p(v) / Math.log1p(scale.vmax));
+  const fill = isRt() ? (S.rtMetric === 'p' ? colorForInc(v) : colorForRt(v)) : S.mapMetric === 'presence' ? colorForP(v) : S.mapMetric === 'increase' ? colorForInc(v) : colorFor(Math.log1p(v) / Math.log1p(scale.vmax));
   return { color: '#0b0f14', weight: w, dashArray: null, fillColor: fill, fillOpacity: 0.8 };
 }
 /* dissolved province outline on the zone layer: heavier for the province in focus */
@@ -145,6 +154,7 @@ function featTip(f, level) {
   const code = f.properties.location;
   if (!code) return `<b>${f.properties.name}</b><div class="sm">${t('map.tipNotInHub')}</div>`;
   const obs = obsMap(S.obsRound, code);
+  if (isRt()) return featTipRt(f, level, obs);
   const upTo = S.roundRef || S.obsRound.last_complete_week;
   const recent = Object.keys(obs).filter(w => w <= upTo).sort().slice(-4).reduce((a, w) => a + obs[w], 0);
   const total = Object.keys(obs).filter(w => w <= upTo).reduce((a, w) => a + obs[w], 0);
@@ -169,6 +179,23 @@ function featTip(f, level) {
   return `<b>${f.properties.name}</b>${ctx}${rows}<div class="sm" style="margin-top:4px">${act}</div>`;
 }
 
+/** tooltip in the Rt view: the Rt map model's estimate for the Rt week, then the reported cases */
+function featTipRt(f, level, obs) {
+  const code = f.properties.location, r = mapRt(code), m = S.rtMapModel;
+  const upTo = S.roundRef || S.obsRound.last_complete_week, past = Object.keys(obs).filter(w => w <= upTo).sort();
+  let rows = '';
+  if (r) rows += `<div class="row"><span>${t('map.tipRt', { wk: rtWkLabel() })}</span><b>${fmtR(r.q[RI.med])}</b></div>`
+    + `<div class="row"><span class="sm">${t('rt.tipIv', { r50: `${fmtR(r.q[RI.lo50])}–${fmtR(r.q[RI.hi50])}`, r95: `${fmtR(r.q[RI.lo95])}–${fmtR(r.q[RI.hi95])}` })}</span></div>`
+    + `<div class="row"><span>${t('map.tipRtP')}</span><b>${fmtRtP(r.p)}</b></div>`;
+  else rows += m ? `<div class="row"><span>${modelLabel(m)}</span><b>${t('map.tipNoRt')}</b></div>`
+    : `<div class="row"><span>${t('map.tipOutput')}</span><b>${noneTickedNote('rt')}</b></div>`;
+  rows += `<div class="row"><span>${t('map.tipLast4')}</span><b>${fmtN(past.slice(-4).reduce((a, w) => a + obs[w], 0))}</b></div><div class="row"><span>${t('map.tipToDate')}</span><b>${fmtN(past.reduce((a, w) => a + obs[w], 0))}</b></div>`;
+  const ctx = level === 'hz' ? ` <span class="sm">${t('map.ctxZone', { prov: locName(f.properties.parent) })}</span>` : ` <span class="sm">· ${code}</span>`;
+  const act = t(code === S.location ? (level === 'hz' ? 'map.actBack' : 'map.actClear') : 'map.actSelect');
+  return `<b>${f.properties.name}</b>${ctx}${rows}<div class="sm" style="margin-top:4px">${act}</div>`;
+}
+const rtWkLabel = () => S.rtWeek ? t('map.rtWkLabel', { d: fmtDate(S.rtWeek), rel: weekRelLabel(S.rtWeek) }) : t('map.noWeek');
+
 function drawMap() {
   if (!map || !S.obsRound || S.layout.hidden.has('map')) return;
   const level = S.mapLayer, layer = level === 'hz' ? hzLayer : provLayer;
@@ -185,6 +212,15 @@ function drawMap() {
   }
   const missing = feats.length - vals.length;
   const mi = metricInfo();
+  if (isRt()) {   // Rt view: its own model, week and metric
+    const m = S.rtMapModel, mt = `${t(mi.sub)}, <span class="horizonval">${rtWkLabel()}</span>`;
+    document.getElementById('mapSub').innerHTML = !m ? `${mt} · ${rtModels().length ? noneTickedNote('rt') : t('map.noRtModels')}`
+      : `${mt} · ${modelLabel(m)}` + (S.round && !vals.length ? ` · ${t('map.noRtWeek')}` : missing ? ` · ${tn(level === 'hz' ? 'map.missingZones' : 'map.missingProvinces', missing)}` : '');
+    document.getElementById('legLo').textContent = mi.lo; document.getElementById('legHi').textContent = mi.hi;
+    document.querySelector('.map .legend .bar').style.background = mi.gradient;
+    if (!mapFitted) { fitProvince(null); mapFitted = true; }
+    return;
+  }
   const inc = S.mapMetric === 'increase', key = inc && S.round ? trendKey() : null;
   const mt = `${t(mi.sub, { x: key ? trendX(key) : '' })}, <span class="horizonval">${wkLabel()}</span>`;
   // the viewer's threshold not available (yet): the map shows the default, and says so

@@ -59,3 +59,8 @@ function colorFor(p) {
   const x = p * (N_STOPS.length - 1), i = Math.min(N_STOPS.length - 2, Math.floor(x));
   return mix(N_STOPS[i], N_STOPS[i + 1], x - i);
 }
+
+/* Rt map (rt.js view): median Rt on a log2 scale diverging at 1, from RT_MAP_MIN (deep teal) to RT_MAP_MAX
+   (deep orange), same colours as P(increase) */
+const RT_MAP_MIN = 0.5, RT_MAP_MAX = 2;
+function colorForRt(r) { return colorForInc((Math.log2(Math.min(RT_MAP_MAX, Math.max(RT_MAP_MIN, r))) + 1) / 2); }

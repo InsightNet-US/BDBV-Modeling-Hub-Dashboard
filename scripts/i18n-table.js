@@ -18,7 +18,7 @@ const I18N = ctx.I18N, EN = I18N.en, FR = I18N.fr;
 /* where each key appears, for the reviewer; prefixes give the panel, specific keys refine it */
 const PANEL = { page: 'Page', hdr: 'Header', common: 'Header / panel labels', badge: 'Preview marks (preview copy)', banner: 'Preview marks (preview copy)',
   gate: 'Test-phrase gate (preview copy)', loc: 'Locations', model: 'Models', week: 'Week labels', dd: 'Models menu (header)',
-  ts: 'Weekly chart', tip: 'Weekly chart tooltip', lower: 'Lower-left panel tabs', trend: 'Trend tab', rt: 'Rt tab', cum: 'Cumulative panel', map: 'Map', drawer: 'Models drawer', foot: 'Footer', panels: 'Panel layout', err: 'Errors' };
+  ts: 'Weekly chart', tip: 'Weekly chart tooltip', lower: 'Lower-left panel tabs', trend: 'Trend tab', view: 'View switch (header)', rt: 'Rt view: Rt over time', rtloc: 'Rt view: Rt by location', cum: 'Cumulative panel', map: 'Map', drawer: 'Models drawer', foot: 'Footer', panels: 'Panel layout', err: 'Errors' };
 const WHERE = {
   months: 'month abbreviations used in every date', 'page.title': 'browser tab title', 'page.desc': 'search-engine description',
   'hdr.subtitle': 'after the title "BDBV Modeling Hub"', 'hdr.roundTitle': 'hover text of the round selector', 'hdr.roundInfo': 'next to the round selector',

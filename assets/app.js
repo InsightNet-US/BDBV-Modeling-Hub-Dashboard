@@ -7,6 +7,8 @@ const S = {
   mapWeek: null, mapRel: 0,   // week shown on the map and its offset in weeks from the reference date
   selPref: null, mapPref: null,   // ticked models (ids, the ensemble as ENS_TOKEN) and the map's pick; null = defaults
   mapMetric: 'median', mapModel: null, mapLayer: 'prov', geoHZ: null,
+  // Rt view (rt.js): its own ticks, map model, week (offset from the reference date) and map metric
+  view: 'cases', rtSelPref: null, rtMapPref: null, rtMapModel: null, rtWeek: null, rtRel: 0, rtMetric: 'median',
   layout: { col: 0.42, row: null, hidden: new Set(), weeks: null, tab: 'trend', trend: 'p10', fromURL: false },   // panel sizes, visibility, weekly-chart window, lower-left tab
   cache: {},
   preview: false, previewCopy: false, previewHash: null,   // see the preview block below
@@ -86,15 +88,18 @@ function obsMap(ov, loc) {
 function modelLoc(mid, loc) {
   const m = S.round && S.round.models[mid]; return m ? (m.locations[loc] || null) : null;
 }
-function roundModels() { return S.round ? Object.keys(S.round.models).sort(sortModels) : []; }
+/** models of the current round with case output (and the ensemble), ensemble first; models that sent only
+    Rt are left out (they are in rtModels(), rt.js) */
+function roundModels() { return S.round ? Object.keys(S.round.models).filter(id => id === S.ensembleId || Object.keys(S.round.models[id].locations).length).sort(sortModels) : []; }
+/** every model of the round, case or Rt (models drawer) */
+function allRoundModels() { return S.round ? Object.keys(S.round.models).sort(sortModels) : []; }
 function sortModels(a, b) { if (a === S.ensembleId) return -1; if (b === S.ensembleId) return 1; return a.localeCompare(b); }
 function modelsForLocation(loc) { return roundModels().filter(m => modelLoc(m, loc)); }
-/** case output or Rt estimates (rt.js) for the location: what the ribbon and the Models menu call "output" */
-const hasOutput = (mid, loc) => !!(modelLoc(mid, loc) || rtLoc(mid, loc));
-/** the model that submitted the most locations in the current round (ties: first in menu order) */
-function widestModel(ms) {
+/** the model that submitted the most locations in the current round (ties: first in menu order); for the Rt
+    view, the most locations with Rt */
+function widestModel(ms, v) {
   let best = null, n = -1;
-  ms.forEach(id => { const k = Object.keys(S.round.models[id].locations).length; if (k > n) { best = id; n = k; } });
+  ms.forEach(id => { const k = Object.keys(S.round.models[id][isRt(v) ? 'rt' : 'locations'] || {}).length; if (k > n) { best = id; n = k; } });
   return best;
 }
 /* ---------- model selection: one set of ticked models for every panel; the map shows one of them ----------
@@ -107,46 +112,66 @@ function widestModel(ms) {
 const ENS_TOKEN = 'ensemble', MODELS_KEY = 'bdbv-models';
 const newestRound = () => ((S.manifest && S.manifest.rounds[0]) || {}).reference_date || null;
 const prefId = id => id === S.ensembleId ? ENS_TOKEN : id;
-function tickedSet() {
+/* The Rt view has its own selection, same rules over the round's Rt models (rtModels(), rt.js): S.rtSelPref,
+   S.rtMapPref, S.rtMapModel, default every Rt model ticked and the one covering most locations on the map.
+   Functions below take an optional view v ('cases' | 'rt', default the current view). */
+const isRt = v => (v || S.view) === 'rt';
+const viewModels = v => isRt(v) ? rtModels() : roundModels();
+const pid = (id, v) => isRt(v) ? id : prefId(id);
+/** the current view's map model */
+const curMapModel = () => isRt() ? S.rtMapModel : S.mapModel;
+function tickedSet(v) {
+  if (isRt(v)) return S.rtSelPref || new Set(rtModels());
   if (S.selPref) return S.selPref;
   return new Set(S.ensembleId && roundModels().includes(S.ensembleId) ? [ENS_TOKEN] : roundModels());
 }
-function isTicked(id) { return tickedSet().has(prefId(id)); }
+function isTicked(id, v) { return tickedSet(v).has(pid(id, v)); }
 /** ticked models of the current round, ensemble first */
-function selectedModels() { return roundModels().filter(isTicked); }
+function selectedModels(v) { return viewModels(v).filter(id => isTicked(id, v)); }
 /** note for panels with nothing to show because no model of this round is ticked */
-const noneTickedNote = () => t(tickedSet().size ? 'common.noneInRound' : 'common.noneTicked');
-function resolveMapModel() {
-  const ms = selectedModels(), pick = S.mapPref === ENS_TOKEN ? S.ensembleId : S.mapPref;
+const noneTickedNote = v => t(tickedSet(v).size ? 'common.noneInRound' : 'common.noneTicked');
+function resolveMapModel(v) {
+  const ms = selectedModels(v), mp = isRt(v) ? S.rtMapPref : S.mapPref, pick = !isRt(v) && mp === ENS_TOKEN ? S.ensembleId : mp;
   if (pick && ms.includes(pick)) return pick;
-  if (S.ensembleId && ms.includes(S.ensembleId)) return S.ensembleId;
-  return ms.length ? widestModel(ms) : null;
+  if (!isRt(v) && S.ensembleId && ms.includes(S.ensembleId)) return S.ensembleId;
+  return ms.length ? widestModel(ms, v) : null;
+}
+function setPref(set, map) {
+  if (isRt()) { S.rtSelPref = set; if (map !== undefined) S.rtMapPref = map; }
+  else { S.selPref = set; if (map !== undefined) S.mapPref = map; }
 }
 function setTicked(id, on) {
-  const set = new Set(tickedSet()); on ? set.add(prefId(id)) : set.delete(prefId(id));
-  S.selPref = set; onSelectionChange();
+  const set = new Set(tickedSet()); on ? set.add(pid(id)) : set.delete(pid(id));
+  setPref(set); onSelectionChange();
 }
 /** tick a model (if needed) and put it on the map, in one redraw */
 function tickAndMap(id) {
-  const set = new Set(tickedSet()); set.add(prefId(id)); S.selPref = set; S.mapPref = prefId(id); onSelectionChange();
+  const set = new Set(tickedSet()); set.add(pid(id)); setPref(set, pid(id)); onSelectionChange();
 }
 function pickMapModel(id) {
   if (!id || !isTicked(id)) return;
-  S.mapPref = prefId(id); onSelectionChange();
+  if (isRt()) S.rtMapPref = id; else S.mapPref = prefId(id);
+  onSelectionChange();
 }
-/** after a tick or a map pick: map model, header button, map menu, storage, panels */
+/** after a tick or a map pick: map models, header button, map menu, storage, panels */
 function onSelectionChange() {
-  S.mapModel = resolveMapModel(); refreshModelBtn(); buildMapModelSel(); saveLayout(); sync();
+  S.mapModel = resolveMapModel('cases'); S.rtMapModel = resolveMapModel('rt');
+  refreshModelBtn(); buildMapModelSel(); saveLayout(); sync();
 }
 function loadModels(q) {
   try { const st = JSON.parse(localStorage.getItem(MODELS_KEY) || 'null');
-    if (st) { S.modelsNewest = st.newest || null; if (Array.isArray(st.models)) S.selPref = new Set(st.models.map(String)); if (typeof st.map === 'string') S.mapPref = st.map; } } catch (e) { /* fine */ }
-  const ms = q.get('models'), mp = q.get('mapmodel');
-  if (ms != null) { S.selPref = new Set(ms === 'none' ? [] : ms.split(',').map(x => x.trim()).filter(Boolean)); S.layout.fromURL = S.modelsLinked = true; }
+    if (st) { S.modelsNewest = st.newest || null; if (Array.isArray(st.models)) S.selPref = new Set(st.models.map(String)); if (typeof st.map === 'string') S.mapPref = st.map;
+      const r = st.rt || {}; if (Array.isArray(r.models)) S.rtSelPref = new Set(r.models.map(String)); if (typeof r.map === 'string') S.rtMapPref = r.map; } } catch (e) { /* fine */ }
+  const list = x => new Set(x === 'none' ? [] : x.split(',').map(y => y.trim()).filter(Boolean));
+  const ms = q.get('models'), mp = q.get('mapmodel'), rms = q.get('rtmodels'), rmp = q.get('rtmapmodel');
+  if (ms != null) { S.selPref = list(ms); S.layout.fromURL = S.modelsLinked = true; }
   if (mp) { S.mapPref = mp.trim(); S.layout.fromURL = S.modelsLinked = true; }
+  if (rms != null) { S.rtSelPref = list(rms); S.layout.fromURL = S.rtModelsLinked = true; }
+  if (rmp) { S.rtMapPref = rmp.trim(); S.layout.fromURL = S.rtModelsLinked = true; }
 }
 function saveModels() {
-  try { if (S.selPref || S.mapPref) localStorage.setItem(MODELS_KEY, JSON.stringify({ models: S.selPref ? [...S.selPref] : null, map: S.mapPref, newest: newestRound() }));
+  const rt = S.rtSelPref || S.rtMapPref ? { models: S.rtSelPref ? [...S.rtSelPref] : null, map: S.rtMapPref } : undefined;
+  try { if (S.selPref || S.mapPref || rt) localStorage.setItem(MODELS_KEY, JSON.stringify({ models: S.selPref ? [...S.selPref] : null, map: S.mapPref, newest: newestRound(), rt }));
     else localStorage.removeItem(MODELS_KEY); } catch (e) { /* fine */ }
 }
 /** weeks with model output from any model/location in the current round, oldest first */
@@ -184,6 +209,32 @@ function setMapWeek(w) {
   refreshStepper('mapWeekSel');   // also when set from code (weekly chart click, P(increase) jump)
   sync();
 }
+/** the Rt view's week (its own, so the case map week is untouched) */
+function setRtWeek(w) {
+  S.rtWeek = w; S.rtRel = weekRel(w) ?? 0;
+  const sel = $('mapWeekSel'); if (sel.value !== w) sel.value = w;
+  refreshStepper('mapWeekSel');
+  sync();
+}
+/** the map's week menu for the current view: case weeks (nowcast / forecast groups) or the round's Rt weeks */
+function buildMapWeekSel() {
+  const sel = $('mapWeekSel'), R = S.roundRef;
+  const opt = w => `<option value="${w}">${fmtDate(w, true)} · ${weekRelLabel(w)}</option>`;
+  if (isRt()) {
+    const ws = rtWeeks();
+    sel.innerHTML = ws.map(opt).join('') || `<option value="">${t('map.noWeeks')}</option>`;
+    sel.value = S.rtWeek || '';
+  } else {
+    // chronological, so the arrows step backwards/forwards in time; label = date plus offset from R
+    const ws = roundWeeks(), fc = ws.filter(w => weekRel(w) >= 0), nc = ws.filter(w => weekRel(w) < 0);
+    sel.innerHTML = (nc.length ? `<optgroup label="${t('map.nowcastWeeks')}">${nc.map(opt).join('')}</optgroup>` : '')
+      + (fc.length ? `<optgroup label="${t('map.forecastWeeks')}">${fc.map(opt).join('')}</optgroup>` : '') || `<option value="">${t('map.noWeeks')}</option>`;
+    sel.value = S.mapWeek || '';
+  }
+  const key = isRt() ? 'map.weekTitleRt' : 'map.weekTitle';
+  sel.setAttribute('data-i18n-title', key); sel.title = t(key);
+  wireStepper('mapWeekSel'); refreshStepper('mapWeekSel');
+}
 
 /* ---------- panel layout: resizable gutters, hideable panels, URL and per-browser persistence ----------
    State in S.layout: col = left column share of the grid width, row = weekly chart share of the column
@@ -191,7 +242,12 @@ function setMapWeek(w) {
    and the no-… / custom-row classes; the ResizeObserver in wire() redraws whatever changes size. */
 const LAYOUT_KEY = 'bdbv-layout', PANELS = ['weekly', 'cum', 'map'], COL_DEFAULT = 0.42;
 const PANEL_KEY = { weekly: 'panels.weekly', cum: 'panels.cum', map: 'panels.map' };
-const LOWER_TABS = ['trend', 'cum', 'rt'];
+const LOWER_TABS = ['trend', 'cum'];
+/* views: case nowcasts/forecasts, or Rt (rt.js) with its own panels in the same grid slots (.casev / .rtv
+   sections; hiding, sizes and gutters are shared), its own model ticks and map colouring */
+const VIEWS = ['cases', 'rt'];
+const PANEL_KEY_RT = { weekly: 'panels.rtTime', cum: 'panels.rtLoc', map: 'panels.map' };
+const panelKey = p => (isRt() ? PANEL_KEY_RT : PANEL_KEY)[p];
 const GUTTER = 14, MAP_MIN = 320, TS_MIN = 260, CUM_MIN = 110;
 /** weekly-chart window {start, end}: ISO dates or the sentinels 'first' / 'last'; null when invalid */
 function validWeeks(x) {
@@ -203,11 +259,13 @@ function validWeeks(x) {
 function loadLayout() {
   const L = S.layout, q = new URLSearchParams(location.search);
   try { const st = JSON.parse(localStorage.getItem(LAYOUT_KEY) || 'null');
-    if (st) { if (st.col > 0 && st.col < 1) L.col = st.col; if (st.row > 0 && st.row < 1) L.row = st.row; (st.hidden || []).forEach(p => { if (PANELS.includes(p)) L.hidden.add(p); }); L.weeks = validWeeks(st.weeks); if (LOWER_TABS.includes(st.tab)) L.tab = st.tab; if (TREND_KEYS.includes(st.trend)) L.trend = st.trend; } } catch (e) { /* fine */ }
+    if (st) { if (st.col > 0 && st.col < 1) L.col = st.col; if (st.row > 0 && st.row < 1) L.row = st.row; (st.hidden || []).forEach(p => { if (PANELS.includes(p)) L.hidden.add(p); }); L.weeks = validWeeks(st.weeks); if (LOWER_TABS.includes(st.tab)) L.tab = st.tab; if (TREND_KEYS.includes(st.trend)) L.trend = st.trend; if (VIEWS.includes(st.view)) S.view = st.view; } } catch (e) { /* fine */ }
   const wk = q.get('weeks');
   if (wk != null) { const [a, b] = wk.split(','); const v = validWeeks({ start: (a || '').trim(), end: (b || '').trim() }); if (v) { L.weeks = v; L.fromURL = true; } }
   const tab = q.get('tab');
   if (LOWER_TABS.includes(tab)) { L.tab = tab; L.fromURL = true; }
+  const view = q.get('view');
+  if (VIEWS.includes(view)) { S.view = view; L.fromURL = true; }
   const thr = q.get('trend');
   if (TREND_KEYS.includes(thr)) { L.trend = thr; L.fromURL = true; }
   const panels = q.get('panels');
@@ -223,10 +281,10 @@ function loadLayout() {
   }
   loadModels(q);
 }
-const LAYOUT_PARAMS = ['panels', 'split', 'weeks', 'tab', 'trend', 'models', 'mapmodel'];
+const LAYOUT_PARAMS = ['panels', 'split', 'weeks', 'tab', 'trend', 'models', 'mapmodel', 'view', 'rtmodels', 'rtmapmodel'];
 function saveLayout() {
   const L = S.layout; L.fromURL = false;
-  try { localStorage.setItem(LAYOUT_KEY, JSON.stringify({ col: L.col, row: L.row, hidden: [...L.hidden], weeks: L.weeks, tab: L.tab, trend: L.trend })); } catch (e) { /* fine */ }
+  try { localStorage.setItem(LAYOUT_KEY, JSON.stringify({ col: L.col, row: L.row, hidden: [...L.hidden], weeks: L.weeks, tab: L.tab, trend: L.trend, view: S.view })); } catch (e) { /* fine */ }
   saveModels();
   stripLayoutParams();   // the stored layout is now the truth; a reload must not re-seed from a shared link
 }
@@ -248,6 +306,10 @@ function applyLayoutCSS() {
   setToggle('lowerTabs', 't', L.tab);
   document.querySelectorAll('#lowerTabs button').forEach(b => b.setAttribute('aria-selected', b.dataset.t === L.tab));
   $('trendThrWrap').classList.toggle('hidden', L.tab !== 'trend'); $('trendThr').value = L.trend;
+  document.body.classList.toggle('view-rt', isRt());
+  setToggle('viewToggle', 'v', S.view);
+  document.querySelectorAll('#viewToggle button').forEach(b => b.setAttribute('aria-pressed', b.dataset.v === S.view));
+  const tag = document.querySelector('.tagline'); tag.setAttribute('data-i18n', isRt() ? 'hdr.subtitleRt' : 'hdr.subtitle'); tag.textContent = t(tag.getAttribute('data-i18n'));
   $('vsplit').setAttribute('aria-valuenow', Math.round(L.col * 100));
   $('hsplit').setAttribute('aria-valuenow', Math.round((L.row == null ? rowFraction() : L.row) * 100));
 }
@@ -263,8 +325,8 @@ function applyLayout(user) {
 function setHidden(panel, hidden) { if (hidden) S.layout.hidden.add(panel); else S.layout.hidden.delete(panel); applyLayout(true); }
 function resetLayout() {
   S.layout.col = COL_DEFAULT; S.layout.row = null; S.layout.hidden = new Set(); S.layout.weeks = null; S.layout.tab = 'trend'; S.layout.trend = TREND_DEFAULT;
-  S.selPref = null; S.mapPref = null;
-  if (S.manifest) { S.mapModel = resolveMapModel(); buildModelDropdown(); buildMapModelSel(); }
+  S.selPref = null; S.mapPref = null; S.rtSelPref = null; S.rtMapPref = null;
+  if (S.manifest) { S.mapModel = resolveMapModel('cases'); S.rtMapModel = resolveMapModel('rt'); buildModelDropdown(); buildMapModelSel(); }
   applyLayout(true);
   try { localStorage.removeItem(LAYOUT_KEY); localStorage.removeItem(MODELS_KEY); } catch (e) { /* fine */ }
   stripLayoutParams();
@@ -277,10 +339,14 @@ function layoutURL() {
   if (L.weeks) u.searchParams.set('weeks', `${L.weeks.start},${L.weeks.end}`);
   u.searchParams.set('tab', L.tab);   // always: the recipient's own stored tab must not win
   u.searchParams.set('trend', L.trend);
-  const ticked = [...tickedSet()];   // always too, for the same reason
+  const ticked = [...tickedSet('cases')], rtTicked = [...tickedSet('rt')];   // always too, for the same reason
   u.searchParams.set('models', ticked.length ? ticked.join(',') : 'none');
   u.searchParams.delete('mapmodel');
   if (S.mapModel) u.searchParams.set('mapmodel', prefId(S.mapModel));
+  u.searchParams.set('view', S.view);
+  u.searchParams.set('rtmodels', rtTicked.length ? rtTicked.join(',') : 'none');
+  u.searchParams.delete('rtmapmodel');
+  if (S.rtMapModel) u.searchParams.set('rtmapmodel', S.rtMapModel);
   u.searchParams.delete('preview');   // a copied link never switches preview features on for its recipient
   return u.toString();
 }
@@ -288,7 +354,7 @@ function layoutURL() {
    against) and to the free height of the left column (its height minus the gutter) */
 function gridWidth() { const g = $('grid'), cs = getComputedStyle(g); return g.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight); }
 function leftFree() { return $('left').clientHeight - GUTTER; }
-function rowFraction() { const f = leftFree(); return f > 0 ? document.querySelector('.ts').offsetHeight / f : 0.6; }
+function rowFraction() { const f = leftFree(); return f > 0 ? document.querySelector(isRt() ? '.ts.rtv' : '.ts.casev').offsetHeight / f : 0.6; }
 function clampCol(v) {
   const w = gridWidth(), leftMin = parseFloat(getComputedStyle($('grid')).getPropertyValue('--left-min')) || 420;
   if (!(w > leftMin + GUTTER + MAP_MIN)) return Math.min(Math.max(v, 0.2), 0.8);
@@ -342,7 +408,7 @@ function wireLayout() {
 }
 function buildPanelsMenu() {
   const panel = $('panelsPanel'), L = S.layout;
-  panel.innerHTML = PANELS.map(p => `<label><input type="checkbox" value="${p}" ${L.hidden.has(p) ? '' : 'checked'}>${t(PANEL_KEY[p])}</label>`).join('')
+  panel.innerHTML = PANELS.map(p => `<label><input type="checkbox" value="${p}" ${L.hidden.has(p) ? '' : 'checked'}>${t(panelKey(p))}</label>`).join('')
     + `<button type="button" class="item" id="layoutReset">${t('panels.reset')}</button><button type="button" class="item" id="layoutCopy">${t('panels.copy')}</button>`;
   panel.querySelectorAll('input').forEach(cb => cb.addEventListener('change', () => setHidden(cb.value, !cb.checked)));
   $('layoutReset').addEventListener('click', resetLayout);
@@ -354,7 +420,7 @@ function buildPanelsMenu() {
 }
 function refreshPanelButtons() {
   document.querySelectorAll('.pbtn.hide').forEach(b => {
-    const label = t('panels.hide', { name: t(PANEL_KEY[b.dataset.panel]) });
+    const label = t('panels.hide', { name: t(b.dataset.label || PANEL_KEY[b.dataset.panel]) });
     b.title = label; b.setAttribute('aria-label', label);
   });
 }
@@ -460,10 +526,20 @@ async function init() {
   S.manifest = manifest; S.models = models; S.geoProv = geoProv;
   manifest.locations.forEach(l => { S.locIndex[l.code] = l; });
   // stored ticks are for the rounds out when they were made: a newly published round starts from the defaults
-  if (!S.modelsLinked && S.modelsNewest !== newestRound()) { S.selPref = null; S.mapPref = null; saveModels(); }
+  if (S.modelsNewest !== newestRound()) {
+    if (!S.modelsLinked) { S.selPref = null; S.mapPref = null; }
+    if (!S.rtModelsLinked) { S.rtSelPref = null; S.rtMapPref = null; }
+    saveModels();
+  }
   const known = id => id === ENS_TOKEN || !!models[id];   // stored or linked ids of models no longer in the data are dropped
   if (S.selPref) S.selPref = new Set([...S.selPref].filter(known));
   if (S.mapPref && !known(S.mapPref)) S.mapPref = null;
+  if (S.rtSelPref) S.rtSelPref = new Set([...S.rtSelPref].filter(known));
+  if (S.rtMapPref && !known(S.rtMapPref)) S.rtMapPref = null;
+  // the Rt view is offered once some round has Rt estimates
+  const anyRt = manifest.rounds.some(r => r.rt);
+  $('viewToggle').classList.toggle('hidden', !anyRt);
+  if (!anyRt && isRt()) { S.view = 'cases'; applyLayoutCSS(); }
   S.ensembleId = manifest.ensemble_model_id && models[manifest.ensemble_model_id] ? manifest.ensemble_model_id : null;
   S.ensembleSource = S.ensembleId ? (manifest.ensemble_source || 'hub') : null;
   // blue for every id that is an ensemble in some round (hub model and/or dashboard pool)
@@ -505,18 +581,15 @@ function setEnsemble(info) {
 }
 function afterRound() {
   // ticked models carry over between rounds (see the model-selection block); the map follows them
-  S.mapModel = resolveMapModel();
+  S.mapModel = resolveMapModel('cases'); S.rtMapModel = resolveMapModel('rt');
   buildModelDropdown(); buildMapModelSel(); buildTrendThrSel();
-  // mapped week: keep the same offset from the reference date across rounds, default week 0
+  // mapped weeks: keep the same offset from the reference date across rounds, default week 0 (Rt: the
+  // reference week, else the latest Rt week before it)
   const ws = roundWeeks(), R = S.roundRef, want = R ? addDays(R, 7 * S.mapRel) : null;
   S.mapWeek = ws.includes(want) ? want : ws.includes(R) ? R : ws[ws.length - 1] || null;
-  // chronological, so the arrows step backwards/forwards in time; label = date plus offset from R
-  const fc = ws.filter(w => weekRel(w) >= 0), nc = ws.filter(w => weekRel(w) < 0);
-  const opt = w => `<option value="${w}">${fmtDate(w, true)} · ${weekRelLabel(w)}</option>`;
-  $('mapWeekSel').innerHTML = (nc.length ? `<optgroup label="${t('map.nowcastWeeks')}">${nc.map(opt).join('')}</optgroup>` : '')
-    + (fc.length ? `<optgroup label="${t('map.forecastWeeks')}">${fc.map(opt).join('')}</optgroup>` : '') || `<option value="">${t('map.noWeeks')}</option>`;
-  $('mapWeekSel').value = S.mapWeek || '';
-  wireStepper('mapWeekSel'); refreshStepper('mapWeekSel');
+  const rws = rtWeeks(), rwant = R ? addDays(R, 7 * S.rtRel) : null;
+  S.rtWeek = rws.includes(rwant) ? rwant : rws.includes(R) ? R : rws.filter(w => !R || w <= R).pop() || rws[rws.length - 1] || null;
+  buildMapWeekSel();
   const ri = S.manifest.rounds.find(r => r.reference_date === S.roundRef);
   $('roundInfo').textContent = ri ? t('hdr.roundInfo', { d: fmtDate(ri.as_of) }) : '';
   $('roundSel').value = S.roundRef || ''; refreshStepper('roundSel');
@@ -527,15 +600,15 @@ function afterRound() {
 /* ---------- controls ---------- */
 /** header Models menu: ensemble first, then team models; rows greyed (still tickable) where a model did not submit the location */
 function buildModelDropdown() {
-  const panel = $('modelPanel'), ms = roundModels();
-  const avail = new Set(roundModels().filter(m => hasOutput(m, S.location))), ec = ensCounts(S.location);
-  const hint = S.ensembleId && ms.includes(S.ensembleId) ? `<div class="hint">${t('dd.hintEns')}${ec && ec.n_models ? ` · ${t('dd.hintEnsN', { n: ec.n_models, loc: locName(S.location) })}` : ''}</div>` : '';
+  const panel = $('modelPanel'), ms = viewModels(), rt = isRt();
+  const avail = new Set(ms.filter(m => rt ? rtLoc(m, S.location) : modelLoc(m, S.location))), ec = rt ? null : ensCounts(S.location);
+  const hint = !rt && S.ensembleId && ms.includes(S.ensembleId) ? `<div class="hint">${t('dd.hintEns')}${ec && ec.n_models ? ` · ${t('dd.hintEnsN', { n: ec.n_models, loc: locName(S.location) })}` : ''}</div>` : '';
   panel.innerHTML = hint + ms.map(id => {
-    const isEns = id === S.ensembleId, dis = !avail.has(id);
+    const isEns = !rt && id === S.ensembleId, dis = !avail.has(id);
     const sw = isEns ? `<span class="sw" style="border:1.5px dashed ${modelColor(id)};background:transparent"></span>`
                      : `<span class="sw" style="background:${modelColor(id)}"></span>`;
-    return `<label class="${dis ? 'disabled' : ''}" title="${dis ? t('dd.noSub', { loc: locName(S.location) }) : ''}"><input type="checkbox" value="${id}" ${isTicked(id) ? 'checked' : ''}>${sw}${isEns ? ensLabelN(S.location) : modelLabel(id)}</label>`;
-  }).join('') || `<div class="hint">${t('dd.none')}</div>`;
+    return `<label class="${dis ? 'disabled' : ''}" title="${dis ? t(rt ? 'dd.noRt' : 'dd.noSub', { loc: locName(S.location) }) : ''}"><input type="checkbox" value="${id}" ${isTicked(id) ? 'checked' : ''}>${sw}${isEns ? ensLabelN(S.location) : modelLabel(id)}</label>`;
+  }).join('') || `<div class="hint">${t(rt ? 'dd.noneRt' : 'dd.none')}</div>`;
   panel.insertAdjacentHTML('beforeend', `<button type="button" class="item" id="aboutModels">${t('hdr.models')}</button>`);
   panel.querySelectorAll('input').forEach(cb => cb.addEventListener('change', () => setTicked(cb.value, cb.checked)));
   $('aboutModels').addEventListener('click', () => { panel.classList.remove('open'); $('modelBtn').setAttribute('aria-expanded', 'false'); toggleDrawer(true); });
@@ -543,8 +616,8 @@ function buildModelDropdown() {
 }
 /** button label from the ticked models of the round (not the location, so it stays put when the location changes) */
 function refreshModelBtn() {
-  const ms = roundModels(), ens = S.ensembleId && ms.includes(S.ensembleId) ? S.ensembleId : null;
-  const all = ms.filter(id => id !== ens), teams = all.filter(isTicked);
+  const ms = viewModels(), ens = !isRt() && S.ensembleId && ms.includes(S.ensembleId) ? S.ensembleId : null;
+  const all = ms.filter(id => id !== ens), teams = all.filter(id => isTicked(id));
   let label;
   if (ens && isTicked(ens)) label = teams.length ? tn('dd.plus', teams.length) : t('dd.ens');
   else label = teams.length === 0 ? t('dd.noneSel') : teams.length === 1 ? modelLabel(teams[0]) : teams.length === all.length ? t('dd.all') : tn('dd.nModels', teams.length);
@@ -553,9 +626,9 @@ function refreshModelBtn() {
 /** map model menu: the ticked models only */
 function buildMapModelSel() {
   const sel = $('mapModelSel'), ms = selectedModels();
-  sel.innerHTML = ms.map(id => `<option value="${id}">${modelLabel(id)}</option>`).join('') || `<option value="">${t(roundModels().length ? 'dd.noneSel' : 'map.noModels')}</option>`;
+  sel.innerHTML = ms.map(id => `<option value="${id}">${modelLabel(id)}</option>`).join('') || `<option value="">${t(viewModels().length ? 'dd.noneSel' : isRt() ? 'map.noRtModels' : 'map.noModels')}</option>`;
   sel.disabled = !ms.length;
-  sel.value = S.mapModel || '';
+  sel.value = curMapModel() || '';
 }
 /** clicks on a [data-model] element inside el (legend chips, chart rows) put that model on the map */
 /** pin marking the model shown on the map */
@@ -563,14 +636,14 @@ const MAP_PIN = '<svg class="pin" width="9" height="11" viewBox="0 0 9 11" aria-
 /** ribbon above the footer: every model of the round with its colour, whatever panels are shown; unticked
    models greyed. Click ticks/unticks, double click puts the model on the map (wired in wire()) */
 function drawRibbon() {
-  const ms = roundModels(), loc = S.location;
+  const ms = viewModels(), loc = S.location, rt = isRt();
   $('modelRibbon').classList.toggle('hidden', !ms.length);
   $('ribbonChips').innerHTML = ms.map(id => {
-    const ens = id === S.ensembleId, none = !hasOutput(id, loc), rtOnly = !none && !modelLoc(id, loc);
+    const ens = !rt && id === S.ensembleId, none = !(rt ? rtLoc(id, loc) : modelLoc(id, loc));
     const sw = ens ? '<i style="border:1.5px dashed var(--median);background:transparent"></i>' : `<i style="background:${modelColor(id)}"></i>`;
     const inner = sw + (ens ? ensLabelN(loc) : modelLabel(id));
-    const on = isTicked(id), mapped = id === S.mapModel;
-    const tip = (none ? t('ribbon.noOutput', { loc: locName(loc) }) + ' ' : rtOnly ? t('ribbon.rtOnly', { loc: locName(loc) }) + ' ' : '') + t(mapped ? 'ribbon.tipMapped' : on ? 'ribbon.tipOn' : 'ribbon.tipOff');
+    const on = isTicked(id), mapped = id === curMapModel();
+    const tip = (none ? t(rt ? 'ribbon.noRt' : 'ribbon.noOutput', { loc: locName(loc) }) + ' ' : '') + t(mapped ? 'ribbon.tipMapped' : on ? 'ribbon.tipOn' : 'ribbon.tipOff');
     return `<span class="chip pick${on ? '' : ' off'}${mapped ? ' onmap' : ''}${none ? ' nodata' : ''}" data-model="${id}" role="checkbox" aria-checked="${on}" tabindex="0" title="${tip}">${inner}${mapped ? MAP_PIN : ''}</span>`;
   }).join('');
 }
@@ -590,7 +663,9 @@ function wire() {
   $('locSel').addEventListener('change', e => { S.location = e.target.value; onLocationChange(); });
   $('hzSel').addEventListener('change', e => { S.location = e.target.value || locProvince(S.location) || NATIONAL; onLocationChange(); });
   document.querySelectorAll('#layerToggle button').forEach(b => b.addEventListener('click', () => setLayer(b.dataset.l, b.dataset.l === 'hz' ? locProvince(S.location) : null)));
-  $('mapWeekSel').addEventListener('change', e => setMapWeek(e.target.value));
+  $('mapWeekSel').addEventListener('change', e => (isRt() ? setRtWeek : setMapWeek)(e.target.value));
+  document.querySelectorAll('#viewToggle button').forEach(b => b.addEventListener('click', () => setView(b.dataset.v)));
+  document.querySelectorAll('#rtMetricToggle button').forEach(b => b.addEventListener('click', () => { S.rtMetric = b.dataset.r; setToggle('rtMetricToggle', 'r', S.rtMetric); drawMap(); }));
   document.querySelectorAll('#metricToggle button').forEach(b => b.addEventListener('click', () => { S.mapMetric = b.dataset.m; setToggle('metricToggle', 'm', S.mapMetric);
     // P(increase) exists for weeks 0 to +3 only: from another week, go to week 0 (or the first week after it)
     if (S.mapMetric === 'increase' && S.roundRef && !mapInTrendWeeks()) { const w = roundWeeks().find(x => x >= S.roundRef); if (w) return setMapWeek(w); }
@@ -620,17 +695,18 @@ function wire() {
       if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); act(c.dataset.model, e.key === 'Enter', true); } });
   }
   wireMapPick($('cumChart'), false);
-  wireMapPick($('trendLegend'), false);
+  wireMapPick($('rtChart'), false);
+  wireMapPick($('rtLegend'), false);
   $('drawerClose').addEventListener('click', () => toggleDrawer(false));
   $('drawerBg').addEventListener('click', () => toggleDrawer(false));
-  window.addEventListener('resize', () => { drawTS(); drawLower(); });
+  window.addEventListener('resize', drawLeft);
   wireLayout(); wireBrush();
   // panels change height when their headers wrap or a gutter is dragged; redraw charts when their drawing
   // area resizes. While dragging, the map keeps its origin fixed (no pan) and is settled on pointer-up.
   let raf = null;
-  const ro = new ResizeObserver(() => { if (raf) return; raf = requestAnimationFrame(() => { raf = null; drawTS(); drawLower();
+  const ro = new ResizeObserver(() => { if (raf) return; raf = requestAnimationFrame(() => { raf = null; drawLeft();
     if (map && !S.layout.hidden.has('map')) map.invalidateSize(document.body.classList.contains('resizing') ? { pan: false, animate: false } : undefined); }); });
-  ro.observe(document.querySelector('.ts .bd')); ro.observe(document.querySelector('.cum .bd')); ro.observe(document.getElementById('map'));
+  document.querySelectorAll('.ts .bd, .cum .bd').forEach(el => ro.observe(el)); ro.observe(document.getElementById('map'));
 }
 /** zone dropdown: hidden for the country, otherwise "whole province" plus its zones by cumulative cases */
 function buildZoneSelect(prov) {
@@ -656,20 +732,31 @@ function onLocationChange() {
   sync();
 }
 function selectLocation(code) { S.location = code; onLocationChange(); }
-/** lower-left panel: the Trend tab (trend.js), the cumulative tab (cumulative.js) or the Rt tab (rt.js) */
+/** lower-left panel of the cases view: the Trend tab (trend.js) or the cumulative tab (cumulative.js) */
 function drawLower() {
-  const svg = $('cumChart'); svg.onmousemove = svg.onmouseleave = null;   // set by the Rt tab only
+  if (isRt()) return;   // also called when the trend presets arrive
   if (S.layout.tab === 'trend') return drawTrend();
-  if (S.layout.tab === 'rt') return drawRt();
   $('trendLegend').innerHTML = '';
   drawCum();
 }
-function sync() { drawRibbon(); drawTS(); drawLower(); drawMap(); }   // ribbon first: the charts measure after it
+/** the left column of the current view */
+function drawLeft() { if (isRt()) { drawRtTime(); drawRtLoc(); } else { drawTS(); drawLower(); } }
+function sync() { drawRibbon(); drawLeft(); drawMap(); }   // ribbon first: the charts measure after it
+/** switch between the cases and Rt views (same round and location) */
+function setView(v) {
+  if (!VIEWS.includes(v) || v === S.view) return;
+  S.view = v; hideTip();
+  applyLayoutCSS(); buildPanelsMenu(); refreshPanelButtons();
+  buildModelDropdown(); buildMapModelSel(); buildMapWeekSel();
+  saveLayout();
+  if (map && !S.layout.hidden.has('map')) map.invalidateSize({ animate: false });
+  if (S.obsRound) sync();
+}
 
 /* ---------- models drawer ---------- */
 function toggleDrawer(open) { $('drawer').classList.toggle('open', open); $('drawerBg').classList.toggle('open', open); }
 function buildDrawer() {
-  const ms = roundModels();
+  const ms = allRoundModels();
   const note = t('drawer.englishNote');   // metadata texts come from the hub in English
   $('drawerSub').innerHTML = (S.roundRef ? tn('drawer.sub', ms.length, { d: fmtDate(S.roundRef, true) }) : t('drawer.noRound')) + (note && ms.length ? `<br><i>${note}</i>` : '');
   $('drawerBody').innerHTML = ms.map(id => {

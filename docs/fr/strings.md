@@ -30,6 +30,7 @@ Try it: the French interface is on the live dashboard, add `?lang=fr` to the add
 | Where | English | French | Example (French) |
 |---|---|---|---|
 | after the title "BDBV Modeling Hub" | · nowcasts & forecasts of weekly confirmed cases | · estimations en temps réel et prévisions des cas confirmés hebdomadaires | · estimations en temps réel et prévisions des cas confirmés hebdomadaires |
+|  | · estimates of the effective reproduction number (Rt) | · estimations du nombre de reproduction effectif (Rt) | · estimations du nombre de reproduction effectif (Rt) |
 |  | Projections from | Projections au | Projections au |
 |  | Earlier round | Cycle de projection précédent | Cycle de projection précédent |
 |  | Later round | Cycle de projection suivant | Cycle de projection suivant |
@@ -41,6 +42,14 @@ Try it: the French interface is on the live dashboard, add `?lang=fr` to the add
 |  | Health zone within the selected province | Zone de santé de la province sélectionnée | Zone de santé de la province sélectionnée |
 | last item of the Models menu, opens the model descriptions | About the models… | À propos des modèles… | À propos des modèles… |
 | hover text of the EN/FR switch | Language | Langue | Langue |
+
+## View switch (header)
+
+| Where | English | French | Example (French) |
+|---|---|---|---|
+|  | View | Vue | Vue |
+|  | Cases | Cas | Cas |
+|  | Rt | Rt | Rt |
 
 ## Header / panel labels
 
@@ -105,6 +114,8 @@ Try it: the French interface is on the live dashboard, add `?lang=fr` to the add
 | top of the Models menu | Weekly chart always shows the ensemble median | Le graphique hebdomadaire affiche toujours la médiane de l’ensemble multimodèle | Le graphique hebdomadaire affiche toujours la médiane de l’ensemble multimodèle |
 | continues that hint line (ensemble size) | pools {n} models for {loc} | regroupe {n} modèles pour {loc} | regroupe 3 modèles pour Ituri |
 | hover text of a greyed-out model | No submission for {loc} | Pas de soumission pour {loc} | Pas de soumission pour Ituri |
+|  | No Rt for {loc} | Pas de Rt pour {loc} | Pas de Rt pour Ituri |
+|  | No model sent Rt for this round | Aucun modèle n’a envoyé de Rt pour ce cycle | Aucun modèle n’a envoyé de Rt pour ce cycle |
 | Models menu when the round has no submission | No submissions in this round | Aucune soumission dans ce cycle de projection | Aucune soumission dans ce cycle de projection |
 | Models menu button *(one)* | Ensemble + {n} model | Ensemble + {n} modèle | Ensemble + 1 modèle |
 | Models menu button *(other)* | Ensemble + {n} models | Ensemble + {n} modèles | Ensemble + 3 modèles |
@@ -142,7 +153,7 @@ Try it: the French interface is on the live dashboard, add `?lang=fr` to the add
 | Where | English | French | Example (French) |
 |---|---|---|---|
 | start of the hover text of a ticked model in the Models ribbon with no output for the location | No output for {loc}. | Pas de résultats pour {loc}. | Pas de résultats pour Ituri. |
-|  | Rt estimates only for {loc}. | Seulement des estimations de Rt pour {loc}. | Seulement des estimations de Rt pour Ituri. |
+|  | No Rt for {loc}. | Pas de Rt pour {loc}. | Pas de Rt pour Ituri. |
 | hover text of a greyed (unticked) model in the Models ribbon | Not ticked. Click to tick this model; double-click to tick it and show it on the map (keys: Space ticks, Enter maps) | Non coché. Cliquer pour cocher ce modèle ; double-cliquer pour le cocher et l’afficher sur la carte (touches : Espace coche, Entrée affiche sur la carte) | Non coché. Cliquer pour cocher ce modèle ; double-cliquer pour le cocher et l’afficher sur la carte (touches : Espace coche, Entrée affiche sur la carte) |
 | hover text of a ticked model in the Models ribbon | Ticked. Click to untick this model; double-click to show it on the map (keys: Space unticks, Enter maps) | Coché. Cliquer pour décocher ce modèle ; double-cliquer pour l’afficher sur la carte (touches : Espace décoche, Entrée affiche sur la carte) | Coché. Cliquer pour décocher ce modèle ; double-cliquer pour l’afficher sur la carte (touches : Espace décoche, Entrée affiche sur la carte) |
 | hover text of the model shown on the map, in the Models ribbon | Ticked and shown on the map. Click to untick this model (keys: Space) | Coché et affiché sur la carte. Cliquer pour décocher ce modèle (touche : Espace) | Coché et affiché sur la carte. Cliquer pour décocher ce modèle (touche : Espace) |
@@ -174,7 +185,7 @@ Try it: the French interface is on the live dashboard, add `?lang=fr` to the add
 
 | Where | English | French | Example (French) |
 |---|---|---|---|
-| heading of the lower-left panel (read by screen readers only) | Trend, cumulative confirmed cases and Rt | Tendance, cas confirmés cumulés et Rt | Tendance, cas confirmés cumulés et Rt |
+| heading of the lower-left panel (read by screen readers only) | Trend and cumulative confirmed cases | Tendance et cas confirmés cumulés | Tendance et cas confirmés cumulés |
 
 ## Trend tab
 
@@ -224,13 +235,12 @@ Try it: the French interface is on the live dashboard, add `?lang=fr` to the add
 | tooltip of a forecast box | {name}: cumulative confirmed through week +{n} ({d}) | {name} : cas confirmés cumulés jusqu’à la semaine +{n} ({d}) | Carte : cas confirmés cumulés jusqu’à la semaine +3 (24 oct.) |
 | italic note | not submitted | non soumis | non soumis |
 
-## Rt tab
+## Rt view: Rt over time
 
 | Where | English | French | Example (French) |
 |---|---|---|---|
-|  | Rt | Rt | Rt |
-|  | Effective reproduction number · {loc} | Nombre de reproduction effectif · {loc} | Nombre de reproduction effectif · Ituri |
 |  | Rt = 1 | Rt = 1 | Rt = 1 |
+|  | Effective reproduction number (Rt) | Nombre de reproduction effectif (Rt) | Nombre de reproduction effectif (Rt) |
 |  | Growing (Rt > 1) | En croissance (Rt > 1) | En croissance (Rt > 1) |
 |  | Declining (Rt < 1) | En décroissance (Rt < 1) | En décroissance (Rt < 1) |
 |  | 50% interval | Intervalle à 50 % | Intervalle à 50 % |
@@ -240,8 +250,22 @@ Try it: the French interface is on the live dashboard, add `?lang=fr` to the add
 |  | P(Rt > 1) {p} | P(Rt > 1) {p} | P(Rt > 1) 57␣% |
 |  | No Rt estimates in this round. | Aucune estimation de Rt pour ce cycle. | Aucune estimation de Rt pour ce cycle. |
 |  | No Rt estimates for {loc} from the ticked models. | Aucune estimation de Rt pour {loc} parmi les modèles cochés. | Aucune estimation de Rt pour Ituri parmi les modèles cochés. |
-|  | The ensemble has no Rt: tick team models in Models to see their estimates. | L’ensemble n’a pas de Rt : cochez des modèles d’équipes dans Modèles pour voir leurs estimations. | L’ensemble n’a pas de Rt : cochez des modèles d’équipes dans Modèles pour voir leurs estimations. |
 |  | No Rt here from: {list} | Pas de Rt ici pour : {list} | Pas de Rt ici pour : OHTJHU-BM, CEPH-Rtrend_BDBV |
+
+## Rt view: Rt by location
+
+| Where | English | French | Example (French) |
+|---|---|---|---|
+|  | Rt by location | Rt par zone géographique | Rt par zone géographique |
+|  | {name} · week ending {d} ({rel}) | {name} · semaine se terminant le {d} ({rel}) | Carte · semaine se terminant le 24 oct. (−2 sem.) |
+|  | median · P(Rt > 1) | médiane · P(Rt > 1) | médiane · P(Rt > 1) |
+|  | No Rt from {name} for this week at this level. | Pas de Rt de {name} pour cette semaine à ce niveau. | Pas de Rt de Carte pour cette semaine à ce niveau. |
+|  *(one)* | {n} province without Rt | {n} province sans Rt | 1 province sans Rt |
+|  *(other)* | {n} provinces without Rt | {n} provinces sans Rt | 3 provinces sans Rt |
+|  *(one)* | {n} health zone without Rt | {n} zone de santé sans Rt | 1 zone de santé sans Rt |
+|  *(other)* | {n} health zones without Rt | {n} zones de santé sans Rt | 3 zones de santé sans Rt |
+|  | click to select this location | cliquer pour sélectionner cette zone géographique | cliquer pour sélectionner cette zone géographique |
+|  | selected location | zone géographique sélectionnée | zone géographique sélectionnée |
 
 ## Map
 
@@ -257,6 +281,17 @@ Try it: the French interface is on the live dashboard, add `?lang=fr` to the add
 |  | Earlier week | Semaine précédente | Semaine précédente |
 |  | Later week | Semaine suivante | Semaine suivante |
 | hover text of the week selector | Week whose cases are mapped (week ending Saturday), with its offset from the projections-from date. Click to pick, or step with the arrows. | Semaine dont les cas sont cartographiés (semaine se terminant le samedi), avec son décalage par rapport à la date des projections. Cliquez pour choisir, ou utilisez les flèches. | Semaine dont les cas sont cartographiés (semaine se terminant le samedi), avec son décalage par rapport à la date des projections. Cliquez pour choisir, ou utilisez les flèches. |
+|  | Week whose Rt is mapped (week ending Saturday), with its offset from the projections-from date. Click to pick, or step with the arrows. | Semaine dont le Rt est cartographié (semaine se terminant le samedi), avec son décalage par rapport à la date des projections. Cliquez pour choisir, ou utilisez les flèches. | Semaine dont le Rt est cartographié (semaine se terminant le samedi), avec son décalage par rapport à la date des projections. Cliquez pour choisir, ou utilisez les flèches. |
+|  | Median Rt | Rt médian | Rt médian |
+|  | P(Rt > 1) | P(Rt > 1) | P(Rt > 1) |
+|  | Median Rt | Rt médian | Rt médian |
+|  | Chance that Rt > 1 | Probabilité que Rt > 1 | Probabilité que Rt > 1 |
+|  | week ending {d} ({rel}) | semaine se terminant le {d} ({rel}) | semaine se terminant le 24 oct. (−2 sem.) |
+|  | Median Rt, {wk} | Rt médian, {wk} | Rt médian, semaine se terminant le 7 nov. (prévision +1 sem.) |
+|  | P(Rt > 1) | P(Rt > 1) | P(Rt > 1) |
+|  | no Rt here this week | pas de Rt ici cette semaine | pas de Rt ici cette semaine |
+|  | no Rt for this week | pas de Rt pour cette semaine | pas de Rt pour cette semaine |
+|  | no Rt estimates in this round | aucune estimation de Rt pour ce cycle | aucune estimation de Rt pour ce cycle |
 | map model selector when the round has no model | no models | aucun modèle | aucun modèle |
 | group heading in the week selector | Nowcast weeks (ending) | Semaines d’estimation en temps réel (fin de semaine) | Semaines d’estimation en temps réel (fin de semaine) |
 | group heading in the week selector | Forecast weeks (ending) | Semaines de prévision (fin de semaine) | Semaines de prévision (fin de semaine) |
@@ -337,7 +372,9 @@ Try it: the French interface is on the live dashboard, add `?lang=fr` to the add
 |---|---|---|---|
 | toolbar button opening the panel menu | Panels | Panneaux | Panneaux |
 | panel name in the menu and button labels | Weekly chart | Graphique hebdomadaire | Graphique hebdomadaire |
-| panel name in the menu and button labels | Trend / cumulative cases / Rt | Tendance / cas cumulés / Rt | Tendance / cas cumulés / Rt |
+| panel name in the menu and button labels | Trend / cumulative cases | Tendance / cas cumulés | Tendance / cas cumulés |
+|  | Rt over time | Rt au fil du temps | Rt au fil du temps |
+|  | Rt by location | Rt par zone géographique | Rt par zone géographique |
 | panel name in the menu and button labels | Map | Carte | Carte |
 | entry of the panel menu | Reset layout | Réinitialiser la disposition | Réinitialiser la disposition |
 | entry of the panel menu | Copy link to this view | Copier le lien vers cette vue | Copier le lien vers cette vue |
