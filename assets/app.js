@@ -543,7 +543,10 @@ async function init() {
   S.ensembleId = manifest.ensemble_model_id && models[manifest.ensemble_model_id] ? manifest.ensemble_model_id : null;
   S.ensembleSource = S.ensembleId ? (manifest.ensemble_source || 'hub') : null;
   // blue for every id that is an ensemble in some round (hub model and/or dashboard pool)
-  S.colors = assignColors(models, [manifest.ensemble_model_id, ...(manifest.rounds || []).map(r => r.ensemble_model_id)].filter(id => id && models[id]));
+  const firstSeen = {};
+  [...(manifest.rounds || [])].sort((a, b) => a.reference_date.localeCompare(b.reference_date))
+    .forEach(r => (r.models || []).forEach(id => { firstSeen[id] = firstSeen[id] || r.reference_date; }));
+  S.colors = assignColors(models, [manifest.ensemble_model_id, ...(manifest.rounds || []).map(r => r.ensemble_model_id)].filter(id => id && models[id]), firstSeen);
   S.obsLatest = await getJSON(`data/observed/${manifest.latest_as_of}.json`);
   $('previewBadge').classList.toggle('hidden', !S.preview);
   if (S.previewCopy) {

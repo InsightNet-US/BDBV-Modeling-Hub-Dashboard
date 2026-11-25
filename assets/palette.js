@@ -1,16 +1,22 @@
-/* Team colours. One distinct hue per team (teams sorted by name, so a model keeps its colour across rounds);
-   models of the same team get darker / lighter shades of the hue. Blue is reserved for observed data and the
-   ensemble (hub or dashboard), so no team hue is blue. */
+/* Team colours. One distinct hue per team, most distinct hues first; teams take them in the order they first
+   submitted (then by name), so a model keeps its colour across rounds and a new team does not shift the others.
+   Models of the same team get darker / lighter shades of the hue. Blue is reserved for observed data and the
+   ensemble (hub or dashboard) and teal is the Rt / trend "declining" colour, so no team hue is either. */
 const TEAM_HUES = [
   '#e31a1c',  // red
   '#33a02c',  // green
   '#ff7f00',  // orange
   '#6a3d9a',  // purple
-  '#8c510a',  // brown
   '#e7298a',  // magenta
+  '#8c510a',  // brown
+  '#555555',  // grey
   '#b8a000',  // mustard
-  '#555555',  // grey (no teal: it is the Rt / trend "declining" colour)
   '#f781bf',  // pink
+  '#6b8e23',  // olive
+  '#800026',  // maroon
+  '#b294c7',  // lavender
+  '#c49a6c',  // tan
+  '#1a1a1a',  // black
 ];
 function hexToRgb(h) { return [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16)); }
 function mix(a, b, t) {
@@ -19,8 +25,9 @@ function mix(a, b, t) {
 }
 /* t < 0 darkens towards black, t > 0 lightens towards white */
 function shade(h, t) { return t < 0 ? mix(h, '#000000', -t) : mix(h, '#ffffff', t); }
-/** models: {id: meta}. Returns {id: cssColor}. Ensemble ids (one or a list) are coloured var(--median). */
-function assignColors(models, ensembleId) {
+/** models: {id: meta}; firstSeen: {id: first round date}. Returns {id: cssColor}. Ensemble ids (one or a list)
+    are coloured var(--median). */
+function assignColors(models, ensembleId, firstSeen = {}) {
   const ens = new Set([].concat(ensembleId || []).filter(Boolean));
   const teams = {};
   Object.keys(models).sort().forEach(id => {
@@ -30,7 +37,8 @@ function assignColors(models, ensembleId) {
   });
   const out = {};
   ens.forEach(id => { out[id] = 'var(--median)'; });
-  Object.keys(teams).sort((a, b) => a.localeCompare(b, 'en', { sensitivity: 'base' })).forEach((t, i) => {
+  const first = t => teams[t].map(id => firstSeen[id] || '9999').sort()[0];
+  Object.keys(teams).sort((a, b) => first(a).localeCompare(first(b)) || a.localeCompare(b, 'en', { sensitivity: 'base' })).forEach((t, i) => {
     const hue = TEAM_HUES[i % TEAM_HUES.length], ids = teams[t];
     ids.forEach((id, k) => { out[id] = ids.length === 1 ? hue : shade(hue, -0.3 + 0.75 * k / (ids.length - 1)); });
   });

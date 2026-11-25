@@ -320,7 +320,7 @@ from DSNIS via HDX (2022) and the provinces from geoBoundaries; those shapes dif
 
 Follows the motifs of the Insight Net interface prototype (light theme, reported/nowcast/forecast bar
 grammar, boxplot cumulative panel, choropleth showing one of the ticked models). Team colours use one distinct
-hue per team (shades of it for a team's models); blue is reserved for reported data and the
+hue per team (14 hues, taken in the order teams first submitted; shades of it for a team's models); blue is reserved for reported data and the
 ensemble (hub or dashboard).
 
 ## Partners
