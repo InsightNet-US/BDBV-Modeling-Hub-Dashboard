@@ -319,8 +319,8 @@ from DSNIS via HDX (2022) and the provinces from geoBoundaries; those shapes dif
 ## Design
 
 Follows the motifs of the Insight Net interface prototype (light theme, reported/nowcast/forecast bar
-grammar, boxplot cumulative panel, choropleth showing one of the ticked models). Team colours use one ColorBrewer
-Paired pair per team, as in the hub's own plotting scripts; blue is reserved for reported data and the
+grammar, boxplot cumulative panel, choropleth showing one of the ticked models). Team colours use one distinct
+hue per team (shades of it for a team's models); blue is reserved for reported data and the
 ensemble (hub or dashboard).
 
 ## Partners
